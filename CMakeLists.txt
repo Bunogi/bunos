@@ -1,0 +1,64 @@
+cmake_minimum_required(VERSION 3.18)
+
+set(CMAKE_C_COMPILER_WORKS 1)
+set(CMAKE_CXX_COMPILER_WORKS 1)
+project(bunos)
+
+set(WARNING_FLAGS "-Wall -Wextra -pedantic")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} -fno-exceptions -ffreestanding -fno-rtti -nostdlib")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_SOURCE_DIR}/kernel/linker.ld")
+
+set(TOOLCHAIN_PREFIX "i686-elf")
+set(CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++")
+set(CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc")
+set(ASSEMBLER "${TOOLCHAIN_PREFIX}-as")
+
+set(CMAKE_CXX_STANDARD 17)
+
+add_custom_command(
+  OUTPUT boot.o
+  COMMAND ${ASSEMBLER} ${CMAKE_SOURCE_DIR}/kernel/boot.s -o boot.o
+  DEPENDS ${CMAKE_SOURCE_DIR}/kernel/boot.s
+)
+
+#add_custom_target(
+#  boot.o
+#  COMMAND ${ASSEMBLER} ${CMAKE_SOURCE_DIR}/kernel/boot.s -o boot.o
+#  SOURCES "${CMAKE_SOURCE_DIR}/kernel/boot.s")
+#set_source_files_properties(boot.o PROPERTIES GENERATED true)
+
+# TODO: Setup crtbegin.o and crtend.o
+
+#add_custom_command(
+#  OUTPUT crtbegin.o crtend.o
+#  COMMAND sh -c "cp \$(${CMAKE_CXX_COMPILER} -print-file-name=crtbegin.o) ."
+#  COMMAND sh -c "cp \$(${CMAKE_CXX_COMPILER} -print-file-name=crtend.o) ."
+#  VERBATIM
+#)
+
+add_library(boot STATIC boot.o)
+set_target_properties(boot PROPERTIES LINKER_LANGUAGE CXX)
+
+add_custom_target(
+  run
+  COMMAND qemu-system-i386 -kernel kernel.bin
+  DEPENDS kernel.bin
+)
+
+add_executable(
+  kernel.bin
+  kernel/kernel_main.cpp
+  kernel/tty/i386/vga.cpp
+)
+
+include_directories(${CMAKE_SOURCE_DIR})
+
+add_dependencies(kernel.bin boot)
+
+add_subdirectory(bustd)
+
+set_target_properties(kernel.bin PROPERTIES LINK_DEPENDS ${CMAKE_SOURCE_DIR}/kernel/linker.ld)
+target_link_libraries(kernel.bin -lgcc boot bustd-kernel)
+target_include_directories(kernel.bin PRIVATE ${CMAKE_SOURCE_DIR})
