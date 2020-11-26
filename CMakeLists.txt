@@ -51,6 +51,9 @@ add_executable(
   kernel.bin
   kernel/kernel_main.cpp
   kernel/tty/i386/vga.cpp
+  kernel/panic.cpp
+  kernel/kprint.cpp
+  kernel/to_string.cpp
 )
 
 include_directories(${CMAKE_SOURCE_DIR})
