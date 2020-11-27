@@ -8,5 +8,5 @@
 }:
 
 pkgs.mkShell.override { stdenv = crossPkgs.gcc10Stdenv; } {
-  nativeBuildInputs = with pkgs; [ qemu cmake ninja ];
+  nativeBuildInputs = with pkgs; [ qemu cmake ninja gdb ];
 }

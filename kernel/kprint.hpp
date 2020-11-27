@@ -4,7 +4,8 @@
 
 namespace kernel::print {
 void init(tty::Vga *dev);
-void print(const char *message);
-void println(const char *message);
-void number(u32 v);
 } // namespace kernel::print
+
+void kprint(const char *message);
+void kprintln(const char *message);
+void kprint_number(u32 v);

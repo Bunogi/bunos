@@ -9,16 +9,16 @@ void kernel_main() {
   kernel::tty::Vga vga;
   kernel::print::init(&vga);
 
-  kernel::print::println("Hello, world!");
+  kprintln("Hello, world!");
 
-  kernel::print::print("My cool number 0 is ");
-  kernel::print::number(0);
-  kernel::print::print("\nMy cool number 0xFF is ");
-  kernel::print::number(0xFF);
-  kernel::print::print("\nMy cool number 0x11223344 is ");
-  kernel::print::number(0x11223344);
+  kprint("My cool number 0 is ");
+  kprint_number(0);
+  kprint("\nMy cool number 0xFF is ");
+  kprint_number(0xFF);
+  kprint("\nMy cool number 0x11223344 is ");
+  kprint_number(0x11223344);
 
-  kernel::print::println("\nReached end of kernel_main");
-  kernel::panic::panic();
+  kprintln("\nReached end of kernel_main");
+  kpanic();
 }
 }

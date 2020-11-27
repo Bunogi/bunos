@@ -1,24 +1,22 @@
 #include "panic.hpp"
 #include "kprint.hpp"
 
-namespace kernel::panic {
-void panic() {
+void kpanic() {
   u32 eax, ebx, ecx, edx;
   __asm__("nop" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx));
-  print::println("KERNEL PANIC");
+  kprintln("KERNEL PANIC");
 
-  print::print("eax: ");
-  print::number(eax);
-  print::print(", ebx: ");
-  print::number(ebx);
-  print::print(", ecx: ");
-  print::number(ecx);
-  print::print(", edx: ");
-  print::number(edx);
-  print::println("");
+  kprint("eax: ");
+  kprint_number(eax);
+  kprint(", ebx: ");
+  kprint_number(ebx);
+  kprint(", ecx: ");
+  kprint_number(ecx);
+  kprint(", edx: ");
+  kprint_number(edx);
+  kprintln("");
 
   volatile bool run = 1;
   while (run) {
   }
 }
-} // namespace kernel::panic

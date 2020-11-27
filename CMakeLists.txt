@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(WARNING_FLAGS "-Wall -Wextra -pedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og -g")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Os -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Og -g")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} -fno-exceptions -ffreestanding -fno-rtti -nostdlib")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_SOURCE_DIR}/kernel/linker.ld")
 
@@ -72,3 +72,4 @@ add_subdirectory(bustd)
 set_target_properties(kernel.bin PROPERTIES LINK_DEPENDS ${CMAKE_SOURCE_DIR}/kernel/linker.ld)
 target_link_libraries(kernel.bin -lgcc boot bustd-kernel)
 target_include_directories(kernel.bin PRIVATE ${CMAKE_SOURCE_DIR})
+add_compile_definitions(__IN_KERNEL__=1)

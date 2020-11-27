@@ -1,5 +1,6 @@
 #include "to_string.hpp"
 #include "panic.hpp"
+#include <bustd/assert.hpp>
 
 static char BUFFER[12];
 
