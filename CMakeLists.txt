@@ -45,7 +45,12 @@ set_target_properties(boot PROPERTIES LINKER_LANGUAGE CXX)
 
 add_custom_target(
   run
-  COMMAND qemu-system-i386 -kernel kernel.bin
+  COMMAND qemu-system-i386 -kernel kernel.bin -m 4G
+  DEPENDS kernel.bin
+)
+add_custom_target(
+  run_debug
+  COMMAND qemu-system-i386 -kernel kernel.bin -m 4G -s -S
   DEPENDS kernel.bin
 )
 
