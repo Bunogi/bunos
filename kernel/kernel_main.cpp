@@ -2,8 +2,6 @@
 #include "panic.hpp"
 #include "tty/i386/vga.hpp"
 
-#include <bustd/memory.hpp>
-
 extern "C" {
 void kernel_main() {
   kernel::tty::Vga vga;

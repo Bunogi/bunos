@@ -1,5 +1,5 @@
 #include "vga.hpp"
-#include <bustd/memory.hpp>
+#include <string.h>
 
 constexpr u8 TEXT_WIDTH = 80;
 constexpr u8 TEXT_HEIGHT = 25;
@@ -33,8 +33,8 @@ void Vga::write_char_at(char c, u8 column, u8 row) {
 
 void Vga::scroll() {
   for (u8 i = 1; i < TEXT_HEIGHT; i++) {
-    bustd::mem::memcpy(m_termbuffer + (i - 1) * TEXT_WIDTH,
-                       m_termbuffer + i * TEXT_WIDTH, TEXT_WIDTH);
+    memcpy(m_termbuffer + (i - 1) * TEXT_WIDTH, m_termbuffer + i * TEXT_WIDTH,
+           TEXT_WIDTH);
   }
 }
 
@@ -61,7 +61,7 @@ void Vga::write(const char *text, usize len) {
   }
 }
 
-void Vga::print(const char *text) { write(text, bustd::mem::strlen(text)); }
+void Vga::print(const char *text) { write(text, strlen(text)); }
 void Vga::println(const char *text) {
   print(text);
   putchar('\n');

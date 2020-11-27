@@ -1,12 +1,8 @@
 {
-  pkgs ? import <nixpkgs> {  },
-  crossPkgs ? import <nixpkgs> {
-    crossSystem = {
-      config = "i686-elf";
-    };
-  }
+  pkgs ? import <nixpkgs> {  }
 }:
 
-pkgs.mkShell.override { stdenv = crossPkgs.gcc10Stdenv; } {
-  nativeBuildInputs = with pkgs; [ qemu cmake ninja gdb ];
+pkgs.mkShell.override { stdenv = pkgs.gcc10Stdenv; } {
+  nativeBuildInputs = with pkgs; [ qemu cmake ninja gdb mpfr gmp libmpc ];
+  hardeningDisable = [ "format" ];
 }
