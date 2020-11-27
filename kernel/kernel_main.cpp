@@ -13,12 +13,12 @@ void kernel_main() {
 
   kernel::print::print("My cool number 0 is ");
   kernel::print::number(0);
-  kernel::print::print("My cool number 0xFF is ");
+  kernel::print::print("\nMy cool number 0xFF is ");
   kernel::print::number(0xFF);
-  kernel::print::print("My cool number 0x11223344 is ");
+  kernel::print::print("\nMy cool number 0x11223344 is ");
   kernel::print::number(0x11223344);
 
-  kernel::print::println("Reached end of kernel_main");
+  kernel::print::println("\nReached end of kernel_main");
   kernel::panic::panic();
 }
 }

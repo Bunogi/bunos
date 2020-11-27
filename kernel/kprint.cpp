@@ -17,5 +17,5 @@ void println(const char *message) {
   out_device->putchar('\n');
 }
 
-void number(u32 v) { out_device->println(kernel::to_string_hex(v)); }
+void number(u32 v) { out_device->print(kernel::to_string_hex(v)); }
 } // namespace kernel::print
