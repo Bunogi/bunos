@@ -1,11 +1,7 @@
 #pragma once
 
-#include "tty/i386/vga.hpp"
+#include "tty/ittydevice.hpp"
 
 namespace kernel::print {
-void init(tty::Vga *dev);
+void init(kernel::tty::IDevice *device);
 } // namespace kernel::print
-
-void kprint(const char *message);
-void kprintln(const char *message);
-void kprint_number(u32 v);

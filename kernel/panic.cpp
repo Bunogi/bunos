@@ -1,9 +1,11 @@
 #include "panic.hpp"
-#include "kprint.hpp"
+#include <stdio.h>
 
 void kpanic() {
-  u32 eax, ebx, ecx, edx;
-  __asm__("nop" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx));
+  // u32 eax, ebx, ecx, edx;
+  //__asm__("nop" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx));
+  printf("KERNEL_PANIC\n");
+  /*
   kprintln("KERNEL PANIC");
 
   kprint("eax: ");
@@ -15,6 +17,7 @@ void kpanic() {
   kprint(", edx: ");
   kprint_number(edx);
   kprintln("");
+  */
 
   volatile bool run = 1;
   while (run) {

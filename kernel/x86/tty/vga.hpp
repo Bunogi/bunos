@@ -1,21 +1,18 @@
 #pragma once
 
 #include <bustd/stddef.hpp>
+#include <kernel/tty/ittydevice.hpp>
 
 // TODO: Make this a generic interface and stuff when global constructors are
 // set up
 
-namespace kernel::tty {
-class Vga {
+namespace kernel::tty::x86 {
+class Vga : public tty::IDevice {
 public:
   Vga();
 
-  void clear();
-  void write(const char *text, usize len);
-  void print(const char *text);
-  void println(const char *text);
-
-  void putchar(char c);
+  virtual void write(const char *text, usize len) override;
+  virtual void putchar(char c) override;
 
   enum class Color : u8 {
     Black = 0,
@@ -40,6 +37,8 @@ public:
 
 private:
   void scroll();
+  void clear();
+  u16 ascii_to_vga(char c);
 
   u8 entry_color(Color fg, Color bg);
   u16 entry(char c, Color bg);
@@ -49,4 +48,4 @@ private:
 
   u16 *m_termbuffer{(u16 *)0xB8000};
 };
-} // namespace kernel::tty
+} // namespace kernel::tty::x86

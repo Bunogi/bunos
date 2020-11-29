@@ -4,7 +4,7 @@
 constexpr u8 TEXT_WIDTH = 80;
 constexpr u8 TEXT_HEIGHT = 25;
 
-namespace kernel::tty {
+namespace kernel::tty::x86 {
 Vga::Vga() { clear(); }
 
 u8 Vga::entry_color(Color fg, Color bg) {
@@ -61,9 +61,4 @@ void Vga::write(const char *text, usize len) {
   }
 }
 
-void Vga::print(const char *text) { write(text, strlen(text)); }
-void Vga::println(const char *text) {
-  print(text);
-  putchar('\n');
-}
-} // namespace kernel::tty
+} // namespace kernel::tty::x86
