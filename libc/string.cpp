@@ -16,8 +16,9 @@ void *memcpy(void *dest, const void *src, size_t n) {
 }
 
 void *memset(void *ptr, int value, size_t n) {
+  unsigned char *buf = static_cast<unsigned char *>(ptr);
   for (size_t i = 0; i < n; i++) {
-    *static_cast<unsigned char *>(ptr) = static_cast<unsigned char>(value);
+    buf[i] = static_cast<unsigned char>(value);
   }
   return ptr;
 }
