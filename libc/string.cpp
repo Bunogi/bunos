@@ -8,6 +8,10 @@ size_t strlen(const char *str) {
   return len;
 }
 
+void *strcpy(char *dest, const char *src) {
+  return memcpy(dest, src, strlen(src));
+}
+
 void *memcpy(void *dest, const void *src, size_t n) {
   for (size_t i = 0; i < n; i++) {
     *(static_cast<char *>(dest) + i) = *(static_cast<const char *>(src) + i);

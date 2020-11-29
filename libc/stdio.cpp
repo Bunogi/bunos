@@ -39,15 +39,13 @@ size_t string_to_padding(const char *s, size_t digits) {
   return out;
 }
 
-size_t to_string_hex(char *buffer, u32 v, u32 padding, bool uppercase) {
-  u32 rest = v;
+size_t to_string_hex(char *buffer, size_t v, unsigned padding, bool uppercase) {
   size_t buffer_index = 0, i;
   bool has_written_nonzero = false;
-  if (v == 0 && padding == 0) {
-    padding = 1;
-  }
-  for (i = 0; i < 8; i++) {
-    const char shift_amount = (7 - i) * 4;
+
+  const size_t nibble_count = sizeof v * 2;
+  for (i = 1; i <= nibble_count; i++) {
+    const char shift_amount = (nibble_count - i) * 4;
     const char this_nibble = (v >> shift_amount) & 0xF;
 
     if (this_nibble == 0) {
@@ -55,7 +53,7 @@ size_t to_string_hex(char *buffer, u32 v, u32 padding, bool uppercase) {
         buffer[buffer_index] = '0';
       }
       // padding starts counting from 1 rather than 0
-      else if (padding > (7 - i)) {
+      else if (padding > (nibble_count - i)) {
         buffer[buffer_index] = '0';
       } else {
         continue;
@@ -71,28 +69,123 @@ size_t to_string_hex(char *buffer, u32 v, u32 padding, bool uppercase) {
       buffer[buffer_index] += 0x20;
     }
 
-    // Done early
-    if (rest == 0) {
-      return i + 1;
+    buffer_index++;
+  }
+  return buffer_index;
+}
+
+size_t to_string_unsigned(char *buffer, unsigned v, u32 padding) {
+  size_t buffer_index = 0, i;
+  bool has_written_nonzero = false;
+
+  // TODO: ugly but it works, maybe improve
+#ifdef __IS_X86__
+  // 2^32 - 1
+  const unsigned digits_in_max = 10;
+#else
+#error Unimplemented on this arch
+#endif
+
+  for (i = 1; i <= digits_in_max; i++) {
+    const unsigned powered = pow(10, digits_in_max - i);
+    const char this_digit = (v / powered) % 10;
+
+    if (this_digit == 0) {
+      if (has_written_nonzero) {
+        buffer[buffer_index] = '0';
+      }
+      // padding starts counting from 1 rather than 0
+      else if (padding > (digits_in_max - i)) {
+        buffer[buffer_index] = '0';
+      } else {
+        continue;
+      }
+    } else {
+      buffer[buffer_index] = '0' + this_digit;
+      has_written_nonzero = true;
     }
-    rest -= (v >> shift_amount) & 0xF;
+
     buffer_index++;
   }
   return i;
 }
-} // namespace Local
 
-#ifdef __IN_KERNEL__
-#include <kernel/tty/ittydevice.hpp>
-namespace kernel::print {
-extern kernel::tty::IDevice *out_device;
+size_t to_string_signed(char *buffer, int v, u32 padding) {
+  if (v < 0) {
+    buffer[0] = '-';
+    return to_string_unsigned(buffer + 1, -v, padding) + 1;
+  } else {
+    return to_string_unsigned(buffer, v, padding);
+  }
 }
-#endif
 
-int printf(const char *format, ...) {
+// TODO: make optional class and use that insdead when we get memory allocation
+bool handle_integer(char *buffer, size_t *offset, char format, va_list *args,
+                    size_t padding) {
+  switch (format) {
+  case 'x': {
+    const auto v = va_arg(*args, unsigned);
+    *offset += Local::to_string_hex(buffer + *offset, v, padding, false);
+    return true;
+  }
+  case 'X': {
+    const auto v = va_arg(*args, unsigned);
+    *offset += Local::to_string_hex(buffer + *offset, v, padding, true);
+    return true;
+  }
+  case 'i':
+  case 'd': {
+    const auto v = va_arg(*args, int);
+    *offset += Local::to_string_signed(buffer + *offset, v, padding);
+    return true;
+  }
+  case 'u': {
+    const auto v = va_arg(*args, unsigned);
+    *offset += Local::to_string_unsigned(buffer + *offset, v, padding);
+    return true;
+  }
+
+  case 'p': {
+    // Implementation specified so we can do whatever we want :)
+    const auto v = va_arg(*args, uintptr_t);
+    buffer[*offset] = '0';
+    buffer[*offset + 1] = 'x';
+    *offset += 2;
+    *offset +=
+        Local::to_string_hex(buffer + *offset, v, sizeof(uintptr_t) * 2, true);
+    return true;
+  }
+  default:
+    return false;
+  }
+}
+
+bool handle_other(char *buffer, size_t *offset, char format, va_list *args) {
+  switch (format) {
+  case 's': {
+    const auto arg = va_arg(*args, char *);
+    const auto len = strlen(arg);
+    memcpy(buffer + *offset, arg, len);
+    *offset += len;
+    return true;
+  }
+  case 'c': {
+    const auto arg = va_arg(*args, int);
+    buffer[*offset] = static_cast<char>(arg);
+    *offset += 1;
+    return true;
+  }
+  case '%':
+    buffer[*offset] = '%';
+    *offset += 1;
+    return true;
+  }
+  return false;
+}
+
+int sprintf_impl(char *buffer, const char *format, va_list args) {
   ASSERT_TRUE(format != nullptr);
-  char buffer[256]; // TODO do something smarter
-
+  ASSERT_TRUE(buffer != nullptr);
 #define CHECKED_INC(_x)                                                        \
   do {                                                                         \
     _x += 1;                                                                   \
@@ -103,8 +196,6 @@ int printf(const char *format, ...) {
   } while (0)
   size_t offset = 0;
 
-  va_list args;
-  va_start(args, 0);
   while (*format) {
     if (*format != '%') {
       buffer[offset++] = *format;
@@ -112,7 +203,6 @@ int printf(const char *format, ...) {
       continue;
     }
     // TODO: Implement non-hex stuff too
-    // TODO: Maybe validate the output?
     CHECKED_INC(format);
     size_t padding = 0;
     if (*format == '.') {
@@ -120,35 +210,57 @@ int printf(const char *format, ...) {
       const auto padding_len = Local::bytes_to_specifier(format);
       padding = Local::string_to_padding(format, padding_len);
       format += padding_len;
+    } else {
+      padding = 1;
     }
-    size_t delta = 0;
-    switch (*format) {
-    case 'x': {
-      const auto v = va_arg(args, unsigned);
-      delta = Local::to_string_hex(buffer + offset, v, padding, false);
-      break;
+    if (handle_integer(buffer, &offset, *format, &args, padding) ||
+        handle_other(buffer, &offset, *format, &args)) {
+      format++;
+    } else {
+      // Probably a bug for now
+      ASSERT_NOT_REACHED();
+      return -1;
     }
-    case 'X': {
-      const auto v = va_arg(args, unsigned);
-      delta = Local::to_string_hex(buffer + offset, v, padding, true);
-      break;
-    }
-    default:
-      ASSERT_NOT_REACHED(); // not implemented
-    }
-    format++;
-    offset += delta;
   }
 #undef CHECKED_INC
-  va_end(args);
-  ASSERT_TRUE(offset + 1 < sizeof buffer);
-  buffer[offset + 1] = '\0';
+  return offset;
+}
+
+} // namespace Local
 
 #ifdef __IN_KERNEL__
-  kernel::print::out_device->write(buffer, offset);
+#include <kernel/tty/ittydevice.hpp>
+namespace kernel::print {
+extern kernel::tty::IDevice *out_device;
+}
+#endif
+
+int sprintf(char *str, const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  auto retval = Local::sprintf_impl(str, format, args);
+  va_end(args);
+  return retval;
+}
+
+int printf(const char *format, ...) {
+  char buffer[256]; // TODO do something smarter
+  memset(buffer, 0, sizeof(buffer));
+
+  va_list args;
+  va_start(args, format);
+  auto retval = Local::sprintf_impl(buffer, format, args);
+  va_end(args);
+  if (retval < 0) {
+    return retval;
+  }
+  ASSERT_TRUE(static_cast<size_t>(retval) < sizeof buffer);
+
+#ifdef __IN_KERNEL__
+  kernel::print::out_device->write(buffer, retval);
 #else
 #warning Printf not implemented yet :)
 #endif
 
-  return offset;
+  return retval;
 }
