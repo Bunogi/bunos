@@ -84,6 +84,7 @@ _start:
 	stack since (pushed 0 bytes so far), so the alignment has thus been
 	preserved and the call is well defined.
 	*/
+	mov 0, %ebp // To tell stack traces where to stop
 	call kernel_main
  
 	/*
