@@ -46,6 +46,7 @@ private:
   u8 m_column{0};
   Color m_current_color{Color::White};
 
-  u16 *m_termbuffer{(u16 *)0xB8000};
+  // Mapped VGA memory to the 1024th page
+  u16 *m_termbuffer{(u16 *)0xC03FF000};
 };
 } // namespace kernel::tty::x86

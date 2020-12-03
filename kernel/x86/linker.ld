@@ -2,25 +2,43 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 1M;
-    .text BLOCK(4K) : ALIGN(4K)
+    . = 0x00100000;
+    /* TODO: use a file directive instead to ensure that the boot.s.o file is linked first somehow */
+    /* Otherwise the offset of the header in the elf becomes wrong */
+    .multiboot.data : {
+       LONG(0x1BADB002);
+       LONG(3);
+       LONG(-(3 + 0x1BADB002));
+       /* *(.multiboot.data) */
+    }
+    
+    .multiboot.text : {
+        *(.multiboot.text)
+    }
+
+    . += 0xC0000000;
+
+    /* Store the section from 0xC0101000. */
+    _kernel_start = .;
+    .text ALIGN(4K): AT (ADDR (.text) - 0xC0000000)
     {
-        *(.multiboot)
         *(.text)
     }
-    .rodata BLOCK(4K) : ALIGN(4K)
+    .rodata ALIGN(4K) : AT (ADDR (.rodata) - 0xC0000000)
     {
         *(.rodata)
     }
  
-    .data BLOCK(4K) : ALIGN(4K)
+    .data ALIGN(4K) : AT (ADDR (.data) - 0xC0000000)
     {
         *(.data)
     }
  
-    .bss BLOCK(4K) : ALIGN(4K)
+    .bss ALIGN(4K) : AT (ADDR (.bss) - 0xC0000000)
     {
         *(COMMON)
         *(.bss)
+        *(.bootstrap_stack)
     }
+    _kernel_end = .;
 }

@@ -1,0 +1,18 @@
+set(TOOLCHAIN_PREFIX "${CMAKE_SOURCE_DIR}/toolchain/prefix/bin/i686-elf")
+set(CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++")
+set(CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc")
+set(CMAKE_OBJCOPY "${TOOLCHAIN_PREFIX}-objcopy")
+set(CMAKE_STRIP "${TOOLCHAIN_PREFIX}-strip")
+set(CMAKE_SIZE "${TOOLCHAIN_PREFIX}-size")
+#set(CMAKE_ASM_COMPILER "${TOOLCHAIN_PREFIX}-as")
+set(CMAKE_AR "${TOOLCHAIN_PREFIX}-ar")
+set(ASSEMBLER "${TOOLCHAIN_PREFIX}-as")
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Og -g")
+set(CMAKE_SYSROOT "${CMAKE_SOURCE_DIR}/sysroot")
+set(WARNING_FLAGS "-Wall -Wextra -pedantic -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} -fno-exceptions -ffreestanding -fno-rtti -nostdlib")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
+set(CMAKE_ASMASM_FLAGS_INIT "") # TODO: make better
+set(CMAKE_ASMASM_FLAGS "") # TODO: make better
