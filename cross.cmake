@@ -14,5 +14,3 @@ set(CMAKE_SYSROOT "${CMAKE_SOURCE_DIR}/sysroot")
 set(WARNING_FLAGS "-Wall -Wextra -pedantic -Werror")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} -fno-exceptions -ffreestanding -fno-rtti -nostdlib")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
-set(CMAKE_ASMASM_FLAGS_INIT "") # TODO: make better
-set(CMAKE_ASMASM_FLAGS "") # TODO: make better
