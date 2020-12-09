@@ -82,6 +82,6 @@ add_subdirectory(libc)
 set_target_properties(kernel.bin PROPERTIES LINK_DEPENDS
   "${CMAKE_SOURCE_DIR}/kernel/x86/linker.ld"
 )
-target_link_libraries(kernel.bin -lgcc libc-kernel)
+target_link_libraries(kernel.bin -lgcc c-kernel)
 target_include_directories(kernel.bin PRIVATE ${CMAKE_SOURCE_DIR})
 target_compile_definitions(kernel.bin PRIVATE __IN_KERNEL__=1 __IS_X86__=1)
