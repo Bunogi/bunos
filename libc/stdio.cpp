@@ -75,7 +75,7 @@ size_t to_string_hex(char *buffer, size_t v, unsigned padding, bool uppercase) {
 }
 
 size_t to_string_unsigned(char *buffer, unsigned v, u32 padding) {
-  size_t buffer_index = 0, i;
+  size_t buffer_index = 0;
   bool has_written_nonzero = false;
 
   // TODO: ugly but it works, maybe improve
@@ -86,7 +86,7 @@ size_t to_string_unsigned(char *buffer, unsigned v, u32 padding) {
 #error Unimplemented on this arch
 #endif
 
-  for (i = 1; i <= digits_in_max; i++) {
+  for (size_t i = 1; i <= digits_in_max; i++) {
     const unsigned powered = pow(10, digits_in_max - i);
     const char this_digit = (v / powered) % 10;
 
@@ -107,7 +107,7 @@ size_t to_string_unsigned(char *buffer, unsigned v, u32 padding) {
 
     buffer_index++;
   }
-  return i;
+  return buffer_index;
 }
 
 size_t to_string_signed(char *buffer, int v, u32 padding) {
