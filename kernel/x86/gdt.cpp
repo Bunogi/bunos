@@ -23,7 +23,6 @@ static u8 gdt_data[entry_count * 8];
 
 void write_gdt_data(const GDTEntry *const entries, size_t size) {
   for (unsigned i = 0; i < size; i++) {
-    printf("i: %u\n", i);
     GDTEntry source = entries[i];
     auto *target = &gdt_data[i * 8];
     // Check the limit to make sure that it can be encoded
