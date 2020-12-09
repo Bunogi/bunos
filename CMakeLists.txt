@@ -65,6 +65,9 @@ add_executable(
   kernel/panic.cpp
   kernel/utils.cpp
   kernel/x86/boot.s
+  kernel/x86/gdt.cpp
+  kernel/x86/gdt.s
+  kernel/x86/memory.cpp
   kernel/x86/tty/vga.cpp
 )
 #add_dependencies(kernel.bin boot.o)

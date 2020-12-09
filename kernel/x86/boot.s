@@ -4,7 +4,6 @@
 .set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
 .set MAGIC,    0x1BADB002       /* 'magic number' lets bootloader find the header */
 .set CHECKSUM, -(MAGIC + FLAGS) /* checksum of above, to prove we are multiboot */
- 
 /* 
 Declare a multiboot header that marks the program as a kernel. These are magic
 values that are documented in the multiboot standard. The bootloader will
@@ -34,13 +33,14 @@ boot_page_directory:
 	.skip 4096
 boot_page_table1:
 	.skip 4096
- 
 
 .section .multiboot.text, "ax"
 .global _start
 .type _start, @function
 _start:
-	// subtract 0xC0100000 in order to convert between the virtual address of the boot_page_table
+	cli
+
+	// subtract 0xC0000000 in order to convert between the virtual address of the boot_page_table
 	// and the physical address it is actually stored at.
 	// edi: Physical pointer to current page
 	// esi: Page pointing to 
@@ -77,7 +77,7 @@ _start:
 	// Use the first page directory entry(boot_page_table1) for 0xC0000xxx
 	// at offset 0xC00 (768 * 4)
 	movl $(boot_page_table1 - 0xC0000000 + 0x003), boot_page_directory - 0xC0000000 + 768 * 4
-	//movl $(boot_page_table1 - 0xC0000000 + 0x003), boot_page_directory - 0xC0000000 + 769 * 4
+	movl $(boot_page_table1 - 0xC0000000 + 0x003), boot_page_directory - 0xC0000000 + 769 * 4
 
 	// Point the cr3 register to the boot_page_directory to set it up
 	movl $(boot_page_directory - 0xC0000000), %ecx
