@@ -33,9 +33,11 @@ set(CMAKE_CXX_STANDARD 17)
 #  VERBATIM
 #)
 
+# standard QEMU flags for use with everything
+set(QEMU_FLAGS -m 4G -no-reboot)
 add_custom_target(
   run
-  COMMAND qemu-system-i386 -kernel kernel.bin -m 4G
+  COMMAND qemu-system-i386 -kernel kernel.bin ${QEMU_FLAGS}
   DEPENDS kernel.bin
 )
 add_custom_target(
@@ -49,12 +51,12 @@ add_custom_target(
 )
 add_custom_target(
   run_image
-  COMMAND qemu-system-i386 -cdrom image.iso -m 4G
+  COMMAND qemu-system-i386 -cdrom image.iso ${QEMU_FLAGS}
   DEPENDS image
 )
 add_custom_target(
   run_debug
-  COMMAND qemu-system-i386 -kernel kernel.bin -m 4G -s -S
+  COMMAND qemu-system-i386 -kernel kernel.bin -s -S ${QEMU_FLAGS} -d int
   DEPENDS kernel.bin
 )
 
