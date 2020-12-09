@@ -42,7 +42,7 @@ add_custom_target(
   image
   COMMAND mkdir -p isodir/boot/grub
   COMMAND cp kernel.bin isodir/boot
-  COMMAND cp ${CMAKE_SOURCE_DIR}/grub.cfg isodir/boot/grub.cfg
+  COMMAND cp ${CMAKE_SOURCE_DIR}/grub.cfg isodir/boot/grub/grub.cfg
   COMMAND grub-mkrescue isodir -o image.iso
   VERBATIM
   DEPENDS kernel.bin
