@@ -34,7 +34,7 @@ set(CMAKE_CXX_STANDARD 17)
 #)
 
 # standard QEMU flags for use with everything
-set(QEMU_FLAGS -m 4G -no-reboot)
+set(QEMU_FLAGS -m 4G -no-reboot -serial stdio)
 add_custom_target(
   run
   COMMAND qemu-system-i386 -kernel kernel.bin ${QEMU_FLAGS}
@@ -65,11 +65,14 @@ add_executable(
   kernel/kernel_main.cpp
   kernel/kprint.cpp
   kernel/panic.cpp
+  kernel/tty/kerneloutputdevice.cpp
   kernel/utils.cpp
   kernel/x86/boot.s
   kernel/x86/gdt.cpp
   kernel/x86/gdt.s
+  kernel/x86/io.cpp
   kernel/x86/memory.cpp
+  kernel/x86/tty/serial.cpp
   kernel/x86/tty/vga.cpp
 )
 #add_dependencies(kernel.bin boot.o)
