@@ -33,9 +33,14 @@ void Vga::write_char_at(char c, u8 column, u8 row) {
 
 void Vga::scroll() {
   for (u8 i = 1; i < TEXT_HEIGHT; i++) {
-    memcpy(m_termbuffer + (i - 1) * TEXT_WIDTH, m_termbuffer + i * TEXT_WIDTH,
-           TEXT_WIDTH);
+    auto *previous_line = m_termbuffer + (i - 1) * TEXT_WIDTH;
+    const auto *current_line = m_termbuffer + i * TEXT_WIDTH;
+    // copy times 2 because the pointer is a u16*, not a u8*
+    memcpy(previous_line, current_line, TEXT_WIDTH * 2);
   }
+  memset(m_termbuffer + TEXT_WIDTH * (TEXT_HEIGHT - 1), 0, TEXT_WIDTH * 2);
+  m_column = 0;
+  m_row = TEXT_HEIGHT - 1;
 }
 
 void Vga::putchar(char c) {
