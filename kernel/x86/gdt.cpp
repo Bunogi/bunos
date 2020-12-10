@@ -24,7 +24,7 @@ static u8 gdt_data[entry_count * 8];
 void write_gdt_data(const GDTEntry *const entries, size_t size) {
   for (unsigned i = 0; i < size; i++) {
     GDTEntry source = entries[i];
-    auto *target = &gdt_data[i * 8];
+    volatile auto *target = &gdt_data[i * 8];
     // Check the limit to make sure that it can be encoded
     if ((source.limit > 65536) && ((source.limit & 0xFFF) != 0xFFF)) {
       printf("Tried to encode invalid gdt entry\n");
