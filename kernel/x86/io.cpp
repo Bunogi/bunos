@@ -2,6 +2,13 @@
 
 #include <stdio.h>
 
+#include <bustd/assert.hpp>
+
+extern "C" {
+// These sucked to write in inline asm
+void _x86_out_u8_string(u16 port, const u8 *buffer, usize length);
+}
+
 // X86-specific
 namespace kernel::x86::io {
 void ensure_ring0_only() {
@@ -21,6 +28,10 @@ void out_u8(u16 port, u8 byte) {
                    :
                    : "r"(port), "r"(byte)
                    : "%al", "%dx");
+}
+
+void out_u8_string(u16 port, const u8 *buffer, usize length) {
+  _x86_out_u8_string(port, buffer, length);
 }
 
 u8 in_u8(u16 port) {
