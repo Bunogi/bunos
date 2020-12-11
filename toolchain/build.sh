@@ -56,6 +56,10 @@ function build_gcc() {
     cd $GCC_BUILD_DIR
     ../gcc-${GCC_VERSION}/configure --target=$TARGET --prefix="$PREFIX" \
         --disable-nls \
+	--with-gnu-as \
+	--with-as="$PREFIX/bin/i686-elf-as" \
+	--with-gnu-ld \
+	--with-ld="$PREFIX/bin/i686-elf-ld" \
         --enable-languages=c,c++ \
         --without-headers
     make all-gcc -j17
