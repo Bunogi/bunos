@@ -190,7 +190,7 @@ int sprintf_impl(char *buffer, const char *format, va_list args) {
   do {                                                                         \
     _x += 1;                                                                   \
     if (*(_x) == 0) {                                                          \
-      kpanic();                                                                \
+      KERNEL_PANIC(nullptr);                                                   \
       return -1;                                                               \
     }                                                                          \
   } while (0)

@@ -70,6 +70,8 @@ add_executable(
   kernel/x86/boot.s
   kernel/x86/gdt.cpp
   kernel/x86/gdt.s
+  kernel/x86/interrupts.cpp
+  kernel/x86/interrupts.S
   kernel/x86/io.cpp
   kernel/x86/io.s
   kernel/x86/tty/serial.cpp

@@ -6,13 +6,13 @@
 #define ASSERT_TRUE(_x)                                                        \
   do {                                                                         \
     if ((_x) != true) {                                                        \
-      kpanic();                                                                \
+      KERNEL_PANIC("Assertion failed: '" #_x "'");                             \
     }                                                                          \
   } while (0)
 
 #define ASSERT_NOT_REACHED()                                                   \
   do {                                                                         \
-    kpanic();                                                                  \
+    KERNEL_PANIC("Reached unreachable code");                                  \
   } while (0)
 
 #else

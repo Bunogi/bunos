@@ -1,7 +1,9 @@
 #include "kprint.hpp"
 #include "panic.hpp"
 #include "x86/gdt.hpp"
+#include "x86/interrupts.hpp"
 #include "x86/io.hpp"
+#include <bustd/assert.hpp>
 
 #include "tty/kerneloutputdevice.hpp"
 
@@ -16,8 +18,8 @@ void kernel_main() {
   printf("Welcome to Bunos 0.0-dev!\n");
   printf("Booting...\n");
   kernel::memory::x86::setup_gdt();
+  kernel::interrupt::x86::initialize();
 
-  printf("Reached end of kernel_main\n");
-  kpanic();
+  KERNEL_PANIC("Reached end of kernel_main");
 }
 }
