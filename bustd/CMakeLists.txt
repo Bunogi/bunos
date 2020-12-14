@@ -1,2 +1,2 @@
-#add_library(bustd-kernel STATIC assert.hpp)
-#add_compile_definitions(__IN_KERNEL__=1)
+add_library(bustd-kernel STATIC string_view.cpp)
+add_compile_definitions(__IN_KERNEL__=1)
