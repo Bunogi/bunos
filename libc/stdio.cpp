@@ -19,7 +19,6 @@ size_t bytes_to_specifier(const char *buf) {
 
 size_t pow(size_t x, size_t y) {
   if (y == 0) {
-    // printf("GOt 1\n");
     return static_cast<size_t>(1);
   }
   size_t out = x;
@@ -202,7 +201,6 @@ int sprintf_impl(char *buffer, const char *format, va_list args) {
       format++;
       continue;
     }
-    // TODO: Implement non-hex stuff too
     CHECKED_INC(format);
     size_t padding = 0;
     if (*format == '.') {

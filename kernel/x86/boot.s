@@ -77,7 +77,6 @@ _start:
 	// Use the first page directory entry(boot_page_table1) for 0xC0000xxx
 	// at offset 0xC00 (768 * 4)
 	movl $(boot_page_table1 - 0xC0000000 + 0x003), boot_page_directory - 0xC0000000 + 768 * 4
-	movl $(boot_page_table1 - 0xC0000000 + 0x003), boot_page_directory - 0xC0000000 + 769 * 4
 
 	// Point the cr3 register to the boot_page_directory to set it up
 	movl $(boot_page_directory - 0xC0000000), %ecx
@@ -89,11 +88,11 @@ _start:
 	movl %ecx, %cr0
 
 	// Get the address of 4f into ecx
-	lea 4f, %ecx
+	lea _start_high_half, %ecx
 	jmp *%ecx
 
 .section .text
-4:	
+_start_high_half:
 	//Don't need this one anymore after jumping to high virtual memory
 	movl $0, boot_page_directory + 0
 

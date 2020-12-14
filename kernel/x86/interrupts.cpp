@@ -6,10 +6,9 @@
 #include "interrupts.hpp"
 #include <kernel/panic.hpp>
 
-// Does not include reserved ones
 #include "handlers.inc"
 
-// From isr.s
+// Stuff from interrupts.S
 extern "C" {
 extern void load_idt_table(u8 *address, u16 length);
 
@@ -53,7 +52,7 @@ void write_gate(u8 *buffer, void (*offset)(), GateType386 type) {
   buffer[0] = offset_constant & 0xFF;
 }
 
-void setup_fault_handlers(/* some type */) {
+void setup_interrupt_handlers() {
   u8 *buffer_ptr = reinterpret_cast<u8 *>(idt_data);
 #define error(_n)                                                              \
   write_gate(buffer_ptr, &_int_handler_vec##_n, GateType386::Trap);            \
@@ -62,7 +61,6 @@ void setup_fault_handlers(/* some type */) {
   HANDLERS(noerror, error)
 #undef error
 #undef noerror
-  // Setup ISRS for all the things
 }
 } // namespace Local
 } // namespace
@@ -74,7 +72,6 @@ void _isr_callable_error_code(kernel::interrupt::x86::InterruptFrame *frame) {
   kernel::panic_from_interrupt(frame, nullptr, true);
 }
 
-// TODO: Use struct instead of void*
 void _isr_callable_noerror(kernel::interrupt::x86::InterruptFrame *frame) {
   kernel::panic_from_interrupt(frame, nullptr, false);
 }
@@ -83,7 +80,7 @@ void _isr_callable_noerror(kernel::interrupt::x86::InterruptFrame *frame) {
 namespace kernel::interrupt::x86 {
 void initialize() {
   memset(Local::idt_data, 0, Local::idt_entries * 8);
-  Local::setup_fault_handlers();
+  Local::setup_interrupt_handlers();
   load_idt_table(Local::idt_data, Local::idt_entries * 8);
   printf("Setup %u idt entries at %p!\n", Local::idt_entries, Local::idt_data);
 }
