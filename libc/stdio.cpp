@@ -31,7 +31,7 @@ size_t pow(size_t x, size_t y) {
 size_t string_to_padding(const char *s, size_t digits) {
   size_t out = 0;
   for (size_t i = 0; i < digits; i++) {
-    ASSERT_TRUE(is_digit(s[i]));
+    ASSERT(is_digit(s[i]));
     const auto num = s[i] - '0';
     out += num * pow(10, digits - i - 1);
   }
@@ -183,8 +183,8 @@ bool handle_other(char *buffer, size_t *offset, char format, va_list *args) {
 }
 
 int sprintf_impl(char *buffer, const char *format, va_list args) {
-  ASSERT_TRUE(format != nullptr);
-  ASSERT_TRUE(buffer != nullptr);
+  ASSERT(format != nullptr);
+  ASSERT(buffer != nullptr);
 #define CHECKED_INC(_x)                                                        \
   do {                                                                         \
     _x += 1;                                                                   \
@@ -252,7 +252,7 @@ int printf(const char *format, ...) {
   if (retval < 0) {
     return retval;
   }
-  ASSERT_TRUE(static_cast<size_t>(retval) < sizeof buffer);
+  ASSERT(static_cast<size_t>(retval) < sizeof buffer);
 
 #ifdef __IN_KERNEL__
   kernel::print::out_device->write(buffer, retval);

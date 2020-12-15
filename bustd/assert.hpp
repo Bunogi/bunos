@@ -3,10 +3,19 @@
 #endif
 
 #ifdef __IN_KERNEL__
-#define ASSERT_TRUE(_x)                                                        \
+#define ASSERT(_x)                                                             \
   do {                                                                         \
     if ((_x) != true) {                                                        \
       KERNEL_PANIC("Assertion failed: '" #_x "'");                             \
+    }                                                                          \
+  } while (0)
+
+#define ASSERT_EQ(_x, _y)                                                      \
+  do {                                                                         \
+    const auto _lhs = _x;                                                      \
+    const auto _rhs = _y;                                                      \
+    if (_lhs != _rhs) {                                                        \
+      KERNEL_PANIC("Assertion failed: '" #_x "' != '" #_y "'");                \
     }                                                                          \
   } while (0)
 
