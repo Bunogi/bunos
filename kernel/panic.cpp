@@ -91,6 +91,12 @@ void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
     printf("==>Received an interrupt of vector 0x%.4X(%s) with no error code\n",
            frame->int_vector, exception_name.data_or("Unknown"));
   }
+  if (frame->int_vector == 0xE) {
+    u32 cr2;
+    __asm__ volatile("mov %%cr2, %0" : "=r"(cr2));
+    printf("Page fault trying to access 0x%.8X\n", cr2);
+  }
+
   printf("==>Register dump:\n"
          "edi: 0x%.8X esi: 0x%.8X, ebp: 0x%.8X, dud_esp: 0x%"
          ".8X, ebx 0x%.8X, edx "
