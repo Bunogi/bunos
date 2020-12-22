@@ -7,7 +7,7 @@ noerror(4)\
 noerror(5)\
 noerror(6)\
 noerror(7)\
-error(8)\
+noerror(8)\
 error(9)\
 error(10)\
 error(11)\
