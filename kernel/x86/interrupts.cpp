@@ -8,8 +8,8 @@
 
 #include "handlers.inc"
 
-// Stuff from interrupts.S
 extern "C" {
+// Stuff from interrupts.S
 extern void load_idt_table(u8 *address, u16 length);
 
 #define error(_n) extern void _int_handler_vec##_n();
@@ -17,6 +17,16 @@ extern void load_idt_table(u8 *address, u16 length);
 HANDLERS(error, noerror)
 #undef error
 #undef noerror
+
+// Interrupt-handler callable functions
+//
+void _isr_callable_error_code(kernel::interrupt::x86::InterruptFrame *frame) {
+  kernel::panic_from_interrupt(frame, nullptr, true);
+}
+
+void _isr_callable_noerror(kernel::interrupt::x86::InterruptFrame *frame) {
+  kernel::panic_from_interrupt(frame, nullptr, false);
+}
 }
 
 namespace {
@@ -64,18 +74,6 @@ void setup_interrupt_handlers() {
 }
 } // namespace Local
 } // namespace
-extern "C" {
-// Interrupt-handler callable functions
-//
-
-void _isr_callable_error_code(kernel::interrupt::x86::InterruptFrame *frame) {
-  kernel::panic_from_interrupt(frame, nullptr, true);
-}
-
-void _isr_callable_noerror(kernel::interrupt::x86::InterruptFrame *frame) {
-  kernel::panic_from_interrupt(frame, nullptr, false);
-}
-}
 
 namespace kernel::interrupt::x86 {
 void initialize() {
