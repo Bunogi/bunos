@@ -2,7 +2,7 @@
 
 #include <bustd/stddef.hpp>
 
-namespace bustd {
+namespace bu {
 class StringView {
 public:
   StringView(nullptr_t);
@@ -18,4 +18,4 @@ private:
   const char *m_data;
   usize m_length;
 };
-} // namespace bustd
+} // namespace bu

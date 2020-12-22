@@ -20,7 +20,7 @@ void print_stack_trace(u32 current_eip, StackFrame *frame) {
   }
 }
 
-bustd::StringView exception_vector_to_string(u16 vector) {
+bu::StringView exception_vector_to_string(u16 vector) {
   switch (vector) {
   case 0:
     return "divide error";
@@ -74,7 +74,7 @@ bustd::StringView exception_vector_to_string(u16 vector) {
 
 namespace kernel {
 void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
-                          const bustd::StringView reason, bool has_errcode) {
+                          const bu::StringView reason, bool has_errcode) {
   __asm__ volatile("cli");
   printf("====KERNEL_PANIC====\n"
          "%s\n",
@@ -108,7 +108,7 @@ void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
 }
 
 void panic_in_code(const char *file, const u32 line,
-                   const bustd::StringView reason) {
+                   const bu::StringView reason) {
   __asm__ volatile("cli");
   printf("====KERNEL_PANIC====\n%s", reason.data_or("No message given"));
   printf("\nLOCATION: %s:%u\n", file, line);

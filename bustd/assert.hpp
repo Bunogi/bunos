@@ -15,6 +15,15 @@
     const auto _lhs = _x;                                                      \
     const auto _rhs = _y;                                                      \
     if (_lhs != _rhs) {                                                        \
+      KERNEL_PANIC("Assertion failed: '" #_x "' == '" #_y "'");                \
+    }                                                                          \
+  } while (0)
+
+#define ASSERT_NE(_x, _y)                                                      \
+  do {                                                                         \
+    const auto _lhs = _x;                                                      \
+    const auto _rhs = _y;                                                      \
+    if (_lhs != _rhs) {                                                        \
       KERNEL_PANIC("Assertion failed: '" #_x "' != '" #_y "'");                \
     }                                                                          \
   } while (0)

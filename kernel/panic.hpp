@@ -7,7 +7,7 @@
 
 namespace kernel {
 void panic_in_code(const char *const file, const u32 line,
-                   const bustd::StringView reason);
+                   const bu::StringView reason);
 void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
-                          const bustd::StringView reason, bool has_errcode);
+                          const bu::StringView reason, bool has_errcode);
 } // namespace kernel
