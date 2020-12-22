@@ -29,8 +29,10 @@ stack_top:
 
 .section .bss, "aw", @nobits
 	.align 4096
+.global boot_page_directory
 boot_page_directory:
 	.skip 4096
+.global boot_page_table1
 boot_page_table1:
 	.skip 4096
 
@@ -52,8 +54,7 @@ _start:
 .loop_continue:	
 	// Skip mapping anything that isn't the kernel (cause page fault when writing beyond the kernel's limits)
 
-	cmpl $(_kernel_start - 0xC0000000), %eax
-	jl .next_page
+	// Keep the bottom multidata stuff mapped so that we don't page fault before jumping to higher-half
 	cmpl $(_kernel_end - 0xC0000000), %esi
 	jge .rest_of_setup
 
@@ -67,9 +68,6 @@ _start:
 	addl $4, %edi
 	loop .loop_continue
 .rest_of_setup:
-	// Map VGA memory to the last page for fun. This means that the virtual address is
-	// 0xC0000000 + 0x003FF000 = 0xC03FF000 (3FF is 1023 in hex)
-	movl $(0x000B8000 | 0x0003), boot_page_table1 - 0xC0000000 + 1023 * 4
 
 	// Use the first boot page table for 0x00000 000
 	// Identity map the kernel to prevent a page fault when writing to the page table.
@@ -95,6 +93,9 @@ _start:
 _start_high_half:
 	//Don't need this one anymore after jumping to high virtual memory
 	movl $0, boot_page_directory + 0
+
+	//According to the virtual memory map, VGA memory should be mapped to 0xC0002000, so do that here
+	movl $(0x000B8000 | 0x0003), boot_page_table1 + 2 * 4
 
 	// Update the page table
 	mov %cr3, %ecx

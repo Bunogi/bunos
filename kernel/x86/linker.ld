@@ -19,7 +19,9 @@ SECTIONS
     . += 0xC0000000;
 
     /* Store the section from 0xC0101000. */
+    . = ALIGN(4K);
     _kernel_start = .;
+    _kernel_nonwritable_start = .;
     .text ALIGN(4K): AT (ADDR (.text) - 0xC0000000)
     {
         *(.text)
@@ -28,7 +30,10 @@ SECTIONS
     {
         *(.rodata)
     }
+    _kernel_nonwritable_end = .;
  
+    . = ALIGN(4K);
+    _kernel_writable_start = .;
     .data ALIGN(4K) : AT (ADDR (.data) - 0xC0000000)
     {
         *(.data)
@@ -40,5 +45,6 @@ SECTIONS
         *(.bss)
         *(.bootstrap_stack)
     }
+    _kernel_writable_end = .;
     _kernel_end = .;
 }

@@ -74,6 +74,8 @@ add_executable(
   kernel/x86/interrupts.S
   kernel/x86/io.cpp
   kernel/x86/io.s
+  kernel/x86/memory.cpp
+  kernel/x86/memory.s
   kernel/x86/tty/serial.cpp
   kernel/x86/tty/vga.cpp
 )
