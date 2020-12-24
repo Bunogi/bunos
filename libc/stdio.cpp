@@ -255,7 +255,9 @@ int printf(const char *format, ...) {
   ASSERT(static_cast<size_t>(retval) < sizeof buffer);
 
 #ifdef __IN_KERNEL__
-  kernel::print::out_device->write(buffer, retval);
+  if (kernel::print::out_device != nullptr) {
+    kernel::print::out_device->write(buffer, retval);
+  }
 #else
 #warning Printf not implemented yet :)
 #endif
