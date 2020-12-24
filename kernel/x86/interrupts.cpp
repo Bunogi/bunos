@@ -5,6 +5,7 @@
 
 #include "interrupts.hpp"
 #include <kernel/panic.hpp>
+#include <kernel/x86/interruptmanager.hpp>
 
 #include "handlers.inc"
 
@@ -25,7 +26,10 @@ void _isr_callable_error_code(kernel::interrupt::x86::InterruptFrame *frame) {
 }
 
 void _isr_callable_noerror(kernel::interrupt::x86::InterruptFrame *frame) {
-  kernel::panic_from_interrupt(frame, nullptr, false);
+  if (!kernel::interrupt::x86::InterruptManager::instance()->handle_interrupt(
+          frame)) {
+    kernel::panic_from_interrupt(frame, "Unhandled interrupt", false);
+  }
 }
 }
 
@@ -35,7 +39,7 @@ enum class GateType386 : u8 { Task = 0x5, Interrupt = 0xE, Trap = 0xF };
 
 // Interrupt descriptor table data
 constexpr u16 idt_entries = 256;
-// Preallocate space for all entries
+// Pre-allocate space for all entries
 // TODO: consider aligning this by 8 for cache things as per the intel manual
 // vol 3A 6-10
 static u8 idt_data[idt_entries * 8];
@@ -63,9 +67,11 @@ void write_gate(u8 *buffer, void (*offset)(), GateType386 type) {
 }
 
 void setup_interrupt_handlers() {
+  // TODO: Find a better way to do this
   u8 *buffer_ptr = reinterpret_cast<u8 *>(idt_data);
 #define error(_n)                                                              \
-  write_gate(buffer_ptr, &_int_handler_vec##_n, GateType386::Trap);            \
+  write_gate(buffer_ptr, &_int_handler_vec##_n,                                \
+             ((_n) <= 32) ? GateType386::Trap : GateType386::Interrupt);       \
   buffer_ptr += 8;
 #define noerror(_n) error(_n)
   HANDLERS(noerror, error)
@@ -80,6 +86,7 @@ void initialize() {
   memset(Local::idt_data, 0, Local::idt_entries * 8);
   Local::setup_interrupt_handlers();
   load_idt_table(Local::idt_data, Local::idt_entries * 8);
-  printf("Setup %u idt entries at %p!\n", Local::idt_entries, Local::idt_data);
+  // printf("Setup %u idt entries at %p!\n", Local::idt_entries,
+  // Local::idt_data);
 }
 } // namespace kernel::interrupt::x86

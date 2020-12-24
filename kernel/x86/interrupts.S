@@ -14,7 +14,6 @@ load_idt_table:
     movl %eax, idt_offset
 
     lidt idt_size
-    sti
 
     // ABI: No need to preserve %cx or %eax
     ret
@@ -22,7 +21,6 @@ load_idt_table:
 .macro int_handler v
 .global _int_handler_vec\v
 _int_handler_vec\v:
-    cli
     pushl $\v
     jmp .isr_common_stub_error_code
 .endm
@@ -30,7 +28,6 @@ _int_handler_vec\v:
 .macro int_handler_noerror v
 .global _int_handler_vec\v
 _int_handler_vec\v:
-    cli
     pushl $0
     pushl $\v
     jmp .isr_common_stub_no_code
@@ -57,6 +54,7 @@ HANDLERS(noerror, error)
     // Clean up the stack
     addl $4, %esp
     popal
+    addl $8, %esp
 
     iret
     
@@ -70,5 +68,6 @@ HANDLERS(noerror, error)
 
     addl $4, %esp
     popal
+    addl $8, %esp
 
     iret

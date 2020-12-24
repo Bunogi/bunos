@@ -1,5 +1,6 @@
 #include "panic.hpp"
 #include <bustd/stddef.hpp>
+#include <kernel/x86/interruptmanager.hpp>
 #include <stdio.h>
 
 namespace Local {
@@ -75,7 +76,6 @@ bu::StringView exception_vector_to_string(u16 vector) {
 namespace kernel {
 void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
                           const bu::StringView reason, bool has_errcode) {
-  __asm__ volatile("cli");
   printf("====KERNEL_PANIC====\n"
          "%s\n",
          reason.data_or("No message given"));
@@ -110,18 +110,17 @@ void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
   Local::print_stack_trace(frame->eip,
                            reinterpret_cast<Local::StackFrame *>(frame->ebp));
 
-  __asm__ volatile("hlt");
+  __asm__ volatile("cli\nhlt");
 }
 
 void panic_in_code(const char *file, const u32 line,
                    const bu::StringView reason) {
-  __asm__ volatile("cli");
   printf("====KERNEL_PANIC====\n%s", reason.data_or("No message given"));
   printf("\nLOCATION: %s:%u\n", file, line);
 
   Local::StackFrame *frame;
   __asm__ volatile("movl %%ebp, %%eax" : "=a"(frame));
   Local::print_stack_trace(0, frame);
-  __asm__ volatile("hlt");
+  __asm__ volatile("cli\nhlt");
 }
 } // namespace kernel

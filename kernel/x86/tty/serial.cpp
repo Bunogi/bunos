@@ -1,6 +1,12 @@
 #include "serial.hpp"
 
+#include <bustd/math.hpp>
+#include <bustd/ringbuffer.hpp>
+#include <bustd/string_view.hpp>
+#include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/io.hpp>
+
+#include <stdio.h>
 
 namespace {
 namespace Local {
@@ -40,6 +46,8 @@ constexpr u16 scratch_pad = port_offset + 7;
 constexpr u16 fifo_size = 16;
 namespace io = kernel::x86::io;
 
+constexpr u8 com1_interrupt_vector = 0x20 + 0x4;
+
 void init() {
   io::out_u8(regs::line_control, 0x00);     // reset DLAB
   io::out_u8(regs::interrupt_enable, 0x00); // disable interrupts
@@ -63,11 +71,45 @@ void init() {
   io::out_u8(regs::modem_control, 0x00);
 }
 
+bool ready_to_send() {
+  return (io::in_u8(regs::line_status) & LineStatus::TransmitterEmpty) != 0;
+}
+
 void wait_until_ready_to_send() {
-  while ((io::in_u8(regs::line_status) &
-          static_cast<u8>(LineStatus::TransmitterEmpty)) == 0) {
+  while (!ready_to_send()) {
     __asm__ volatile("nop");
   }
+}
+
+// Must only ever be one
+static kernel::tty::x86::Serial *serial_instance;
+
+bool interrupt_handler(kernel::interrupt::x86::InterruptFrame *frame) {
+  // We have to handle every interrupt sent to us, one at a time
+  u8 detect;
+  while (((detect = io::in_u8(regs::interrupt_detect)) & 0x01) == 0) {
+    if ((detect & 0x06) != 0x06) {
+      const auto line_status = io::in_u8(regs::line_status);
+      if (line_status & LineStatus::TransmitterEmpty) {
+        serial_instance->transmit();
+      }
+      // Transmitter holding register empty: Not useful when FIFOs are enabled
+      if ((line_status & ~(LineStatus::TransmitterEmpty |
+                           LineStatus::HoldingRegisterEmpty)) != 0) {
+        printf("[Serial] Line status has errors, its value is: 0x%.2X\n",
+               line_status);
+      }
+    } else if ((detect & 0x0F) == 0xC) {
+      // FIFO, have to read some data
+      // just discard it
+      io::in_u8(regs::transmit_buffer);
+    } else {
+      // This should not happen that much so log it and be done
+      printf("[Serial] Unknown interrupt detect register value: 0x%.2X\n",
+             detect);
+    }
+  }
+  return true;
 }
 } // namespace Local
 } // namespace
@@ -75,31 +117,36 @@ void wait_until_ready_to_send() {
 namespace kernel::tty::x86 {
 Serial::Serial() {
   // TODO: Attempt to detect the first COM port we can actually use
-
+  ASSERT_EQ(Local::serial_instance, nullptr);
   Local::init();
+
+  kernel::interrupt::x86::InterruptManager::instance()->register_handler(
+      Local::com1_interrupt_vector, Local::interrupt_handler);
+
+  kernel::x86::io::out_u8(Local::regs::interrupt_enable, 0x02);
+  Local::serial_instance = this;
 }
 
-// TODO: This should really use interrupts when I get that far :)
-void Serial::write(const char *buf, usize length) {
-  // We enabled 64-byte FIFO, so we can write 64 bytes straight away without
-  // waiting
-  const auto full_buffer_instances = length / Local::fifo_size;
-  const auto rest = length % Local::fifo_size;
-  for (usize i = 0; i < full_buffer_instances; i++) {
-    Local::wait_until_ready_to_send();
-    kernel::x86::io::out_u8_string(Local::regs::transmit_buffer,
-                                   reinterpret_cast<const u8 *>(buf) +
-                                       i * Local::fifo_size,
-                                   Local::fifo_size);
+void Serial::write(const char *buf, const usize length) {
+  const auto guard = kernel::interrupt::x86::InterruptManager::instance()
+                         ->disable_interrupts_guarded();
+  m_buffer.write(reinterpret_cast<const u8 *>(buf), length);
+
+  if (m_buffer.len() == length) {
+    // We are the first to write to the port in a while, so the transmitter
+    // empty interrupt has already fired. This means we have to write something
+    // now, such that the interrupt fires again when we're done writing.
+    transmit();
   }
-  Local::wait_until_ready_to_send();
-  kernel::x86::io::out_u8_string(Local::regs::transmit_buffer,
-                                 reinterpret_cast<const u8 *>(buf) +
-                                     full_buffer_instances * Local::fifo_size,
-                                 rest);
 }
-void Serial::putchar(const char c) {
-  Local::wait_until_ready_to_send();
-  kernel::x86::io::out_u8(Local::regs::transmit_buffer, c);
+void Serial::putchar(const char) { KERNEL_PANIC(":("); }
+
+void Serial::transmit() {
+  const auto guard = kernel::interrupt::x86::InterruptManager::instance()
+                         ->disable_interrupts_guarded();
+  u8 send_buffer[Local::fifo_size] = {};
+  const auto to_send = m_buffer.take(send_buffer, Local::fifo_size);
+  kernel::x86::io::out_u8_string(Local::regs::transmit_buffer, send_buffer,
+                                 to_send);
 }
 } // namespace kernel::tty::x86
