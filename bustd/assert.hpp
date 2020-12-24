@@ -23,7 +23,7 @@
   do {                                                                         \
     const auto _lhs = _x;                                                      \
     const auto _rhs = _y;                                                      \
-    if (_lhs != _rhs) {                                                        \
+    if (_lhs == _rhs) {                                                        \
       KERNEL_PANIC("Assertion failed: '" #_x "' != '" #_y "'");                \
     }                                                                          \
   } while (0)
