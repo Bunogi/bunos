@@ -216,7 +216,7 @@ int sprintf_impl(char *buffer, const char *format, va_list args) {
       format++;
     } else {
       // Probably a bug for now
-      ASSERT_NOT_REACHED();
+      UNREACHABLE();
       return -1;
     }
   }

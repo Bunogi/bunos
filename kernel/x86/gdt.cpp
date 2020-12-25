@@ -29,7 +29,7 @@ void write_gdt_data(const GDTEntry *const entries, size_t size) {
     if ((source.limit > 65536) && ((source.limit & 0xFFF) != 0xFFF)) {
       printf("Tried to encode invalid gdt entry\n");
       printf("Limit: 0x%.8X\n", source.limit);
-      ASSERT_NOT_REACHED();
+      UNREACHABLE();
     }
     if (source.limit > 65536) {
       // Adjust granularity if required

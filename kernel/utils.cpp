@@ -1,4 +1,4 @@
 #include <bustd/assert.hpp>
 
 // Needed to make pure functions work
-extern "C" void __cxa_pure_virtual() { ASSERT_NOT_REACHED(); }
+extern "C" void __cxa_pure_virtual() { UNREACHABLE(); }

@@ -11,8 +11,11 @@ public:
 
   // Return s if this is null or empty.
   const char *data_or(const char *s) const;
-  usize length() const;
+  usize len() const;
   const char *data() const;
+
+  bool operator==(const StringView &other) const;
+  bool operator!=(const StringView &other) const;
 
 private:
   const char *m_data;

@@ -34,7 +34,7 @@
     }                                                                          \
   } while (0)
 
-#define ASSERT_NOT_REACHED()                                                   \
+#define UNREACHABLE()                                                          \
   do {                                                                         \
     FAIL("Reached unreachable code");                                          \
   } while (0)

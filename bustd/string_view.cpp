@@ -17,5 +17,16 @@ const char *StringView::data_or(const char *s) const {
   }
 }
 const char *StringView::data() const { return m_data; }
-usize StringView::length() const { return m_length; }
+usize StringView::len() const { return m_length; }
+
+bool StringView::operator==(const StringView &other) const {
+  if (m_length != other.len()) {
+    return false;
+  }
+  return strcmp(m_data, other.data()) == 0;
+}
+
+bool StringView::operator!=(const StringView &other) const {
+  return !(*this == other);
+}
 } // namespace bu
