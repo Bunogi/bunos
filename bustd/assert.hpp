@@ -1,12 +1,18 @@
-#ifdef __IN_KERNEL__
+#pragma once
+
+#ifdef __IN_LIBTEST__
+#define FAIL(message) LIBTEST_FAIL(message)
+#elif __IN_KERNEL__
 #include <kernel/panic.hpp>
+#define FAIL(message) KERNEL_PANIC(message)
+#else
+#error Asserts without libtest and not in kernel are not implemented
 #endif
 
-#ifdef __IN_KERNEL__
 #define ASSERT(_x)                                                             \
   do {                                                                         \
     if ((_x) != true) {                                                        \
-      KERNEL_PANIC("Assertion failed: '" #_x "'");                             \
+      FAIL("Assertion failed: '" #_x "'");                                     \
     }                                                                          \
   } while (0)
 
@@ -15,7 +21,7 @@
     const auto _lhs = _x;                                                      \
     const auto _rhs = _y;                                                      \
     if (_lhs != _rhs) {                                                        \
-      KERNEL_PANIC("Assertion failed: '" #_x "' == '" #_y "'");                \
+      FAIL("Assertion failed: '" #_x "' == '" #_y "'");                        \
     }                                                                          \
   } while (0)
 
@@ -24,15 +30,11 @@
     const auto _lhs = _x;                                                      \
     const auto _rhs = _y;                                                      \
     if (_lhs == _rhs) {                                                        \
-      KERNEL_PANIC("Assertion failed: '" #_x "' != '" #_y "'");                \
+      FAIL("Assertion failed: '" #_x "' != '" #_y "'");                        \
     }                                                                          \
   } while (0)
 
 #define ASSERT_NOT_REACHED()                                                   \
   do {                                                                         \
-    KERNEL_PANIC("Reached unreachable code");                                  \
+    FAIL("Reached unreachable code");                                          \
   } while (0)
-
-#else
-#error Non-kernel assert not implemented yet
-#endif

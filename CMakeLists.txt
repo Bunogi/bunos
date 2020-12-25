@@ -87,6 +87,7 @@ include_directories(${CMAKE_SOURCE_DIR} libc) #TODO: remove libc from this when 
 
 add_subdirectory(bustd)
 add_subdirectory(libc)
+add_subdirectory(libraries)
 
 set_target_properties(kernel.bin PROPERTIES LINK_DEPENDS
   "${CMAKE_SOURCE_DIR}/kernel/x86/linker.ld"
