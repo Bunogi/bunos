@@ -3,7 +3,6 @@
 #include <bustd/stddef.hpp>
 #include <bustd/string_view.hpp>
 #include <stdio.h>
-#include <stdlib.h>
 
 namespace test {
 typedef bool Result;
@@ -48,10 +47,10 @@ void handle_result(const char *name, Result res) {
     const auto total = ::test::failures + ::test::successes;                   \
     if (::test::failures != 0) {                                               \
       printf("\033[31m%u/%u tests failed!\033[m\n", ::test::failures, total);  \
-      exit(1);                                                                 \
+      return 1;                                                                \
     } else {                                                                   \
       printf("\033[32mAll %u tests succeeded!\033[m\n", total);                \
-      exit(0);                                                                 \
+      return 0;                                                                \
     }                                                                          \
   } while (0)
 
