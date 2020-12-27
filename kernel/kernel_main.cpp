@@ -10,6 +10,7 @@
 #include "x86/memory.hpp"
 
 #include "tty/kerneloutputdevice.hpp"
+#include <kernel/kmalloc.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 
 extern "C" {
@@ -17,6 +18,7 @@ void kernel_main() {
   kernel::x86::io::ensure_ring0_only();
   kernel::memory::x86::setup_gdt();
   kernel::memory::x86::init_memory_management();
+  kernel::malloc::Allocator allocator;
 
   // TODO: Allocate in the ::instance() function instead of here when we get
   // memory allocation

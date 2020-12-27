@@ -12,7 +12,8 @@
 extern "C" {
 // From boot.S, we can use these
 extern char _kernel_nonwritable_start, _kernel_nonwritable_end,
-    _kernel_writable_start, _kernel_writable_end;
+    _kernel_writable_start, _kernel_writable_end, _kernel_heap_start,
+    _kernel_heap_end;
 
 // memory.s
 extern void _x86_refresh_page_directory(u32 addr);
@@ -130,6 +131,17 @@ void init_writable_kernel_sections() {
   init_kernel_area(bu::move(entry), start_offset, end_offset);
 }
 
+void init_kernel_heap_section() {
+  const u32 start_offset = kernel::memory::x86::to_physical_address(
+      reinterpret_cast<uintptr_t>(&_kernel_heap_start));
+  const u32 end_offset = kernel::memory::x86::to_physical_address(
+      reinterpret_cast<uintptr_t>(&_kernel_heap_end));
+
+  PageTableEntry entry{}; // All fields zero
+  entry.read_write = true;
+  init_kernel_area(bu::move(entry), start_offset, end_offset);
+}
+
 void init_other_sections() {
   // VGA -> 0xxxx2000
   PageTableEntry entry{};
@@ -145,6 +157,7 @@ void reinit_page_directory() {
 
   init_nonwritable_kernel_sections();
   init_writable_kernel_sections();
+  init_kernel_heap_section();
   init_other_sections();
 
   uintptr_t table_address = reinterpret_cast<uintptr_t>(&kernel_page_table[0]);

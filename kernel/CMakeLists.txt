@@ -49,6 +49,7 @@ add_custom_target(
 add_executable(
   kernel.bin
   kernel_main.cpp
+  kmalloc.cpp
   kprint.cpp
   panic.cpp
   tty/kerneloutputdevice.cpp

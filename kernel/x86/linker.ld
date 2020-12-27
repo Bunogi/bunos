@@ -47,4 +47,10 @@ SECTIONS
     }
     _kernel_writable_end = .;
     _kernel_end = .;
+
+   /* Reserve some(static) heap space */
+   . = ALIGN(4K);
+   _kernel_heap_start = .;
+   . += 0x00100000;
+   _kernel_heap_end = .;
 }
