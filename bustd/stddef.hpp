@@ -15,7 +15,15 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 
-template <typename T> T &&move(T &v) { return static_cast<T &&>(v); }
+template <class T> struct remove_reference { typedef T type; };
+template <class T> struct remove_reference<T &> { typedef T type; };
+template <class T> struct remove_reference<T &&> { typedef T type; };
+template <typename T> T &&move(T &v) noexcept {
+  return static_cast<typename remove_reference<T>::type &&>(v);
+}
+template <typename T> T &&forward(T &v) noexcept {
+  return static_cast<T &&>(v);
+}
 } // namespace bu
 
 using bu::u16;
