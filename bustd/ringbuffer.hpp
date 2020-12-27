@@ -22,24 +22,24 @@ public:
   // TODO: Maybe these should be a generic interface?
   usize len() const { return m_current_size; }
   usize max_len() const { return N; }
-  bool is_full() const { return m_current_size == N; }
+  bool is_full() const { return m_current_size == N - 1; }
   bool is_empty() const { return m_current_size == 0; }
   usize write(const u8 *buffer, const usize length) {
     // TODO: Handle gracefully when we don't have enough space
-    ASSERT(N - m_current_size >= length);
+    const auto to_write = bu::min(length, remaining_space());
 
-    const auto margin = N - m_buffer_start;
-    if (length < margin) {
+    const auto margin_to_end = N - m_current_size - m_buffer_start;
+    if (to_write < margin_to_end) {
       // Can write directly
-      memcpy(m_buffer + m_buffer_start + m_current_size, buffer, length);
+      memcpy(m_buffer + m_buffer_start + m_current_size, buffer, to_write);
     } else {
       // Need to wrap
-      memcpy(m_buffer + m_buffer_start + m_current_size, buffer, margin);
-      const auto remaining = length - margin;
-      memcpy(m_buffer, buffer + margin, remaining);
+      memcpy(m_buffer + m_buffer_start + m_current_size, buffer, margin_to_end);
+      const auto remaining = to_write - margin_to_end;
+      memcpy(m_buffer, buffer + margin_to_end, remaining);
     }
-    m_current_size += length;
-    return length;
+    m_current_size += to_write;
+    return to_write;
   }
   usize read(u8 *buffer, const usize length) const {
     const auto to_read = bu::min(length, m_current_size);
@@ -59,30 +59,41 @@ public:
   }
   usize take(u8 *buffer, const usize upto) {
     const auto bytes_read = read(buffer, upto);
-    m_current_size -= bytes_read;
-    m_buffer_start += bytes_read;
-
-    if (m_buffer_start >= N) {
-      m_buffer_start -= N;
-    }
+    drop(bytes_read);
     return bytes_read;
   }
 
+  usize remaining_space() const { return N - m_current_size; }
+  // This was needed for the serial driver
+  usize vol_remaining_space() const volatile { return N - m_current_size; }
+
   // Restrictions: Calling write() invalidates these pointers, and no guarantees
   // are made about the state of these afterwards.
-  bool take_nocopy(StringView &first_part, StringView &second_part) {
+  bool read_nocopy(StringView &first_part, StringView &second_part) {
     if (is_empty()) {
       return false;
     }
     const auto margin = N - m_buffer_start;
+    const auto buffer_casted = reinterpret_cast<const char *>(m_buffer);
     first_part =
-        StringView(m_buffer + m_buffer_start, min(margin, m_current_size));
+        StringView(buffer_casted + m_buffer_start, min(margin, m_current_size));
     if (m_current_size > margin) {
       const auto remaining = m_current_size - margin;
-      second_part = StringView(m_buffer, remaining);
+      second_part = StringView(buffer_casted, remaining);
     } else {
       second_part = StringView(nullptr);
     }
+    return true;
+  }
+
+  usize drop(const usize n) {
+    const auto to_drop = bu::min(n, m_current_size);
+    m_current_size -= to_drop;
+    m_buffer_start += to_drop;
+    if (m_buffer_start >= N) {
+      m_buffer_start -= N;
+    }
+    return to_drop;
   }
 
 private:
