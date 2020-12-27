@@ -83,7 +83,7 @@ test::Result write_overrun_and_wrap() {
 test::Result many_reads_and_writes() {
   bu::SizedRingBuffer<20> buf;
   bu::StringView s = "This should work :^)";
-  for (int i = 0; i <= 20; i++) {
+  for (u32 i = 0; i <= 20; i++) {
     printf("i: %u ", i);
     ASSERT_EQ(buf.write(s.data_u8(), i), i);
     ASSERT_EQ(buf.drop(i), i);
