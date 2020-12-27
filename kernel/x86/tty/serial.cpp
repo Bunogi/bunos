@@ -128,18 +128,42 @@ Serial::Serial() {
 }
 
 void Serial::write(const char *buf, const usize length) {
-  const auto guard = kernel::interrupt::x86::InterruptManager::instance()
-                         ->disable_interrupts_guarded();
-  m_buffer.write(reinterpret_cast<const u8 *>(buf), length);
+  // If the buffer cannot take any more, we have to wait until it can
+  auto *const instance = kernel::interrupt::x86::InterruptManager::instance();
+  const auto guard = instance->disable_interrupts_guarded();
+  const auto written =
+      m_buffer.write(reinterpret_cast<const u8 *>(buf), length);
 
-  if (m_buffer.len() == length) {
+  if (written < length) {
+    // Block until we can fit the rest of the buffer in
+    const auto remaining = length - written;
+    if (guard.disabled_interrupts()) {
+      instance->enable_interrupts();
+      volatile auto &buffer = m_buffer;
+      while (buffer.vol_remaining_space() < remaining) {
+        // TODO: maybe wait in a more sensible way
+        __asm__ volatile("nop");
+      }
+      instance->disable_interrupts();
+      const auto written_again = m_buffer.write(
+          reinterpret_cast<const u8 *>(buf) + written, remaining);
+      if (written_again + written != length) {
+        // TODO: Want to use UNREACHABLE() here, but can't because it will
+        // create infinite recursion... do we even need to check this?
+        __asm__ volatile("cli\nhlt");
+      }
+      ASSERT_EQ(written_again + written, length);
+    }
+  } else if (m_buffer.len() == length) {
     // We are the first to write to the port in a while, so the transmitter
     // empty interrupt has already fired. This means we have to write something
     // now, such that the interrupt fires again when we're done writing.
     transmit();
   }
+} // namespace kernel::tty::x86
+void Serial::putchar(const char c) {
+  m_buffer.write(reinterpret_cast<const u8 *>(&c), 1);
 }
-void Serial::putchar(const char) { KERNEL_PANIC(":("); }
 
 void Serial::transmit() {
   const auto guard = kernel::interrupt::x86::InterruptManager::instance()

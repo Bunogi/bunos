@@ -1,10 +1,12 @@
 #pragma once
 
+#include <bustd/macros.hpp>
 #include <bustd/ringbuffer.hpp>
 #include <kernel/tty/ittydevice.hpp>
 
 namespace kernel::tty::x86 {
 class Serial : public IDevice {
+  BU_NOCOPY(Serial)
 public:
   Serial();
   virtual void write(const char *buf, usize length) override;
@@ -13,6 +15,6 @@ public:
   void transmit();
 
 private:
-  bu::RingBuffer m_buffer;
+  bu::SizedRingBuffer<16 * 16> m_buffer;
 };
 } // namespace kernel::tty::x86

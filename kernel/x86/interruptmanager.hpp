@@ -30,10 +30,11 @@ public:
     BU_NOCOPY(InterruptGuard)
   public:
     ~InterruptGuard();
+    bool disabled_interrupts() const;
 
   private:
     InterruptManager *m_parent;
-    bool m_did_disable_interrupts;
+    bool m_did_disable_interrupts{false};
     explicit InterruptGuard(InterruptManager *parent);
   };
 

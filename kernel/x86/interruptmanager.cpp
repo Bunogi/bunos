@@ -42,10 +42,10 @@ void InterruptManager::enable_interrupts() { __asm__ volatile("sti"); }
 void InterruptManager::disable_interrupts() { __asm__ volatile("cli"); }
 bool InterruptManager::interrupts_enabled() {
   u32 eflags;
-  __asm__("pushf\n"
-          "popl %0"
-          : "=r"(eflags));
-  return (eflags & 0x10) == 0;
+  __asm__ volatile("pushf\n"
+                   "popl %0"
+                   : "=r"(eflags));
+  return (eflags & 0x200) != 0;
 }
 
 bool InterruptManager::handle_interrupt(InterruptFrame *frame) {
@@ -69,8 +69,8 @@ InterruptManager::InterruptGuard::InterruptGuard(InterruptManager *parent)
     : m_parent(parent) {
   if (parent->interrupts_enabled()) {
     m_did_disable_interrupts = true;
+    m_parent->disable_interrupts();
   }
-  m_parent->disable_interrupts();
 }
 
 InterruptManager::InterruptGuard::~InterruptGuard() {
@@ -79,4 +79,7 @@ InterruptManager::InterruptGuard::~InterruptGuard() {
   }
 }
 
+bool InterruptManager::InterruptGuard::disabled_interrupts() const {
+  return m_did_disable_interrupts;
+}
 } // namespace kernel::interrupt::x86
