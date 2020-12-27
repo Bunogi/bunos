@@ -1,5 +1,7 @@
 #include "string.h"
 
+#include <bustd/math.hpp>
+
 size_t strlen(const char *str) {
   size_t len = 0;
   if (str == nullptr) {
@@ -15,17 +17,16 @@ char *strcpy(char *dest, const char *src) {
   return static_cast<char *>(memcpy(dest, src, strlen(src)));
 }
 
-int strcmp(const void *lhs, const void *rhs) {
-  // TODO: implement min()
-  auto s1 = strlen(reinterpret_cast<const char *>(lhs));
-  auto s2 = strlen(reinterpret_cast<const char *>(rhs));
-  auto smallest = s1 < s2 ? s1 : s2;
-  return memcmp(lhs, rhs, smallest);
+int strcmp(const char *lhs, const char *rhs) {
+  auto s1 = strlen(lhs);
+  auto s2 = strlen(rhs);
+  return memcmp(lhs, rhs, bu::min(s1, s2));
 }
 
 void *memcpy(void *dest, const void *src, size_t n) {
   for (size_t i = 0; i < n; i++) {
-    *(static_cast<char *>(dest) + i) = *(static_cast<const char *>(src) + i);
+    *(reinterpret_cast<char *>(dest) + i) =
+        *(reinterpret_cast<const char *>(src) + i);
   }
   return dest;
 }

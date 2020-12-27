@@ -243,7 +243,6 @@ int sprintf(char *str, const char *format, ...) {
 
 int printf(const char *format, ...) {
   char buffer[256]; // TODO do something smarter
-  memset(buffer, 0, sizeof(buffer));
 
   va_list args;
   va_start(args, format);
