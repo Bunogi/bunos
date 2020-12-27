@@ -1,4 +1,5 @@
 build/
+build_host/
 compile_commands.json
 .ccls-cache/
 toolchain/prefix
