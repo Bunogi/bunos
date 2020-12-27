@@ -21,6 +21,10 @@ mkdir -p work
 echo $PREFIX
 echo $TARGET
 
+typeset -i makejobs=$(nproc)
+makejobs=${makejobs}+1
+echo $makejobs
+
 #mkdir -p $PREFIX/include
 #mkdir -p $PREFIX/lib
 
@@ -37,7 +41,7 @@ function build_binutils() {
     pushd .
     cd ${BINUTILS_BUILD_DIR}
     ../binutils-${BINUTILS_VERSION}/configure --target=$TARGET --prefix=$PREFIX --with-sysroot --disable-nls --disable-werror
-    make -j17
+    make -j ${makejobs}
     make install
     popd
 }
@@ -62,10 +66,10 @@ function build_gcc() {
 	--with-ld="$PREFIX/bin/i686-elf-ld" \
         --enable-languages=c,c++ \
         --without-headers
-    make all-gcc -j17
-    make all-target-libgcc -j17
-    make install-gcc
-    make install-target-libgcc -j17
+    make all-gcc -j ${makejobs}
+    make all-target-libgcc -j ${makejobs}
+    make install-gcc -j ${makejobs} 
+    make install-target-libgcc -j ${makejobs}
     popd
 }
 
