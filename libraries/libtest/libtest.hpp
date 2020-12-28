@@ -42,6 +42,14 @@ void handle_result(const char *name, Result res) {
     return true;                                                               \
   } while (0)
 
+#define LIBTEST_CHECK_OTHER(v)                                                 \
+  {                                                                            \
+    ::test::Result _test_result = v;                                           \
+    if (!_test_result) {                                                       \
+      return false;                                                            \
+    }                                                                          \
+  }
+
 #define LIBTEST_CLEANUP()                                                      \
   do {                                                                         \
     const auto total = ::test::failures + ::test::successes;                   \
