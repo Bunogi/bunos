@@ -56,7 +56,7 @@ void *Allocator::allocate(size_t size) {
         reinterpret_cast<uintptr_t>(node_with_space) + size + m_data_offset;
     Node *const new_node = reinterpret_cast<Node *>(new_node_addr);
     new_node->state = State::Free;
-    new_node->capacity = node_with_space->capacity - m_data_offset;
+    new_node->capacity = node_with_space->capacity - m_data_offset - size;
     new_node->next = node_with_space->next;
     node_with_space->next = new_node;
     node_with_space->capacity = size;
