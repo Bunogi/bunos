@@ -41,7 +41,6 @@ test::Result read_empty() {
 test::Result with_wrapping() {
   bu::SizedRingBuffer<16> buf;
   bu::StringView s = "Hello, this is";
-  printf("s.len(): %lu\n", s.len());
   buf.write(s.data_u8(), s.len());
 
   u8 otherbuf[16];
@@ -49,9 +48,6 @@ test::Result with_wrapping() {
 
   ASSERT_EQ(buf.write(s.data_u8(), s.len()), s.len());
   ASSERT_EQ(buf.read(otherbuf, s.len()), s.len());
-  for (int i = 0; i < 16; i++) {
-    printf("Otherbuf[%d] = %c(%u)\n", i, otherbuf[i], otherbuf[i]);
-  }
   ASSERT(memcmp(s.data_u8(), otherbuf, s.len()) == 0);
 
   LIBTEST_SUCCEED();
@@ -84,7 +80,6 @@ test::Result many_reads_and_writes() {
   bu::SizedRingBuffer<20> buf;
   bu::StringView s = "This should work :^)";
   for (u32 i = 0; i <= 20; i++) {
-    printf("i: %u ", i);
     ASSERT_EQ(buf.write(s.data_u8(), i), i);
     ASSERT_EQ(buf.drop(i), i);
   }
