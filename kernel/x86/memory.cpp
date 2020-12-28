@@ -1,13 +1,8 @@
 #include "memory.hpp"
 
 #include <bustd/assert.hpp>
+#include <kernel/x86/virtualmemorymap.hpp>
 #include <stdio.h>
-
-// Need: Kernel memory mapped
-// Everything above kernel_end is available for dynamic allocation by the kernel
-// First: Keep track of which pages are available.
-// Virtual memory Map:
-// 0xC0002000->0xC0000000 -> VGA memory
 
 extern "C" {
 // From boot.S, we can use these
@@ -22,6 +17,9 @@ extern u32 boot_page_directory[1024];
 extern u32 boot_page_table1[1024];
 }
 
+namespace kernel::memory::x86 {
+constexpr u64 to_physical_address(u64 addr) { return addr - 0xC0000000; }
+} // namespace kernel::memory::x86
 namespace {
 namespace Local {
 
@@ -148,7 +146,12 @@ void init_other_sections() {
   entry.physical_page_address = 0xB8000;
   entry.present = true;
   entry.read_write = true;
-  kernel_page_table[2] = entry.as_u32();
+
+  constexpr u32 index =
+      kernel::memory::x86::to_physical_address(
+          static_cast<u64>(kernel::vmem::ReservedRegion::Vga)) /
+      0x1000;
+  kernel_page_table[index] = entry.as_u32();
 }
 
 void reinit_page_directory() {
@@ -185,5 +188,4 @@ void init_memory_management() {
   printf("Re-mapped to proper paging setup\n");
 }
 
-constexpr u64 to_physical_address(u64 addr) { return addr - 0xC0000000; }
 } // namespace kernel::memory::x86

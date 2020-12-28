@@ -2,6 +2,7 @@
 
 #include <bustd/stddef.hpp>
 #include <kernel/tty/ittydevice.hpp>
+#include <kernel/x86/virtualmemorymap.hpp>
 
 // TODO: Make this a generic interface and stuff when global constructors are
 // set up
@@ -46,8 +47,6 @@ private:
   u8 m_column{0};
   Color m_current_color{Color::White};
 
-  // Refer to the memory map
-  // TODO: Write a memory map getting thing
-  u16 *m_termbuffer{(u16 *)0xC0002000};
+  u16 *m_termbuffer{(u16 *)vmem::ReservedRegion::Vga};
 };
 } // namespace kernel::tty::x86
