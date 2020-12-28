@@ -7,6 +7,12 @@ constexpr u8 TEXT_HEIGHT = 25;
 namespace kernel::tty::x86 {
 Vga::Vga() { clear(); }
 
+Vga::Vga(Vga &&other) {
+  m_row = other.m_row;
+  m_column = other.m_column;
+  m_current_color = other.m_current_color;
+}
+
 u8 Vga::entry_color(Color fg, Color bg) {
   return static_cast<u8>(fg) | static_cast<u8>(bg) << 4;
 }

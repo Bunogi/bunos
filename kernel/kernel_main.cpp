@@ -13,9 +13,13 @@
 #include <kernel/kmalloc.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
+#include <kernel/x86/tty/vga.hpp>
 
 extern "C" {
 void kernel_main() {
+  kernel::tty::x86::Vga early_printer;
+  kernel::print::init(&early_printer);
+
   kernel::x86::io::ensure_ring0_only();
   kernel::memory::x86::setup_gdt();
   kernel::memory::x86::init_memory_management();
@@ -27,7 +31,8 @@ void kernel_main() {
   kernel::interrupt::x86::InterruptManager manager;
   kernel::interrupt::x86::InterruptManager::init(&manager);
 
-  kernel::tty::KernelOutputDevice print_device;
+  printf("=== Switching to late print device ===\n");
+  kernel::tty::KernelOutputDevice print_device(bu::move(early_printer));
   kernel::print::init(&print_device);
 
   kernel::timer::initialize();

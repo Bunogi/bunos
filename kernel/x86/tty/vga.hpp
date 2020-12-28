@@ -11,6 +11,7 @@ namespace kernel::tty::x86 {
 class Vga : public tty::IDevice {
 public:
   Vga();
+  Vga(Vga &&other);
 
   virtual void write(const char *text, usize len) override;
   virtual void putchar(char c) override;

@@ -7,6 +7,7 @@ namespace kernel::tty {
 // Default
 class KernelOutputDevice : public IDevice {
 public:
+  KernelOutputDevice(x86::Vga &&vga);
   virtual void write(const char *buf, usize length) override;
   virtual void putchar(const char c) override;
 
