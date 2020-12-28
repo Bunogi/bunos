@@ -3,6 +3,7 @@
 #include <bustd/math.hpp>
 #include <bustd/ringbuffer.hpp>
 #include <bustd/string_view.hpp>
+#include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/io.hpp>
 
@@ -77,7 +78,7 @@ bool ready_to_send() {
 
 void wait_until_ready_to_send() {
   while (!ready_to_send()) {
-    __asm__ volatile("nop");
+    kernel::timer::delay(1);
   }
 }
 
@@ -141,8 +142,7 @@ void Serial::write(const char *buf, const usize length) {
       instance->enable_interrupts();
       volatile auto &buffer = m_buffer;
       while (buffer.vol_remaining_space() < remaining) {
-        // TODO: maybe wait in a more sensible way
-        __asm__ volatile("nop");
+        timer::delay(10);
       }
       instance->disable_interrupts();
       const auto written_again = m_buffer.write(
