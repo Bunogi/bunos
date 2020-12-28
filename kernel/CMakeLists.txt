@@ -52,19 +52,21 @@ add_executable(
   kmalloc.cpp
   kprint.cpp
   panic.cpp
+  timer.cpp
   tty/kerneloutputdevice.cpp
   utils.cpp
   x86/boot.s
   x86/gdt.cpp
   x86/gdt.s
   x86/interruptmanager.cpp
-  x86/interrupts.S
   x86/interrupts.cpp
+  x86/interrupts.S
   x86/io.cpp
   x86/io.s
   x86/memory.cpp
   x86/memory.s
   x86/pic.cpp
+  x86/pit.cpp
   x86/tty/serial.cpp
   x86/tty/vga.cpp
 )

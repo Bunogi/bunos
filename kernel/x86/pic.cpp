@@ -1,10 +1,7 @@
-#include <kernel/x86/pic.hpp>
-
 #include <bustd/assert.hpp>
 #include <bustd/stddef.hpp>
 #include <kernel/x86/io.hpp>
-
-// TODO: remove
+#include <kernel/x86/pic.hpp>
 #include <stdio.h>
 
 namespace kernel::interrupt::x86::pic {
@@ -65,11 +62,11 @@ void unmask_irq(u8 irq) {
     out_u8(slave_pic_imr, irqs);
   } else {
     u8 irqs = in_u8(master_pic_imr);
-    printf("0x%.2x ", irqs);
     irqs &= ~(1 << irq);
-    printf("0x%.2x\n", irqs);
     out_u8(master_pic_imr, irqs);
   }
+
+  printf("[pic] Unmasked irq %u\n", irq);
 }
 
 void acknowledge(u8 irq) {
@@ -79,6 +76,30 @@ void acknowledge(u8 irq) {
     kernel::x86::io::out_u8(slave_pic_csr, 0x20);
   }
   kernel::x86::io::out_u8(master_pic_csr, 0x20);
+}
+
+bool check_spurious(u8 irq) {
+  using kernel::x86::io::in_u8;
+  using kernel::x86::io::out_u8;
+  ASSERT(irq == 7 || irq == 0xF);
+  constexpr u8 read_interrupt_service_cmd = 0x0b;
+  if (irq == 7) {
+    out_u8(master_pic_csr, read_interrupt_service_cmd);
+    const auto status = in_u8(master_pic_csr);
+    printf("irq 7: Read isr: 0x%.2X\n", status);
+    return (status & 0x80) != 0;
+  } else {
+    out_u8(slave_pic_csr, read_interrupt_service_cmd);
+    const auto status = in_u8(slave_pic_csr);
+    printf("Read isr: 0x%.2X\n", status);
+    if (status & 0x80) {
+      // Have to send eoi to the master
+      out_u8(master_pic_csr, 0x20);
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
 
 } // namespace kernel::interrupt::x86::pic

@@ -11,6 +11,7 @@
 
 #include "tty/kerneloutputdevice.hpp"
 #include <kernel/kmalloc.hpp>
+#include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 
 extern "C" {
@@ -29,12 +30,22 @@ void kernel_main() {
   kernel::tty::KernelOutputDevice print_device;
   kernel::print::init(&print_device);
 
+  kernel::timer::initialize();
+
   manager.enable_interrupts();
 
   printf("Welcome to Bunos 0.0-dev!\n");
   printf("Booting...\n");
 
+  printf("Nothing more to do, relaxing here for a while...   ");
+  const char *const animation = "\\|/-\\|/";
+  u16 i = 0;
   while (1) {
+    if (i >= sizeof animation) {
+      i = 0;
+    }
+    printf("\b%c", animation[i++]);
+    kernel::timer::delay(1000);
   }
   KERNEL_PANIC("Reached end of kernel_main");
 }

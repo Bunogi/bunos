@@ -86,7 +86,6 @@ void initialize() {
   memset(Local::idt_data, 0, Local::idt_entries * 8);
   Local::setup_interrupt_handlers();
   load_idt_table(Local::idt_data, Local::idt_entries * 8);
-  // printf("Setup %u idt entries at %p!\n", Local::idt_entries,
-  // Local::idt_data);
+  printf("Setup %u idt entries at %p!\n", Local::idt_entries, Local::idt_data);
 }
 } // namespace kernel::interrupt::x86

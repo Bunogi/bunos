@@ -17,7 +17,7 @@ u16 Vga::entry(char c, Color bg) {
 
 void Vga::clear() {
   m_row = m_column = 0;
-  m_current_color = Color::White;
+  m_current_color = Color::LightGray;
   for (u8 y = 0; y < TEXT_HEIGHT; y++) {
     for (u8 x = 0; x < TEXT_WIDTH; x++) {
       const auto index = y * TEXT_WIDTH + x;
@@ -44,12 +44,23 @@ void Vga::scroll() {
 }
 
 void Vga::putchar(char c) {
-  if (c == '\n') {
+  switch (c) {
+  case '\n':
     m_column = 0;
     m_row++;
-  } else {
+    break;
+  case '\b':
+    if (m_column > 0) {
+      m_column--;
+    }
+    break;
+  case '\r':
+    m_column = 0;
+    break;
+  default:
     write_char_at(c, m_column, m_row);
     m_column++;
+    break;
   }
   if (m_column == TEXT_WIDTH) {
     m_column = 0;
