@@ -1,4 +1,5 @@
 #include "vga.hpp"
+#include <kernel/x86/io.hpp>
 #include <string.h>
 
 constexpr u8 TEXT_WIDTH = 80;
@@ -81,6 +82,18 @@ void Vga::write(const char *text, usize len) {
   for (usize i = 0; i < len; i++) {
     putchar(text[i]);
   }
+  update_cursor();
+}
+
+void Vga::update_cursor() {
+  using kernel::x86::io::out_u8;
+  u16 pos = m_row * TEXT_WIDTH + m_column;
+
+  // TODO: Name these registers to make things better
+  out_u8(0x3D4, 0x0F);
+  out_u8(0x3D5, static_cast<u8>(pos & 0xFF));
+  out_u8(0x3D4, 0x0E);
+  out_u8(0x3D5, static_cast<u8>((pos >> 8) & 0xFF));
 }
 
 } // namespace kernel::tty::x86

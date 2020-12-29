@@ -5,12 +5,11 @@
 #include <kernel/tty/ittydevice.hpp>
 
 namespace kernel::tty::x86 {
-class Serial : public IDevice {
+class Serial final : public IDevice {
   BU_NOCOPY(Serial)
 public:
   Serial();
   virtual void write(const char *buf, usize length) override;
-  virtual void putchar(const char c) override;
 
   void transmit();
 

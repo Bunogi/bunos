@@ -8,13 +8,13 @@
 // set up
 
 namespace kernel::tty::x86 {
-class Vga : public tty::IDevice {
+class Vga final : public tty::IDevice {
 public:
   Vga();
   Vga(Vga &&other);
 
   virtual void write(const char *text, usize len) override;
-  virtual void putchar(char c) override;
+  void putchar(char c);
 
   enum class Color : u8 {
     Black = 0,
@@ -41,6 +41,7 @@ private:
   void scroll();
   void clear();
   u16 ascii_to_vga(char c);
+  void update_cursor();
 
   u8 entry_color(Color fg, Color bg);
   u16 entry(char c, Color bg);

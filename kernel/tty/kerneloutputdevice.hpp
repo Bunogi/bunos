@@ -5,11 +5,10 @@
 
 namespace kernel::tty {
 // Default
-class KernelOutputDevice : public IDevice {
+class KernelOutputDevice final : public IDevice {
 public:
   KernelOutputDevice(x86::Vga &&vga);
   virtual void write(const char *buf, usize length) override;
-  virtual void putchar(const char c) override;
 
 private:
   x86::Serial m_serial;

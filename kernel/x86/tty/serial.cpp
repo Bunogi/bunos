@@ -1,11 +1,10 @@
-#include "serial.hpp"
-
 #include <bustd/math.hpp>
 #include <bustd/ringbuffer.hpp>
 #include <bustd/string_view.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/io.hpp>
+#include <kernel/x86/tty/serial.hpp>
 
 #include <stdio.h>
 
@@ -72,27 +71,17 @@ void init() {
   io::out_u8(regs::modem_control, 0x00);
 }
 
-bool ready_to_send() {
-  return (io::in_u8(regs::line_status) & LineStatus::TransmitterEmpty) != 0;
-}
-
-void wait_until_ready_to_send() {
-  while (!ready_to_send()) {
-    kernel::timer::delay(1);
-  }
-}
-
 // Must only ever be one
-static kernel::tty::x86::Serial *serial_instance;
+static kernel::tty::x86::Serial *s_serial_instance;
 
-bool interrupt_handler(kernel::interrupt::x86::InterruptFrame *frame) {
+bool interrupt_handler(kernel::interrupt::x86::InterruptFrame *) {
   // We have to handle every interrupt sent to us, one at a time
   u8 detect;
   while (((detect = io::in_u8(regs::interrupt_detect)) & 0x01) == 0) {
     if ((detect & 0x06) != 0x06) {
       const auto line_status = io::in_u8(regs::line_status);
       if (line_status & LineStatus::TransmitterEmpty) {
-        serial_instance->transmit();
+        s_serial_instance->transmit();
       }
       // Transmitter holding register empty: Not useful when FIFOs are enabled
       if ((line_status & ~(LineStatus::TransmitterEmpty |
@@ -118,14 +107,14 @@ bool interrupt_handler(kernel::interrupt::x86::InterruptFrame *frame) {
 namespace kernel::tty::x86 {
 Serial::Serial() {
   // TODO: Attempt to detect the first COM port we can actually use
-  ASSERT_EQ(Local::serial_instance, nullptr);
+  ASSERT_EQ(Local::s_serial_instance, nullptr);
   Local::init();
 
   kernel::interrupt::x86::InterruptManager::instance()->register_handler(
       Local::com1_interrupt_vector, Local::interrupt_handler);
 
   kernel::x86::io::out_u8(Local::regs::interrupt_enable, 0x02);
-  Local::serial_instance = this;
+  Local::s_serial_instance = this;
 }
 
 void Serial::write(const char *buf, const usize length) {
@@ -160,9 +149,6 @@ void Serial::write(const char *buf, const usize length) {
     // now, such that the interrupt fires again when we're done writing.
     transmit();
   }
-} // namespace kernel::tty::x86
-void Serial::putchar(const char c) {
-  m_buffer.write(reinterpret_cast<const u8 *>(&c), 1);
 }
 
 void Serial::transmit() {
