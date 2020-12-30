@@ -30,9 +30,9 @@ SECTIONS
     {
         *(.rodata)
     }
+    . = ALIGN(4K);
     _kernel_nonwritable_end = .;
  
-    . = ALIGN(4K);
     _kernel_writable_start = .;
     .data ALIGN(4K) : AT (ADDR (.data) - 0xC0000000)
     {
