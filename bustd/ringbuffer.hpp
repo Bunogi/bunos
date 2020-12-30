@@ -5,9 +5,7 @@
 #include <bustd/math.hpp>
 #include <bustd/stddef.hpp>
 #include <bustd/string_view.hpp>
-
 #include <string.h>
-
 namespace bu {
 // TODO: This does not have to be a template class when we get a memory
 // allocator
@@ -22,21 +20,25 @@ public:
   // TODO: Maybe these should be a generic interface?
   usize len() const { return m_current_size; }
   usize max_len() const { return N; }
-  bool is_full() const { return m_current_size == N - 1; }
+  bool is_full() const { return m_current_size == N; }
   bool is_empty() const { return m_current_size == 0; }
   usize write(const u8 *buffer, const usize length) {
-    // TODO: Handle gracefully when we don't have enough space
     const auto to_write = bu::min(length, remaining_space());
 
-    const auto margin_to_end = N - m_current_size - m_buffer_start;
-    if (to_write < margin_to_end) {
+    const auto append_offset = m_buffer_start + m_current_size;
+    if (append_offset + to_write <= N) {
       // Can write directly
-      memcpy(m_buffer + m_buffer_start + m_current_size, buffer, to_write);
-    } else {
-      // Need to wrap
-      memcpy(m_buffer + m_buffer_start + m_current_size, buffer, margin_to_end);
+      memcpy(m_buffer + append_offset, buffer, to_write);
+    } else if (append_offset < N) {
+      // Have to divide it into two writes
+      const auto margin_to_end = N - append_offset;
+      memcpy(m_buffer + append_offset, buffer, margin_to_end);
       const auto remaining = to_write - margin_to_end;
       memcpy(m_buffer, buffer + margin_to_end, remaining);
+    } else {
+      // The whole write has to wrap
+      const auto write_offset = append_offset - N;
+      memcpy(m_buffer + write_offset, buffer, to_write);
     }
     m_current_size += to_write;
     return to_write;

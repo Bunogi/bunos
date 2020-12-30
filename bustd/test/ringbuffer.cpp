@@ -16,6 +16,7 @@ test::Result basic_read_take() {
   // TODO: switch to vector
   char *const otherbuf = new char[v.len() + 1];
   buf.take(reinterpret_cast<u8 *>(otherbuf), v.len());
+  otherbuf[v.len()] = 0;
   ASSERT_EQ(v, otherbuf);
   ASSERT_EQ(buf.len(), v.len());
 
@@ -86,6 +87,27 @@ test::Result many_reads_and_writes() {
   LIBTEST_SUCCEED();
 }
 
+// This test detects stack smashing, which I have had a ton of issues with.
+test::Result write_until_full() {
+  constexpr usize len = 128;
+  bu::SizedRingBuffer<len> buf;
+  bu::StringView s = "This is a long line :^)";
+  while (!buf.is_full()) {
+    buf.write(s.data_u8(), s.len());
+  }
+
+  printf("Dropping %lu values\n", len / 2);
+  while (buf.len() > len / 2) {
+    buf.drop(4);
+  }
+
+  while (!buf.is_full()) {
+    buf.write(s.data_u8(), s.len());
+  }
+
+  LIBTEST_SUCCEED();
+}
+
 int main() {
   RUN_TEST(basic_read_take);
   RUN_TEST(read_empty);
@@ -93,5 +115,6 @@ int main() {
   RUN_TEST(overrun_buffer);
   RUN_TEST(write_overrun_and_wrap);
   RUN_TEST(many_reads_and_writes);
+  RUN_TEST(write_until_full);
   LIBTEST_CLEANUP();
 }
