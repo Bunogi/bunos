@@ -12,6 +12,7 @@ public:
   virtual void write(const char *buf, usize length) override;
 
   void transmit();
+  static Serial *instance();
 
 private:
   bu::SizedRingBuffer<16 * 16> m_buffer;

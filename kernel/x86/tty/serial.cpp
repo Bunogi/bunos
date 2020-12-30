@@ -71,6 +71,10 @@ void init() {
   io::out_u8(regs::modem_control, 0x00);
 }
 
+bool ready_to_send() {
+  return (io::in_u8(regs::line_status) & LineStatus::TransmitterEmpty) != 0;
+}
+
 // Must only ever be one
 static kernel::tty::x86::Serial *s_serial_instance;
 
@@ -117,6 +121,10 @@ Serial::Serial() {
   Local::s_serial_instance = this;
 }
 
+// Used by the timer system to let us print stuff
+// FIXME:
+Serial *Serial::instance() { return Local::s_serial_instance; }
+
 void Serial::write(const char *buf, const usize length) {
   // If the buffer cannot take any more, we have to wait until it can
   auto *const instance = kernel::interrupt::x86::InterruptManager::instance();
@@ -127,36 +135,33 @@ void Serial::write(const char *buf, const usize length) {
   if (written < length) {
     // Block until we can fit the rest of the buffer in
     const auto remaining = length - written;
-    if (guard.disabled_interrupts()) {
-      instance->enable_interrupts();
-      volatile auto &buffer = m_buffer;
-      while (buffer.vol_remaining_space() < remaining) {
-        timer::delay(10);
-      }
-      instance->disable_interrupts();
-      const auto written_again = m_buffer.write(
-          reinterpret_cast<const u8 *>(buf) + written, remaining);
-      if (written_again + written != length) {
-        // TODO: Want to use UNREACHABLE() here, but can't because it will
-        // create infinite recursion... do we even need to check this?
-        __asm__ volatile("cli\nhlt");
-      }
-      ASSERT_EQ(written_again + written, length);
+
+    instance->enable_interrupts();
+    volatile auto &buffer = m_buffer;
+    while (buffer.vol_remaining_space() < remaining) {
+      timer::delay(10);
     }
-  } else if (m_buffer.len() == length) {
-    // We are the first to write to the port in a while, so the transmitter
-    // empty interrupt has already fired. This means we have to write something
-    // now, such that the interrupt fires again when we're done writing.
-    transmit();
+    instance->disable_interrupts();
+    const auto written_again =
+        m_buffer.write(reinterpret_cast<const u8 *>(buf) + written, remaining);
+    if (written_again + written != length) {
+      // TODO: Want to use UNREACHABLE() here, but can't because it will
+      // create infinite recursion... do we even need to check this?
+      __asm__ volatile("cli\nhlt");
+    }
+    ASSERT_EQ(written_again + written, length);
   }
 }
 
 void Serial::transmit() {
   const auto guard = kernel::interrupt::x86::InterruptManager::instance()
                          ->disable_interrupts_guarded();
-  u8 send_buffer[Local::fifo_size] = {};
-  const auto to_send = m_buffer.take(send_buffer, Local::fifo_size);
-  kernel::x86::io::out_u8_string(Local::regs::transmit_buffer, send_buffer,
-                                 to_send);
+  if (Local::ready_to_send()) {
+    // m_buffer.drop(Local::fifo_size);
+    u8 send_buffer[Local::fifo_size] = {};
+    const auto to_send = m_buffer.take(send_buffer, Local::fifo_size);
+    kernel::x86::io::out_u8_string(Local::regs::transmit_buffer, send_buffer,
+                                   to_send);
+  }
 }
 } // namespace kernel::tty::x86

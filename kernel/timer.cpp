@@ -3,6 +3,7 @@
 #include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/pit.hpp>
+#include <kernel/x86/tty/serial.hpp>
 
 // TODO: (maybe) use a static vector or something
 static constexpr u32 SLEEP_TIMER_COUNT = 16;
@@ -16,6 +17,15 @@ bool interrupt_handler(interrupt::x86::InterruptFrame *) {
       SLEEP_TIMERS[i]--;
     }
   }
+  // FIXME: Allow things to register timer callbacks?
+  // We need this to flush serial data to the port. Maybe a better way is to
+  // have the serial port listen for timer interrupts directly, but that
+  // requires a way to register multiple listeners on a single interrupt.
+  auto *const instance = tty::x86::Serial::instance();
+  if (instance != nullptr) {
+    instance->transmit();
+  }
+
   return true;
 }
 
