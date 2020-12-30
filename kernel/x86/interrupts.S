@@ -46,6 +46,20 @@ HANDLERS(noerror, error)
 .isr_common_stub_error_code:
     pushal
 
+    // We have to be in a kernel segment for this to work, and
+    // restore the previous segment later.
+    movw %ds, %ax
+    push %eax
+
+    movw $0x10, %ax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+
+    // Start a new stack frame here to not mess with the stack trace stuff
+    movl $0, %ebp
+
     pushl %esp // Arg 1: exception data pointer
 
     cld // ABI needs DF to be clear 
@@ -53,6 +67,13 @@ HANDLERS(noerror, error)
 
     // Clean up the stack
     addl $4, %esp
+
+    pop %eax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+
     popal
     addl $8, %esp
 
@@ -61,12 +82,31 @@ HANDLERS(noerror, error)
 .isr_common_stub_no_code:    
     pushal
 
+    movw %ds, %ax
+    push %eax
+
+    movw $0x10, %ax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+
+    // Start a new stack frame here to not mess with the stack trace stuff
+    movl $0, %ebp
+
     pushl %esp // Arg 1: exception data pointer
 
     cld // ABI needs DF to be clear
     call _isr_callable_noerror
 
     addl $4, %esp
+
+    pop %eax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+
     popal
     addl $8, %esp
 

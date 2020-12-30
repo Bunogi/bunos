@@ -103,9 +103,9 @@ void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
          "0x%.8X, ecx 0x%.8X, eax: 0x%.8X\n",
          frame->edi, frame->esi, frame->ebp, frame->dud_esp, frame->ebx,
          frame->ecx, frame->edx, frame->eax);
-  printf("eip: 0x%.8X, cs: 0x%.8X, eflags: 0x%.8X _a: 0x%.8X, _b: "
+  printf("eip: 0x%.8X, cs: 0x%.8X, eflags: 0x%.8X useresp: 0x%.8X, ss: "
          "0x%.8X\n",
-         frame->eip, frame->cs, frame->eflags, frame->_a, frame->_b);
+         frame->eip, frame->cs, frame->eflags, frame->useresp, frame->ss);
 
   Local::print_stack_trace(frame->eip,
                            reinterpret_cast<Local::StackFrame *>(frame->ebp));

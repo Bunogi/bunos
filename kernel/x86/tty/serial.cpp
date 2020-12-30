@@ -122,7 +122,6 @@ Serial::Serial() {
 }
 
 // Used by the timer system to let us print stuff
-// FIXME:
 Serial *Serial::instance() { return Local::s_serial_instance; }
 
 void Serial::write(const char *buf, const usize length) {
