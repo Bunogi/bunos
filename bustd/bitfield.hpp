@@ -9,6 +9,8 @@ template <usize SIZE> class Bitfield {
 
 public:
   Bitfield() {}
+  // TODO: Convert from integer type
+
   bool operator[](usize i) const { return at(i); }
   bool at(usize i) const {
     ASSERT(i <= SIZE);

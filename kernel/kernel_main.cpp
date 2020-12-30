@@ -13,6 +13,7 @@
 #include <kernel/kmalloc.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
+#include <kernel/x86/physicalmalloc.hpp>
 #include <kernel/x86/tty/vga.hpp>
 
 extern "C" {
@@ -24,6 +25,7 @@ void kernel_main() {
   kernel::memory::x86::setup_gdt();
   kernel::memory::x86::init_memory_management();
   kernel::malloc::Allocator allocator;
+  kernel::pmem::init();
 
   // TODO: Allocate in the ::instance() function instead of here when we get
   // memory allocation

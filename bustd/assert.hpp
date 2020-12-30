@@ -38,3 +38,8 @@
   do {                                                                         \
     FAIL("Reached unreachable code");                                          \
   } while (0)
+
+#define TODO(_msg)                                                             \
+  do {                                                                         \
+    FAIL("Hit a work-in progress code path: '" _msg "'");                      \
+  } while (0)

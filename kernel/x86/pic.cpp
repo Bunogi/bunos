@@ -91,7 +91,7 @@ bool check_spurious(u8 irq) {
   } else {
     out_u8(slave_pic_csr, read_interrupt_service_cmd);
     const auto status = in_u8(slave_pic_csr);
-    printf("Read isr: 0x%.2X\n", status);
+    printf("Irq 15: read isr: 0x%.2X\n", status);
     if (status & 0x80) {
       // Have to send eoi to the master
       out_u8(master_pic_csr, 0x20);
