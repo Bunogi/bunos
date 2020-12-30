@@ -59,8 +59,8 @@ add_executable(
   x86/gdt.cpp
   x86/gdt.s
   x86/interruptmanager.cpp
-  x86/interrupts.cpp
   x86/interrupts.S
+  x86/interrupts.cpp
   x86/io.cpp
   x86/io.s
   x86/memory.cpp

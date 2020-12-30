@@ -49,6 +49,6 @@ private:
   u8 m_column{0};
   Color m_current_color{Color::White};
 
-  u16 *m_termbuffer{(u16 *)vmem::ReservedRegion::Vga};
+  u16 *const m_termbuffer{(u16 *)vmem::ReservedRegion::Vga};
 };
 } // namespace kernel::tty::x86
