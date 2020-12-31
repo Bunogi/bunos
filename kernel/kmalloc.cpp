@@ -16,20 +16,25 @@ extern "C" {
 extern char _kernel_heap_start, _kernel_heap_end;
 }
 
-static kernel::malloc::Allocator *allocator;
+static kernel::malloc::Allocator *s_allocator;
 
 namespace kernel::malloc {
 
 Allocator::Allocator()
     : m_heap_start(reinterpret_cast<uintptr_t>(&_kernel_heap_start)),
       m_heap_end(reinterpret_cast<uintptr_t>(&_kernel_heap_end)) {
-  ASSERT_EQ(allocator, nullptr);
+  ASSERT_EQ(s_allocator, nullptr);
 
   m_alloc_head = reinterpret_cast<Node *>(m_heap_start);
   m_alloc_head->capacity = m_heap_end - m_heap_start - m_data_offset;
   m_alloc_head->state = State::Free;
   m_alloc_head->next = m_alloc_head->prev = nullptr;
-  allocator = this;
+  s_allocator = this;
+}
+
+Allocator *Allocator::instance() {
+  ASSERT_NE(s_allocator, nullptr);
+  return s_allocator;
 }
 
 void *Allocator::allocate(size_t size) {
@@ -108,7 +113,9 @@ bool Allocator::is_allocated_in_node(const void *p, const Node *const node) {
 }
 
 void Allocator::try_merge_free_nodes(Node *node) {
-  ASSERT_EQ(node->state, State::Free);
+  if (node->state != State::Free) {
+    return;
+  }
 
   if (node->next != nullptr && node->next->state == State::Free) {
     const auto old_capacity = node->capacity;
@@ -150,31 +157,31 @@ void Allocator::print_allocations() {
 } // namespace kernel::malloc
 
 void *operator new(size_t size) {
-  ASSERT_NE(allocator, nullptr);
-  return allocator->allocate(size);
+  ASSERT_NE(s_allocator, nullptr);
+  return s_allocator->allocate(size);
 }
 
 void *operator new[](size_t size) {
-  ASSERT_NE(allocator, nullptr);
-  return allocator->allocate(size);
+  ASSERT_NE(s_allocator, nullptr);
+  return s_allocator->allocate(size);
 }
 
 void operator delete(void *p) {
-  ASSERT_NE(allocator, nullptr);
-  allocator->deallocate(p);
+  ASSERT_NE(s_allocator, nullptr);
+  s_allocator->deallocate(p);
 }
 
 void operator delete[](void *p) {
-  ASSERT_NE(allocator, nullptr);
-  allocator->deallocate(p);
+  ASSERT_NE(s_allocator, nullptr);
+  s_allocator->deallocate(p);
 }
 
 // Called to in theory be faster, but we can safely ignore this one
 void operator delete(void *p, size_t) {
-  ASSERT_NE(allocator, nullptr);
-  allocator->deallocate(p);
+  ASSERT_NE(s_allocator, nullptr);
+  s_allocator->deallocate(p);
 }
 void operator delete[](void *p, size_t) {
-  ASSERT_NE(allocator, nullptr);
-  allocator->deallocate(p);
+  ASSERT_NE(s_allocator, nullptr);
+  s_allocator->deallocate(p);
 }

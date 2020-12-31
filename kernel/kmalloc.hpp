@@ -3,13 +3,10 @@
 #include <bustd/stddef.hpp>
 
 namespace kernel::malloc {
-#if 0
-void init();
-void print_allocations();
-#else
 class Allocator {
 public:
   explicit Allocator();
+  static Allocator *instance();
   void *allocate(size_t size);
   void deallocate(void *p);
 
@@ -33,5 +30,4 @@ private:
   // Align everything by 4-bytes because all types have to be properly aligned.
   static constexpr u32 m_data_offset{sizeof(Node) + sizeof(Node) % 8};
 };
-#endif
 } // namespace kernel::malloc
