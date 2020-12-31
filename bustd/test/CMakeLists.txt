@@ -1,4 +1,4 @@
-set(test_sources ringbuffer.cpp bitfield.cpp)
+set(test_sources ringbuffer.cpp bitfield.cpp vector.cpp)
 foreach(test IN ITEMS ${test_sources})
   bunos_test("${test}" bustd)
 endforeach()
