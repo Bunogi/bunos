@@ -5,6 +5,10 @@
 #include <bustd/assert.hpp>
 #include <bustd/stddef.hpp>
 
+#ifndef __IN_KERNEL__
+#error Stdio not implemented outside the kernel
+#endif
+
 namespace Local {
 bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
@@ -216,7 +220,8 @@ int sprintf_impl(char *buffer, const char *format, va_list args) {
       format++;
     } else {
       // Probably a bug for now
-      UNREACHABLE();
+      printf("[(s)printf]: Unrecognized format char: %c\n", *format);
+      // UNREACHABLE();
       return -1;
     }
   }
@@ -253,13 +258,18 @@ int printf(const char *format, ...) {
   }
   ASSERT(static_cast<size_t>(retval) < sizeof buffer);
 
-#ifdef __IN_KERNEL__
   if (kernel::print::out_device != nullptr) {
     kernel::print::out_device->write(buffer, retval);
   }
-#else
-#warning Printf not implemented yet :)
-#endif
 
   return retval;
+}
+
+int puts(const char *s) {
+  if (kernel::print::out_device != nullptr) {
+    kernel::print::out_device->write(s, strlen(s));
+    kernel::print::out_device->write("\n", 1);
+  }
+
+  return 0;
 }
