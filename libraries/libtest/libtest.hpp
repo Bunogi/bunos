@@ -62,4 +62,32 @@ void handle_result(const char *name, Result res) {
     }                                                                          \
   } while (0)
 
+#define LIBTEST_ASSERT(_v)                                                     \
+  do {                                                                         \
+    if ((_v)) {                                                                \
+    } else {                                                                   \
+      LIBTEST_FAIL("Assertion failed: '" #_v "'");                             \
+    }                                                                          \
+  } while (0)
+
+#define LIBTEST_ASSERT_EQ(_x, _y)                                              \
+  do {                                                                         \
+    const auto _lhs = _x;                                                      \
+    const auto _rhs = _y;                                                      \
+    if (_lhs == _rhs) {                                                        \
+    } else {                                                                   \
+      LIBTEST_FAIL("Assertion failed: '" #_x " == " #_y "'");                  \
+    }                                                                          \
+  } while (0)
+
+#define LIBTEST_ASSERT_NE(_x, _y)                                              \
+  do {                                                                         \
+    const auto _lhs = _x;                                                      \
+    const auto _rhs = _y;                                                      \
+    if (_lhs != _rhs) {                                                        \
+    } else {                                                                   \
+      LIBTEST_FAIL("Assertion failed: '" #_x " != " #_y "'");                  \
+    }                                                                          \
+  } while (0)
+
 #define __IN_LIBTEST__

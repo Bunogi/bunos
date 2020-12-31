@@ -1,14 +1,13 @@
-#include <libraries/libtest/libtest.hpp>
-
 #include <bustd/assert.hpp>
 #include <bustd/bitfield.hpp>
+#include <libraries/libtest/libtest.hpp>
 
 template <usize N> test::Result check_first_byte(bu::Bitfield<N> field) {
-  ASSERT(!field.replace(1, true));
-  ASSERT(field.replace(1, false));
+  LIBTEST_ASSERT(!field.replace(1, true));
+  LIBTEST_ASSERT(field.replace(1, false));
 
-  ASSERT_EQ(field[3], false);
-  ASSERT_EQ(field.at(3), false);
+  LIBTEST_ASSERT_EQ(field[3], false);
+  LIBTEST_ASSERT_EQ(field.at(3), false);
   LIBTEST_SUCCEED();
 }
 
@@ -19,12 +18,12 @@ test::Result basic() {
 
 test::Result multibyte() {
   bu::Bitfield<16> field;
-  ASSERT_EQ(field.size(), 16);
+  LIBTEST_ASSERT_EQ(field.size(), 16);
 
   LIBTEST_CHECK_OTHER(check_first_byte(field));
 
-  ASSERT(!field.replace(9, true));
-  ASSERT(field.replace(9, false));
+  LIBTEST_ASSERT(!field.replace(9, true));
+  LIBTEST_ASSERT(field.replace(9, false));
   LIBTEST_SUCCEED();
 }
 
@@ -39,8 +38,8 @@ test::Result small_overrun() {
   // One and a half bytes
   bu::Bitfield<12> field;
   LIBTEST_CHECK_OTHER(check_first_byte(field));
-  ASSERT(!field.replace(9, true));
-  ASSERT(field.replace(9, false));
+  LIBTEST_ASSERT(!field.replace(9, true));
+  LIBTEST_ASSERT(field.replace(9, false));
   LIBTEST_SUCCEED();
 }
 

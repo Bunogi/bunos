@@ -1,12 +1,21 @@
 #pragma once
 
-#ifdef __IN_LIBTEST__
-#define FAIL(message) LIBTEST_FAIL(message)
-#elif __IN_KERNEL__
+#ifdef __IN_KERNEL__
 #include <kernel/panic.hpp>
 #define FAIL(message) KERNEL_PANIC(message)
+#elif not defined(__bunos__)
+#include <stdio.h>
+#include <stdlib.h>
+// TODO: This should print a backtrace
+#define FAIL(message)                                                          \
+  do {                                                                         \
+    printf("%s\n==>in %s()\n==>at %s:%u\n", message, __func__, __FILE__,       \
+           __LINE__);                                                          \
+    exit(1);                                                                   \
+  } while (0)
 #else
-#error Asserts without libtest and not in kernel are not implemented
+// FIXME: This version should output to the debug console and some other stuff
+#error No assertion fail
 #endif
 
 #define ASSERT(_x)                                                             \
