@@ -75,6 +75,22 @@ public:
     m_size += 1;
   };
 
+  // Set `upto` elements of the vector to `v`.
+  // Any existing values are updated.
+  void fill(const T &v, usize upto) {
+    for (usize i = 0; i < len(); i++) {
+      at(i) = v;
+    }
+
+    for (usize i = len(); i < upto; i++) {
+      push(v);
+    }
+  }
+
+  T *data() { return m_data; }
+
+  const T *data() const { return m_data; }
+
   /*
     template <typename... Ts> void emplace(Ts &&... args) {
       *reinterpret_cast<T *>(m_data + m_size * sizeof(T)) =

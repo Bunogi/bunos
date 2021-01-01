@@ -198,6 +198,24 @@ test::Result index() {
   LIBTEST_SUCCEED();
 }
 
+test::Result fill() {
+  bu::Vector<char> v;
+  constexpr int num = 10;
+  v.fill('0', num);
+  LIBTEST_ASSERT_EQ(v.len(), num);
+  for (usize i = 0; i < v.len(); i++) {
+    LIBTEST_ASSERT_EQ(v[i], '0');
+  }
+
+  v.fill('1', num);
+  LIBTEST_ASSERT_EQ(v.len(), num);
+  for (usize i = 0; i < v.len(); i++) {
+    LIBTEST_ASSERT_EQ(v[i], '1');
+  }
+
+  LIBTEST_SUCCEED();
+}
+
 int main() {
   RUN_TEST(basic_push_pop);
   RUN_TEST(pop_value);
@@ -206,5 +224,6 @@ int main() {
   RUN_TEST(allocation_strategy);
   RUN_TEST(preallocate);
   RUN_TEST(index);
+  RUN_TEST(fill);
   LIBTEST_CLEANUP();
 }
