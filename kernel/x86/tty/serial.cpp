@@ -1,17 +1,17 @@
 #include <bustd/math.hpp>
 #include <bustd/ringbuffer.hpp>
 #include <bustd/string_view.hpp>
+#include <kernel/interruptmanager.hpp>
 #include <kernel/process.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/timer.hpp>
-#include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/io.hpp>
 #include <kernel/x86/tty/serial.hpp>
 
 #include <stdio.h>
 
 namespace {
-namespace Local {
+using namespace kernel::x86;
 enum LineStatus : u8 {
   DataReady = 0x01,
   OverrunError = 0x02,
@@ -46,46 +46,45 @@ constexpr u16 scratch_pad = port_offset + 7;
 } // namespace regs
 
 constexpr u16 fifo_size = 16;
-namespace io = kernel::x86::io;
 
 constexpr u8 com1_interrupt_vector = 0x20 + 0x4;
 
 void init() {
-  io::out_u8(regs::line_control, 0x00);     // reset DLAB
-  io::out_u8(regs::interrupt_enable, 0x00); // disable interrupts
+  out_u8(regs::line_control, 0x00);     // reset DLAB
+  out_u8(regs::interrupt_enable, 0x00); // disable interrupts
 
   // set dlab
-  io::out_u8(regs::line_control, 0x80);
+  out_u8(regs::line_control, 0x80);
 
   // 115200 baud
-  io::out_u8(regs::baud_rate_div_lsb, 0x01);
-  io::out_u8(regs::baud_rate_div_msb, 0x00);
+  out_u8(regs::baud_rate_div_lsb, 0x01);
+  out_u8(regs::baud_rate_div_msb, 0x00);
 
   // Assumes that we are at least a 16550. bochs does not support 16750 mode so
   // don't enable it.
-  io::out_u8(regs::fifo_control, 0x07);
+  out_u8(regs::fifo_control, 0x07);
 
   // ~DLAB(0x80) | ~Break(0x40) | Parity_en(0x20) | ~even_parity(0x10)
   // parity(0x8) | one stop bit(~0x4) | 8 bit words(0b11)
-  io::out_u8(regs::line_control, 0x2B);
+  out_u8(regs::line_control, 0x2B);
 
   // Disable everything here
-  io::out_u8(regs::modem_control, 0x00);
+  out_u8(regs::modem_control, 0x00);
 }
 
 bool ready_to_send() {
-  return (io::in_u8(regs::line_status) & LineStatus::TransmitterEmpty) != 0;
+  return (in_u8(regs::line_status) & LineStatus::TransmitterEmpty) != 0;
 }
 
 // Must only ever be one
-static kernel::tty::x86::Serial *s_serial_instance;
+static tty::Serial *s_serial_instance;
 
-bool interrupt_handler(kernel::interrupt::x86::InterruptFrame *) {
+bool interrupt_handler(InterruptFrame *) {
   // We have to handle every interrupt sent to us, one at a time
   u8 detect;
-  while (((detect = io::in_u8(regs::interrupt_detect)) & 0x01) == 0) {
+  while (((detect = in_u8(regs::interrupt_detect)) & 0x01) == 0) {
     if ((detect & 0x06) != 0x06) {
-      const auto line_status = io::in_u8(regs::line_status);
+      const auto line_status = in_u8(regs::line_status);
       if (line_status & LineStatus::TransmitterEmpty) {
         s_serial_instance->transmit();
       }
@@ -98,7 +97,7 @@ bool interrupt_handler(kernel::interrupt::x86::InterruptFrame *) {
     } else if ((detect & 0x0F) == 0xC) {
       // FIFO, have to read some data
       // just discard it
-      io::in_u8(regs::transmit_buffer);
+      in_u8(regs::transmit_buffer);
     } else {
       // This should not happen that much so log it and be done
       printf("[Serial] Unknown interrupt detect register value: 0x%.2X\n",
@@ -107,28 +106,27 @@ bool interrupt_handler(kernel::interrupt::x86::InterruptFrame *) {
   }
   return true;
 }
-} // namespace Local
 } // namespace
 
-namespace kernel::tty::x86 {
+namespace kernel::x86::tty {
 Serial::Serial() {
   // TODO: Attempt to detect the first COM port we can actually use
-  ASSERT_EQ(Local::s_serial_instance, nullptr);
-  Local::init();
+  ASSERT_EQ(s_serial_instance, nullptr);
+  init();
 
-  kernel::interrupt::x86::InterruptManager::instance()->register_handler(
-      Local::com1_interrupt_vector, Local::interrupt_handler);
+  InterruptManager::instance()->register_handler(com1_interrupt_vector,
+                                                 interrupt_handler);
 
-  kernel::x86::io::out_u8(Local::regs::interrupt_enable, 0x02);
-  Local::s_serial_instance = this;
+  out_u8(regs::interrupt_enable, 0x02);
+  s_serial_instance = this;
 }
 
 // Used by the timer system to let us print stuff
-Serial *Serial::instance() { return Local::s_serial_instance; }
+Serial *Serial::instance() { return s_serial_instance; }
 
 void Serial::write(const char *buf, const usize length) {
   // If the buffer cannot take any more, we have to wait until it can
-  auto *const instance = kernel::interrupt::x86::InterruptManager::instance();
+  auto *const instance = InterruptManager::instance();
   const auto guard = instance->disable_interrupts_guarded();
   const auto written =
       m_buffer.write(reinterpret_cast<const u8 *>(buf), length);
@@ -155,24 +153,21 @@ void Serial::write(const char *buf, const usize length) {
 }
 
 void Serial::transmit() {
-  const auto guard = kernel::interrupt::x86::InterruptManager::instance()
-                         ->disable_interrupts_guarded();
-  if (Local::ready_to_send()) {
-    // m_buffer.drop(Local::fifo_size);
-    u8 send_buffer[Local::fifo_size] = {};
-    const auto to_send = m_buffer.take(send_buffer, Local::fifo_size);
-    kernel::x86::io::out_u8_string(Local::regs::transmit_buffer, send_buffer,
-                                   to_send);
+  const auto guard = InterruptManager::instance()->disable_interrupts_guarded();
+  if (ready_to_send()) {
+    // m_buffer.drop(fifo_size);
+    u8 send_buffer[fifo_size] = {};
+    const auto to_send = m_buffer.take(send_buffer, fifo_size);
+    out_u8_string(regs::transmit_buffer, send_buffer, to_send);
   }
 }
 
 void Serial::flush() {
   if (!m_buffer.is_empty()) {
-    ASSERT(kernel::interrupt::x86::InterruptManager::instance()
-               ->interrupts_enabled());
+    ASSERT(InterruptManager::instance()->interrupts_enabled());
     while (m_buffer.len() > 0) {
       timer::delay(10);
     }
   }
 }
-} // namespace kernel::tty::x86
+} // namespace kernel::x86::tty

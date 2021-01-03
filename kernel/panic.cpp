@@ -1,12 +1,11 @@
-#include "panic.hpp"
 #include <bustd/stddef.hpp>
+#include <kernel/interruptmanager.hpp>
 #include <kernel/kprint.hpp>
+#include <kernel/panic.hpp>
 #include <kernel/scheduler.hpp>
-#include <kernel/x86/interruptmanager.hpp>
 #include <stdio.h>
 
 namespace {
-namespace Local {
 struct StackFrame {
   StackFrame *ebp;
   uint32_t eip;
@@ -76,23 +75,21 @@ bu::StringView exception_vector_to_string(u16 vector) {
 }
 void disable_non_printing_interrupts() {
   kernel::Scheduler::disable();
-  auto *instance = kernel::interrupt::x86::InterruptManager::instance();
+  auto *instance = kernel::InterruptManager::instance();
   instance->disable_non_printing_interrupts();
   instance->enable_interrupts();
 }
-} // namespace Local
 } // namespace
 
 namespace kernel {
-void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
+void panic_from_interrupt(x86::InterruptFrame *frame,
                           const bu::StringView reason, bool has_errcode) {
-  Local::disable_non_printing_interrupts();
+  disable_non_printing_interrupts();
   printf("====KERNEL_PANIC====\n"
          "%s\n",
          reason.data_or("No message given"));
 
-  const auto exception_name =
-      Local::exception_vector_to_string(frame->int_vector);
+  const auto exception_name = exception_vector_to_string(frame->int_vector);
   if (has_errcode) {
     printf("==>Received an interrupt of vector 0x%.4X(%s) with error code: "
            "0x%.4X\n",
@@ -118,8 +115,7 @@ void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
          "0x%.8X\n",
          frame->eip, frame->cs, frame->eflags, frame->useresp, frame->ss);
 
-  Local::print_stack_trace(frame->eip,
-                           reinterpret_cast<Local::StackFrame *>(frame->ebp));
+  print_stack_trace(frame->eip, reinterpret_cast<StackFrame *>(frame->ebp));
 
   kernel::print::flush();
   __asm__ volatile("cli\nhlt");
@@ -127,13 +123,13 @@ void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
 
 void panic_in_code(const char *file, const u32 line,
                    const bu::StringView reason) {
-  Local::disable_non_printing_interrupts();
+  disable_non_printing_interrupts();
   printf("====KERNEL_PANIC====\n%s", reason.data_or("No message given"));
   printf("\nLOCATION: %s:%u\n", file, line);
 
-  Local::StackFrame *frame;
+  StackFrame *frame;
   __asm__ volatile("movl %%ebp, %0\n" : "=r"(frame));
-  Local::print_stack_trace(0, frame);
+  print_stack_trace(0, frame);
   kernel::print::flush();
   __asm__ volatile("cli\nhlt");
 }

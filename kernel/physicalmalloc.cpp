@@ -1,6 +1,6 @@
 #include <bustd/bitfield.hpp>
+#include <kernel/physicalmalloc.hpp>
 #include <kernel/x86/memory.hpp>
-#include <kernel/x86/physicalmalloc.hpp>
 
 // TODO remove
 #include <stdio.h>
@@ -24,9 +24,9 @@ void init() {
   ASSERT_EQ(s_allocations, nullptr);
   s_allocations = new bu::Bitfield<8192>();
   // TODO: call global constructors, put this outside
-  s_allocatable_page_start = kernel::memory::x86::virt_to_phys_addr(
-                                 reinterpret_cast<u64>(&_kernel_heap_end)) +
-                             physical_page_size;
+  s_allocatable_page_start =
+      kernel::x86::virt_to_phys_addr(reinterpret_cast<u64>(&_kernel_heap_end)) +
+      physical_page_size;
   ASSERT_EQ(s_allocatable_page_start & 0xFFF, 0);
 }
 

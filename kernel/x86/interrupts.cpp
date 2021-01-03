@@ -1,13 +1,10 @@
 #include <bustd/stddef.hpp>
-
+#include <kernel/interruptmanager.hpp>
+#include <kernel/panic.hpp>
+#include <kernel/x86/handlers.inc>
+#include <kernel/x86/interrupts.hpp>
 #include <stdio.h>
 #include <string.h>
-
-#include "interrupts.hpp"
-#include <kernel/panic.hpp>
-#include <kernel/x86/interruptmanager.hpp>
-
-#include "handlers.inc"
 
 extern "C" {
 // Stuff from interrupts.S
@@ -21,20 +18,18 @@ HANDLERS(error, noerror)
 
 // Interrupt-handler callable functions
 //
-void _isr_callable_error_code(kernel::interrupt::x86::InterruptFrame *frame) {
+void _isr_callable_error_code(kernel::x86::InterruptFrame *frame) {
   kernel::panic_from_interrupt(frame, nullptr, true);
 }
 
-void _isr_callable_noerror(kernel::interrupt::x86::InterruptFrame *frame) {
-  if (!kernel::interrupt::x86::InterruptManager::instance()->handle_interrupt(
-          frame)) {
+void _isr_callable_noerror(kernel::x86::InterruptFrame *frame) {
+  if (!kernel::InterruptManager::instance()->handle_interrupt(frame)) {
     kernel::panic_from_interrupt(frame, "Unhandled interrupt", false);
   }
 }
 }
 
 namespace {
-namespace Local {
 enum class GateType386 : u8 { Task = 0x5, Interrupt = 0xE, Trap = 0xF };
 
 // Interrupt descriptor table data
@@ -71,21 +66,20 @@ void setup_interrupt_handlers() {
   u8 *buffer_ptr = reinterpret_cast<u8 *>(idt_data);
 #define error(_n)                                                              \
   write_gate(buffer_ptr, &_int_handler_vec##_n,                                \
-             ((_n) <= 32) ? GateType386::Trap : GateType386::Interrupt);       \
+             ((_n) <= 32) ? GateType386::Interrupt : GateType386::Interrupt);  \
   buffer_ptr += 8;
 #define noerror(_n) error(_n)
   HANDLERS(noerror, error)
 #undef error
 #undef noerror
 }
-} // namespace Local
 } // namespace
 
-namespace kernel::interrupt::x86 {
-void initialize() {
-  memset(Local::idt_data, 0, Local::idt_entries * 8);
-  Local::setup_interrupt_handlers();
-  load_idt_table(Local::idt_data, Local::idt_entries * 8);
-  printf("Setup %u idt entries at %p!\n", Local::idt_entries, Local::idt_data);
+namespace kernel::x86 {
+void initialize_interrupts() {
+  memset(idt_data, 0, idt_entries * 8);
+  setup_interrupt_handlers();
+  load_idt_table(idt_data, idt_entries * 8);
+  printf("Setup %u idt entries at %p!\n", idt_entries, idt_data);
 }
-} // namespace kernel::interrupt::x86
+} // namespace kernel::x86

@@ -7,7 +7,7 @@ extern void _x86_process_entry();
 }
 
 namespace kernel {
-void x86::Registers::update_from_frame(interrupt::x86::InterruptFrame *frame) {
+void x86::Registers::update_from_frame(InterruptFrame *frame) {
   edi = frame->edi;
   esi = frame->esi;
   ebp = frame->ebp;
@@ -27,7 +27,7 @@ void x86::Registers::update_from_frame(interrupt::x86::InterruptFrame *frame) {
   eip = frame->eip;
 }
 
-void x86::Registers::prepare_frame(interrupt::x86::InterruptFrame *frame) {
+void x86::Registers::prepare_frame(InterruptFrame *frame) {
   frame->edi = edi;
   frame->esi = esi;
   frame->ebp = ebp;
@@ -41,9 +41,9 @@ void x86::Registers::prepare_frame(interrupt::x86::InterruptFrame *frame) {
 Process::Process(void (*entry)()) : m_registers() {
   m_registers.eip = reinterpret_cast<uintptr_t>(entry);
   m_registers.ebp = 0;
-  m_page_directory = kernel::memory::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(memory::x86::kernel_page_directory));
-  m_kernel_stack_start = memory::x86::map_kernel_memory(1);
+  m_page_directory = x86::virt_to_phys_addr(
+      reinterpret_cast<uintptr_t>(x86::kernel_page_directory));
+  m_kernel_stack_start = x86::map_kernel_memory(1);
   // Stack must be 16 byte aligned
   m_registers.esp =
       reinterpret_cast<uintptr_t>(m_kernel_stack_start) + (4096 - 16);

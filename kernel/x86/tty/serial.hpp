@@ -4,8 +4,8 @@
 #include <bustd/ringbuffer.hpp>
 #include <kernel/tty/ittydevice.hpp>
 
-namespace kernel::tty::x86 {
-class Serial final : public IDevice {
+namespace kernel::x86::tty {
+class Serial final : public kernel::tty::IDevice {
   BU_NOCOPY(Serial)
 public:
   Serial();
@@ -18,4 +18,4 @@ public:
 private:
   bu::SizedRingBuffer<64 * 16> m_buffer;
 };
-} // namespace kernel::tty::x86
+} // namespace kernel::x86::tty

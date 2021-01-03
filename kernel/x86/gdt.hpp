@@ -2,7 +2,6 @@
 
 #include <bustd/stddef.hpp>
 
-namespace kernel::memory::x86 {
-extern u8 gdt_data;
+namespace kernel::x86 {
 void setup_gdt();
-} // namespace kernel::memory::x86
+} // namespace kernel::x86

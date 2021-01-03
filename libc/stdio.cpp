@@ -9,7 +9,7 @@
 #error Stdio not implemented outside the kernel
 #endif
 
-namespace Local {
+namespace {
 bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
 size_t bytes_to_specifier(const char *buf) {
@@ -128,23 +128,23 @@ bool handle_integer(char *buffer, size_t *offset, char format, va_list *args,
   switch (format) {
   case 'x': {
     const auto v = va_arg(*args, unsigned);
-    *offset += Local::to_string_hex(buffer + *offset, v, padding, false);
+    *offset += to_string_hex(buffer + *offset, v, padding, false);
     return true;
   }
   case 'X': {
     const auto v = va_arg(*args, unsigned);
-    *offset += Local::to_string_hex(buffer + *offset, v, padding, true);
+    *offset += to_string_hex(buffer + *offset, v, padding, true);
     return true;
   }
   case 'i':
   case 'd': {
     const auto v = va_arg(*args, int);
-    *offset += Local::to_string_signed(buffer + *offset, v, padding);
+    *offset += to_string_signed(buffer + *offset, v, padding);
     return true;
   }
   case 'u': {
     const auto v = va_arg(*args, unsigned);
-    *offset += Local::to_string_unsigned(buffer + *offset, v, padding);
+    *offset += to_string_unsigned(buffer + *offset, v, padding);
     return true;
   }
 
@@ -154,8 +154,7 @@ bool handle_integer(char *buffer, size_t *offset, char format, va_list *args,
     buffer[*offset] = '0';
     buffer[*offset + 1] = 'x';
     *offset += 2;
-    *offset +=
-        Local::to_string_hex(buffer + *offset, v, sizeof(uintptr_t) * 2, true);
+    *offset += to_string_hex(buffer + *offset, v, sizeof(uintptr_t) * 2, true);
     return true;
   }
   default:
@@ -209,8 +208,8 @@ int sprintf_impl(char *buffer, const char *format, va_list args) {
     size_t padding = 0;
     if (*format == '.') {
       CHECKED_INC(format);
-      const auto padding_len = Local::bytes_to_specifier(format);
-      padding = Local::string_to_padding(format, padding_len);
+      const auto padding_len = bytes_to_specifier(format);
+      padding = string_to_padding(format, padding_len);
       format += padding_len;
     } else {
       padding = 1;
@@ -229,7 +228,7 @@ int sprintf_impl(char *buffer, const char *format, va_list args) {
   return offset;
 }
 
-} // namespace Local
+} // namespace
 
 #ifdef __IN_KERNEL__
 #include <kernel/tty/ittydevice.hpp>
@@ -241,7 +240,7 @@ extern kernel::tty::IDevice *out_device;
 int sprintf(char *str, const char *format, ...) {
   va_list args;
   va_start(args, format);
-  auto retval = Local::sprintf_impl(str, format, args);
+  auto retval = sprintf_impl(str, format, args);
   va_end(args);
   return retval;
 }
@@ -251,7 +250,7 @@ int printf(const char *format, ...) {
 
   va_list args;
   va_start(args, format);
-  auto retval = Local::sprintf_impl(buffer, format, args);
+  auto retval = sprintf_impl(buffer, format, args);
   va_end(args);
   if (retval < 0) {
     return retval;

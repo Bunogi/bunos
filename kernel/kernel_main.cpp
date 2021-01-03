@@ -1,38 +1,38 @@
 #include <bustd/assert.hpp>
-
-#include <stdio.h>
-
-#include "kprint.hpp"
-#include "panic.hpp"
-#include "x86/gdt.hpp"
-#include "x86/interrupts.hpp"
-#include "x86/io.hpp"
-#include "x86/memory.hpp"
-
-#include "tty/kerneloutputdevice.hpp"
+#include <bustd/vector.hpp>
+#include <kernel/interruptmanager.hpp>
 #include <kernel/kmalloc.hpp>
+#include <kernel/kprint.hpp>
+#include <kernel/panic.hpp>
+#include <kernel/physicalmalloc.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/timer.hpp>
-#include <kernel/x86/interruptmanager.hpp>
-#include <kernel/x86/physicalmalloc.hpp>
+#include <kernel/tty/kerneloutputdevice.hpp>
+#include <kernel/x86/gdt.hpp>
+#include <kernel/x86/interrupts.hpp>
+#include <kernel/x86/io.hpp>
+#include <kernel/x86/memory.hpp>
 #include <kernel/x86/tty/vga.hpp>
+#include <stdio.h>
 
 extern "C" {
 void kernel_main() {
-  kernel::tty::x86::Vga early_printer;
-  kernel::print::init(&early_printer);
+  using namespace kernel;
 
-  kernel::x86::io::ensure_ring0_only();
-  kernel::memory::x86::setup_gdt();
-  kernel::memory::x86::init_memory_management();
-  kernel::malloc::Allocator allocator;
-  kernel::pmem::init();
+  x86::tty::Vga early_printer;
+  print::init(&early_printer);
+
+  x86::set_io_permissions();
+  x86::setup_gdt();
+  x86::init_memory_management();
+  malloc::Allocator allocator;
+  pmem::init();
 
   // TODO: Allocate in the ::instance() function instead of here when we get
   // memory allocation
-  kernel::interrupt::x86::initialize();
-  kernel::interrupt::x86::InterruptManager manager;
-  kernel::interrupt::x86::InterruptManager::init(&manager);
+  x86::initialize_interrupts();
+  InterruptManager manager;
+  InterruptManager::init(&manager);
 
   printf("=== Switching to late print device ===\n");
   kernel::tty::KernelOutputDevice print_device(bu::move(early_printer));

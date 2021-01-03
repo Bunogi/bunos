@@ -1,5 +1,4 @@
-#include "kprint.hpp"
-
+#include <kernel/kprint.hpp>
 #include <stdio.h>
 
 namespace kernel::print {

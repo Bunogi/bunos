@@ -2,7 +2,7 @@
 
 #include <bustd/stddef.hpp>
 
-namespace kernel::interrupt::x86 {
+namespace kernel::x86 {
 // If this changes, scheduler code has to be updated!
 struct InterruptFrame {
   u32 ds;
@@ -14,5 +14,9 @@ struct InterruptFrame {
   // esp -> stack pointer where the interrupt happened
 };
 
-void initialize();
-} // namespace kernel::interrupt::x86
+// returns ID of that handler
+// handler function: Returns whether or not the interrupt was handled
+typedef bool (*InterruptHandler)(InterruptFrame *frame);
+
+void initialize_interrupts();
+} // namespace kernel::x86

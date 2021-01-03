@@ -1,8 +1,6 @@
-#include "gdt.hpp"
-
 #include <bustd/assert.hpp>
 #include <bustd/stddef.hpp>
-
+#include <kernel/x86/gdt.hpp>
 #include <stdio.h>
 
 extern "C" {
@@ -11,7 +9,6 @@ void load_gdt(void *start, size_t size);
 }
 
 namespace {
-namespace Local {
 struct GDTEntry {
   u32 base;
   u32 limit;
@@ -54,13 +51,12 @@ void write_gdt_data(const GDTEntry *const entries, size_t size) {
     target[5] = source.flags;
   }
 }
-} // namespace Local
 } // namespace
 
-namespace kernel::memory::x86 {
+namespace kernel::x86 {
 // Set up flat memory because we use paging anyway
 void setup_gdt() {
-  Local::GDTEntry gdt[Local::entry_count];
+  GDTEntry gdt[entry_count];
   // Nullentry
   gdt[0].base = 0;
   gdt[0].limit = 0;
@@ -86,9 +82,9 @@ void setup_gdt() {
   gdt[4].limit = 0xFFFFFFFF;
   gdt[4].flags = 0xF2;
 
-  Local::write_gdt_data(gdt, Local::entry_count);
+  write_gdt_data(gdt, entry_count);
 
-  load_gdt(&Local::gdt_data, Local::entry_count * 8);
-  printf("Setup %u gdt entries at %p\n", Local::entry_count, Local::gdt_data);
+  load_gdt(&gdt_data, entry_count * 8);
+  printf("Setup %u gdt entries at %p\n", entry_count, gdt_data);
 }
-} // namespace kernel::memory::x86
+} // namespace kernel::x86

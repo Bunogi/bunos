@@ -1,12 +1,9 @@
 #include <bustd/assert.hpp>
-#include <kernel/x86/interruptmanager.hpp>
+#include <kernel/interruptmanager.hpp>
 #include <kernel/x86/pic.hpp>
 #include <string.h>
 
-// TODO remove
-#include <stdio.h>
-
-namespace kernel::interrupt::x86 {
+namespace kernel {
 static InterruptManager *this_instance;
 
 InterruptManager *InterruptManager::instance() {
@@ -14,13 +11,14 @@ InterruptManager *InterruptManager::instance() {
   return this_instance;
 }
 
-InterruptManager::InterruptManager() { pic::initialize(); }
+InterruptManager::InterruptManager() { x86::pic::initialize(); }
 
 void InterruptManager::init(InterruptManager *instance) {
   this_instance = instance;
 }
 
-u16 InterruptManager::register_handler(u16 vector, InterruptHandler handler) {
+u16 InterruptManager::register_handler(u16 vector,
+                                       x86::InterruptHandler handler) {
   constexpr u8 usable_vector_offset = 32;
   // Reserved for exceptions
   ASSERT(vector >= usable_vector_offset);
@@ -30,9 +28,9 @@ u16 InterruptManager::register_handler(u16 vector, InterruptHandler handler) {
   m_handlers[vector] = handler;
 
   // FROM PIC
-  if (vector >= usable_vector_offset && vector < pic::slave_vector_offset + 8) {
-    // printf("Hello! %x\n", vector - usable_vector_offset);
-    pic::unmask_irq(vector - usable_vector_offset);
+  if (vector >= usable_vector_offset &&
+      vector < x86::pic::slave_vector_offset + 8) {
+    x86::pic::unmask_irq(vector - usable_vector_offset);
   }
 
   return vector;
@@ -48,11 +46,11 @@ bool InterruptManager::interrupts_enabled() {
   return (eflags & 0x200) != 0;
 }
 
-bool InterruptManager::handle_interrupt(InterruptFrame *frame) {
+bool InterruptManager::handle_interrupt(x86::InterruptFrame *frame) {
   if (m_handlers[frame->int_vector] != nullptr) {
     const auto retval = m_handlers[frame->int_vector](frame);
     if (retval) {
-      pic::acknowledge(frame->int_vector - 0x20);
+      x86::pic::acknowledge(frame->int_vector - 0x20);
     }
     return retval;
   } else {
@@ -84,6 +82,6 @@ bool InterruptManager::InterruptGuard::disabled_interrupts() const {
 }
 
 void InterruptManager::disable_non_printing_interrupts() {
-  pic::mask_non_printing_irqs();
+  x86::pic::mask_non_printing_irqs();
 }
-} // namespace kernel::interrupt::x86
+} // namespace kernel

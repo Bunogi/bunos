@@ -2,8 +2,8 @@
 
 #include <bustd/stddef.hpp>
 
-namespace kernel::x86::io {
-void ensure_ring0_only();
+namespace kernel::x86 {
+void set_io_permissions();
 
 void out_u8(u16 port, u8 out);
 // TODO: Maybe implement these other ones later
@@ -18,4 +18,4 @@ u8 in_u8(u16 port);
 // u32 in_u32(u16 port);
 // void in_string(/*something*/)
 
-} // namespace kernel::x86::io
+} // namespace kernel::x86

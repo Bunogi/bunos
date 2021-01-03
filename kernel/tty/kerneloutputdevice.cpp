@@ -1,7 +1,8 @@
-#include "kerneloutputdevice.hpp"
+#include <kernel/tty/kerneloutputdevice.hpp>
 
 namespace kernel::tty {
-KernelOutputDevice::KernelOutputDevice(x86::Vga &&vga) : m_vga(bu::move(vga)) {}
+KernelOutputDevice::KernelOutputDevice(x86::tty::Vga &&vga)
+    : m_vga(bu::move(vga)) {}
 
 void KernelOutputDevice::write(const char *buf, const usize length) {
   m_vga.write(buf, length);

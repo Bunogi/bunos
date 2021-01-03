@@ -12,8 +12,8 @@ struct Registers {
   u32 edi, esi, ebp, dud_esp, ebx, edx, ecx, eax;
 
   u32 eflags, esp, eip;
-  void update_from_frame(interrupt::x86::InterruptFrame *frame);
-  void prepare_frame(interrupt::x86::InterruptFrame *frame);
+  void update_from_frame(InterruptFrame *frame);
+  void prepare_frame(InterruptFrame *frame);
 };
 } // namespace x86
 

@@ -7,8 +7,8 @@
 // TODO: Make this a generic interface and stuff when global constructors are
 // set up
 
-namespace kernel::tty::x86 {
-class Vga final : public tty::IDevice {
+namespace kernel::x86::tty {
+class Vga final : public kernel::tty::IDevice {
 public:
   Vga();
   Vga(Vga &&other);
@@ -52,4 +52,4 @@ private:
 
   u16 *const m_termbuffer{(u16 *)vmem::ReservedRegion::Vga};
 };
-} // namespace kernel::tty::x86
+} // namespace kernel::x86::tty

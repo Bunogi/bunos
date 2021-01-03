@@ -1,17 +1,14 @@
-#include "io.hpp"
-
-#include <stdio.h>
-
 #include <bustd/assert.hpp>
+#include <kernel/x86/io.hpp>
+#include <stdio.h>
 
 extern "C" {
 // These sucked to write in inline asm
 void _x86_out_u8_string(u16 port, const u8 *buffer, usize length);
 }
 
-// X86-specific
-namespace kernel::x86::io {
-void ensure_ring0_only() {
+namespace kernel::x86 {
+void set_io_permissions() {
   // TODO: Revise when TSS are set up if needed
   // This is ok for now when we don't have  any TSSes setup.
   __asm__ volatile(
@@ -45,4 +42,4 @@ u8 in_u8(u16 port) {
   return out;
 }
 
-} // namespace kernel::x86::io
+} // namespace kernel::x86

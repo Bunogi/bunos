@@ -33,7 +33,7 @@ _int_handler_vec\v:
     jmp .isr_common_stub_no_code
 .endm
 
-#include "handlers.inc"
+#include <kernel/x86/handlers.inc>
 #define error(_n) int_handler _n ;
 #define noerror(_n) int_handler_noerror _n ;
 HANDLERS(noerror, error)

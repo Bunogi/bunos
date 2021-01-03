@@ -46,7 +46,7 @@ void Scheduler::run() {
   }
 }
 
-void Scheduler::wake(kernel::interrupt::x86::InterruptFrame *frame) {
+void Scheduler::wake(x86::InterruptFrame *frame) {
   static volatile usize this_tick = 0;
   static volatile usize ticks_left = 0;
   static volatile bool first_switch = true;

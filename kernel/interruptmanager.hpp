@@ -3,7 +3,7 @@
 #include <bustd/macros.hpp>
 #include <kernel/x86/interrupts.hpp>
 
-namespace kernel::interrupt::x86 {
+namespace kernel {
 class InterruptManager {
   BU_NOCOPY(InterruptManager)
 public:
@@ -12,13 +12,10 @@ public:
   static void init(InterruptManager *instance);
   InterruptManager();
 
-  // returns ID of that handler
-  // handler function: Returns whether or not the interrupt was handled
-  typedef bool (*InterruptHandler)(InterruptFrame *frame);
-  u16 register_handler(u16 vector, InterruptHandler handler);
+  u16 register_handler(u16 vector, x86::InterruptHandler handler);
   void unregister_handler(usize handler_id); // maybe unneeded?
 
-  bool handle_interrupt(InterruptFrame *frame);
+  bool handle_interrupt(x86::InterruptFrame *frame);
 
   bool interrupts_enabled();
 
@@ -44,6 +41,6 @@ public:
 
 private:
   // TODO: Allow multiple listeners on the same interrupt?
-  InterruptHandler m_handlers[256]{};
+  x86::InterruptHandler m_handlers[256]{};
 };
-} // namespace kernel::interrupt::x86
+} // namespace kernel

@@ -4,7 +4,7 @@
 #include <kernel/x86/pic.hpp>
 #include <stdio.h>
 
-namespace kernel::interrupt::x86::pic {
+namespace kernel::x86::pic {
 static constexpr u16 master_pic_csr = 0x0020;
 static constexpr u16 master_pic_imr = 0x0021;
 
@@ -31,13 +31,12 @@ static constexpr u8 icw4 = 0x01;
 
 namespace {
 void disable_all_interrupts() {
-  kernel::x86::io::out_u8(master_pic_imr, 0xFF);
-  kernel::x86::io::out_u8(slave_pic_imr, 0xFF);
+  out_u8(master_pic_imr, 0xFF);
+  out_u8(slave_pic_imr, 0xFF);
 }
 } // namespace
 
 void initialize() {
-  using kernel::x86::io::out_u8;
   // Init sequence
   out_u8(master_pic_csr, icw1);
   out_u8(slave_pic_csr, icw1);
@@ -55,8 +54,6 @@ void initialize() {
 }
 
 void unmask_irq(u8 irq) {
-  using kernel::x86::io::in_u8;
-  using kernel::x86::io::out_u8;
   ASSERT(irq < 16);
   // slave pic
   if (irq >= 8) {
@@ -79,14 +76,12 @@ void acknowledge(u8 irq) {
   ASSERT(irq < 16);
 
   if (irq >= 8) {
-    kernel::x86::io::out_u8(slave_pic_csr, 0x20);
+    out_u8(slave_pic_csr, 0x20);
   }
-  kernel::x86::io::out_u8(master_pic_csr, 0x20);
+  out_u8(master_pic_csr, 0x20);
 }
 
 bool check_spurious(u8 irq) {
-  using kernel::x86::io::in_u8;
-  using kernel::x86::io::out_u8;
   ASSERT(irq == 7 || irq == 0xF);
   constexpr u8 read_interrupt_service_cmd = 0x0b;
   if (irq == 7) {
@@ -109,8 +104,6 @@ bool check_spurious(u8 irq) {
 }
 
 void mask_non_printing_irqs() {
-  using kernel::x86::io::in_u8;
-  using kernel::x86::io::out_u8;
   disable_all_interrupts();
 
   // Timer
@@ -119,4 +112,4 @@ void mask_non_printing_irqs() {
   unmask_irq(4);
 }
 
-} // namespace kernel::interrupt::x86::pic
+} // namespace kernel::x86::pic

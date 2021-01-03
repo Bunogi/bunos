@@ -1,8 +1,8 @@
 #include <bustd/assert.hpp>
+#include <kernel/interruptmanager.hpp>
+#include <kernel/physicalmalloc.hpp>
 #include <kernel/timer.hpp>
-#include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/memory.hpp>
-#include <kernel/x86/physicalmalloc.hpp>
 #include <kernel/x86/virtualmemorymap.hpp>
 #include <stdio.h>
 
@@ -17,7 +17,6 @@ extern u32 boot_page_table1[1024];
 }
 
 namespace {
-namespace Local {
 
 class PageDirectoryEntry {
 public:
@@ -188,11 +187,11 @@ u16 page_dir_index_from_virtual_addr(const u32 addr) {
 class TemporaryPageMapGuard {
 public:
   TemporaryPageMapGuard(const u64 physical_address)
-      : m_guard(kernel::interrupt::x86::InterruptManager::instance()
+      : m_guard(kernel::InterruptManager::instance()
                     ->disable_interrupts_guarded()) {
     // FIXME: use spinlock?
     if (s_m_in_use) {
-      auto *instance = kernel::interrupt::x86::InterruptManager::instance();
+      auto *instance = kernel::InterruptManager::instance();
       instance->enable_interrupts();
       while (s_m_in_use) {
         kernel::timer::delay(10);
@@ -207,24 +206,22 @@ public:
     entry.present = true;
     entry.read_write = true;
     // FIXME: Do to all threads
-    constexpr u32 index =
-        kernel::memory::x86::virt_to_phys_addr(
-            static_cast<u64>(kernel::vmem::ReservedRegion::Temp)) /
-        0x1000;
-    kernel::memory::x86::kernel_page_table[index] = entry.as_u32();
+    constexpr u32 index = kernel::x86::virt_to_phys_addr(static_cast<u64>(
+                              kernel::vmem::ReservedRegion::Temp)) /
+                          0x1000;
+    kernel::x86::kernel_page_table[index] = entry.as_u32();
     _x86_refresh_page_directory();
   }
 
   ~TemporaryPageMapGuard() {
     ASSERT(s_m_in_use);
     // FIXME: do for all threads
-    constexpr u32 index =
-        kernel::memory::x86::virt_to_phys_addr(
-            static_cast<u64>(kernel::vmem::ReservedRegion::Temp)) /
-        0x1000;
+    constexpr u32 index = kernel::x86::virt_to_phys_addr(static_cast<u64>(
+                              kernel::vmem::ReservedRegion::Temp)) /
+                          0x1000;
     PageTableEntry entry{};
     entry.present = false;
-    kernel::memory::x86::kernel_page_table[index] = entry.as_u32();
+    kernel::x86::kernel_page_table[index] = entry.as_u32();
     _x86_refresh_page_directory();
     s_m_in_use = false;
   }
@@ -234,7 +231,7 @@ public:
   }
 
 private:
-  kernel::interrupt::x86::InterruptManager::InterruptGuard m_guard;
+  kernel::InterruptManager::InterruptGuard m_guard;
   static volatile bool s_m_in_use;
 };
 
@@ -257,14 +254,14 @@ void init_kernel_area(PageTableEntry &&table_settings, const u32 start,
 
     // We can do this because the address translation is linear.
     const auto index = physical_page % 0x1000;
-    kernel::memory::x86::kernel_page_table[index] = table_settings.as_u32();
+    kernel::x86::kernel_page_table[index] = table_settings.as_u32();
   }
 }
 
 void init_nonwritable_kernel_sections() {
-  const u32 start_offset = kernel::memory::x86::virt_to_phys_addr(
+  const u32 start_offset = kernel::x86::virt_to_phys_addr(
       reinterpret_cast<uintptr_t>(&_kernel_nonwritable_start));
-  const u32 end_offset = kernel::memory::x86::virt_to_phys_addr(
+  const u32 end_offset = kernel::x86::virt_to_phys_addr(
       reinterpret_cast<uintptr_t>(&_kernel_nonwritable_end));
 
   PageTableEntry entry{};
@@ -274,9 +271,9 @@ void init_nonwritable_kernel_sections() {
 }
 
 void init_writable_kernel_sections() {
-  const u32 start_offset = kernel::memory::x86::virt_to_phys_addr(
+  const u32 start_offset = kernel::x86::virt_to_phys_addr(
       reinterpret_cast<uintptr_t>(&_kernel_writable_start));
-  const u32 end_offset = kernel::memory::x86::virt_to_phys_addr(
+  const u32 end_offset = kernel::x86::virt_to_phys_addr(
       reinterpret_cast<uintptr_t>(&_kernel_writable_end));
 
   PageTableEntry entry{}; // All fields zero
@@ -285,9 +282,9 @@ void init_writable_kernel_sections() {
 }
 
 void init_kernel_heap_section() {
-  const u32 start_offset = kernel::memory::x86::virt_to_phys_addr(
+  const u32 start_offset = kernel::x86::virt_to_phys_addr(
       reinterpret_cast<uintptr_t>(&_kernel_heap_start));
-  const u32 end_offset = kernel::memory::x86::virt_to_phys_addr(
+  const u32 end_offset = kernel::x86::virt_to_phys_addr(
       reinterpret_cast<uintptr_t>(&_kernel_heap_end));
 
   PageTableEntry entry{}; // All fields zero
@@ -302,10 +299,10 @@ void init_other_sections() {
   entry.present = true;
   entry.read_write = true;
 
-  constexpr u32 index = kernel::memory::x86::virt_to_phys_addr(static_cast<u64>(
+  constexpr u32 index = kernel::x86::virt_to_phys_addr(static_cast<u64>(
                             kernel::vmem::ReservedRegion::Vga)) /
                         0x1000;
-  kernel::memory::x86::kernel_page_table[index] = entry.as_u32();
+  kernel::x86::kernel_page_table[index] = entry.as_u32();
 }
 
 void reinit_page_directory() {
@@ -318,30 +315,29 @@ void reinit_page_directory() {
   init_other_sections();
 
   uintptr_t table_address =
-      reinterpret_cast<uintptr_t>(&kernel::memory::x86::kernel_page_table[0]);
+      reinterpret_cast<uintptr_t>(&kernel::x86::kernel_page_table[0]);
   table_address -= 0xC0000000;
 
   PageDirectoryEntry entry{};
   entry.page_table_address = table_address;
   entry.present = true;
   entry.read_write = true;
-  kernel::memory::x86::kernel_page_directory
-      [kernel::memory::x86::kernel_address_space_dir_index] = entry.as_u32();
+  kernel::x86::kernel_page_directory
+      [kernel::x86::kernel_address_space_dir_index] = entry.as_u32();
 
-  u32 address = kernel::memory::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&kernel::memory::x86::kernel_page_directory));
+  u32 address = kernel::x86::virt_to_phys_addr(
+      reinterpret_cast<uintptr_t>(&kernel::x86::kernel_page_directory));
   _x86_set_page_directory(address);
 }
 
-} // namespace Local
 } // namespace
 
-namespace kernel::memory::x86 {
+namespace kernel::x86 {
 u32 kernel_page_table[1024] __attribute__((aligned(4096)));
 u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
 
 void init_memory_management() {
-  Local::reinit_page_directory();
+  reinit_page_directory();
 
   printf("Re-initialized paging\n");
 }
@@ -358,17 +354,15 @@ void *map_kernel_memory(u32 page_count) {
   // starting point.
   u16 page_directory_index = 0;
   u16 page_table_index = 0;
-  const auto kernel_end_as_table_index =
-      Local::page_table_index_from_virtual_addr(
-          reinterpret_cast<uintptr_t>(&_kernel_heap_end));
+  const auto kernel_end_as_table_index = page_table_index_from_virtual_addr(
+      reinterpret_cast<uintptr_t>(&_kernel_heap_end));
   ASSERT(kernel_end_as_table_index < 1024);
   // reinterpret_cast<u64>(&_kernel_heap_end) / 1024;
   for (u16 i = kernel_end_as_table_index; i < 1024; i++) {
-    const auto entry = Local::PageTableEntry::from_u32(
-        kernel::memory::x86::kernel_page_table[i]);
+    const auto entry =
+        PageTableEntry::from_u32(kernel::x86::kernel_page_table[i]);
     if (!entry.present) {
-      page_directory_index =
-          kernel::memory::x86::kernel_address_space_dir_index;
+      page_directory_index = kernel::x86::kernel_address_space_dir_index;
       page_table_index = i;
       break;
     }
@@ -377,20 +371,19 @@ void *map_kernel_memory(u32 page_count) {
   // Did not find free space in the first page dir entry, have to look further
   // ahead
   if (page_directory_index == 0) {
-    for (u16 i = kernel::memory::x86::kernel_address_space_dir_index + 1;
-         i < 1024; i++) {
-      const auto entry = Local::PageDirectoryEntry::from_u32(
-          kernel::memory::x86::kernel_page_directory[i]);
+    for (u16 i = kernel::x86::kernel_address_space_dir_index + 1; i < 1024;
+         i++) {
+      const auto entry =
+          PageDirectoryEntry::from_u32(kernel::x86::kernel_page_directory[i]);
       if (!entry.present) {
         TODO("Need to create a new page directory entry");
       }
 
       for (u16 j = 0; j < 0x1000; j++) {
         const u32 *table =
-            reinterpret_cast<u32 *>(Local::virtual_address_from_indices(i, j));
-        const Local::TemporaryPageMapGuard guard(
-            reinterpret_cast<uintptr_t>(table));
-        const auto entry = Local::PageTableEntry::from_u32(
+            reinterpret_cast<u32 *>(virtual_address_from_indices(i, j));
+        const TemporaryPageMapGuard guard(reinterpret_cast<uintptr_t>(table));
+        const auto entry = PageTableEntry::from_u32(
             *reinterpret_cast<u32 *>(guard.mapped_address()));
         if (!entry.present) {
           page_directory_index = i;
@@ -411,14 +404,13 @@ found_entry:
   ASSERT(page_table_index < 1024);
   printf("Found room at PD[%u], PT[%u], addr: %p\n", page_directory_index,
          page_table_index,
-         Local::virtual_address_from_indices(page_directory_index,
-                                             page_table_index));
+         virtual_address_from_indices(page_directory_index, page_table_index));
 
-  const auto entry = Local::PageDirectoryEntry::from_u32(
-      kernel::memory::x86::kernel_page_directory[page_directory_index]);
+  const auto entry = PageDirectoryEntry::from_u32(
+      kernel::x86::kernel_page_directory[page_directory_index]);
   u32 table = entry.page_table_address;
 
-  Local::PageTableEntry new_entry{};
+  PageTableEntry new_entry{};
   // FIXME: Have some way to de-allocate afterwards
   const auto physical_page = kernel::pmem::allocate();
   new_entry.physical_page_address = physical_page.address();
@@ -428,16 +420,15 @@ found_entry:
   // Temporarily map this table in memory instead of trying to find it mapped
   // somewhere.
   {
-    const Local::TemporaryPageMapGuard guard(static_cast<u64>(table));
+    const TemporaryPageMapGuard guard(static_cast<u64>(table));
     u32 *const mapped = reinterpret_cast<u32 *>(guard.mapped_address());
     mapped[page_table_index] = new_entry.as_u32();
   }
 
-  auto *const retval =
-      reinterpret_cast<void *>(Local::virtual_address_from_indices(
-          page_directory_index, page_table_index));
+  auto *const retval = reinterpret_cast<void *>(
+      virtual_address_from_indices(page_directory_index, page_table_index));
   printf("Successfully allocated kernel page at %p\n", retval);
   return retval;
 }
 
-} // namespace kernel::memory::x86
+} // namespace kernel::x86

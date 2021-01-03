@@ -13,7 +13,7 @@ public:
   static void spawn(Process &&p);
   static void run();
   static void disable();
-  void wake(interrupt::x86::InterruptFrame *frame);
+  void wake(x86::InterruptFrame *frame);
 
 private:
   bu::Vector<Process> m_processes;
