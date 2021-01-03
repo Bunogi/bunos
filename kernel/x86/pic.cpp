@@ -29,6 +29,13 @@ static constexpr u8 slave_icw3 = 0x02;
 // 80x86 mode as opposed to other weird systems
 static constexpr u8 icw4 = 0x01;
 
+namespace {
+void disable_all_interrupts() {
+  kernel::x86::io::out_u8(master_pic_imr, 0xFF);
+  kernel::x86::io::out_u8(slave_pic_imr, 0xFF);
+}
+} // namespace
+
 void initialize() {
   using kernel::x86::io::out_u8;
   // Init sequence
@@ -44,9 +51,7 @@ void initialize() {
   out_u8(master_pic_imr, icw4);
   out_u8(slave_pic_imr, icw4);
 
-  // Disable all interrupts for now
-  out_u8(master_pic_imr, 0xFF);
-  out_u8(slave_pic_imr, 0xFF);
+  disable_all_interrupts();
 }
 
 void unmask_irq(u8 irq) {
@@ -70,6 +75,7 @@ void unmask_irq(u8 irq) {
 }
 
 void acknowledge(u8 irq) {
+  // printf("irq: %u\n", irq);
   ASSERT(irq < 16);
 
   if (irq >= 8) {
@@ -100,6 +106,17 @@ bool check_spurious(u8 irq) {
       return false;
     }
   }
+}
+
+void mask_non_printing_irqs() {
+  using kernel::x86::io::in_u8;
+  using kernel::x86::io::out_u8;
+  disable_all_interrupts();
+
+  // Timer
+  unmask_irq(0);
+  // Com1
+  unmask_irq(4);
 }
 
 } // namespace kernel::interrupt::x86::pic

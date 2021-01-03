@@ -12,6 +12,7 @@ public:
   static void init();
   static void spawn(Process &&p);
   static void run();
+  static void disable();
   void wake(interrupt::x86::InterruptFrame *frame);
 
 private:
@@ -19,6 +20,7 @@ private:
   volatile usize m_ticks_left{0};
   volatile usize m_running_pid{0};
   volatile usize m_current_process{0};
+  volatile bool m_enabled{true};
 };
 
 } // namespace kernel

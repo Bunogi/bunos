@@ -1,8 +1,11 @@
 #include "panic.hpp"
 #include <bustd/stddef.hpp>
+#include <kernel/kprint.hpp>
+#include <kernel/scheduler.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 #include <stdio.h>
 
+namespace {
 namespace Local {
 struct StackFrame {
   StackFrame *ebp;
@@ -71,11 +74,19 @@ bu::StringView exception_vector_to_string(u16 vector) {
     return nullptr;
   }
 }
+void disable_non_printing_interrupts() {
+  kernel::Scheduler::disable();
+  auto *instance = kernel::interrupt::x86::InterruptManager::instance();
+  instance->disable_non_printing_interrupts();
+  instance->enable_interrupts();
+}
 } // namespace Local
+} // namespace
 
 namespace kernel {
 void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
                           const bu::StringView reason, bool has_errcode) {
+  Local::disable_non_printing_interrupts();
   printf("====KERNEL_PANIC====\n"
          "%s\n",
          reason.data_or("No message given"));
@@ -110,17 +121,20 @@ void panic_from_interrupt(interrupt::x86::InterruptFrame *frame,
   Local::print_stack_trace(frame->eip,
                            reinterpret_cast<Local::StackFrame *>(frame->ebp));
 
+  kernel::print::flush();
   __asm__ volatile("cli\nhlt");
 }
 
 void panic_in_code(const char *file, const u32 line,
                    const bu::StringView reason) {
+  Local::disable_non_printing_interrupts();
   printf("====KERNEL_PANIC====\n%s", reason.data_or("No message given"));
   printf("\nLOCATION: %s:%u\n", file, line);
 
   Local::StackFrame *frame;
-  __asm__ volatile("movl %%ebp, %%eax" : "=a"(frame));
+  __asm__ volatile("movl %%ebp, %0\n" : "=r"(frame));
   Local::print_stack_trace(0, frame);
+  kernel::print::flush();
   __asm__ volatile("cli\nhlt");
 }
 } // namespace kernel

@@ -82,4 +82,8 @@ InterruptManager::InterruptGuard::~InterruptGuard() {
 bool InterruptManager::InterruptGuard::disabled_interrupts() const {
   return m_did_disable_interrupts;
 }
+
+void InterruptManager::disable_non_printing_interrupts() {
+  pic::mask_non_printing_irqs();
+}
 } // namespace kernel::interrupt::x86

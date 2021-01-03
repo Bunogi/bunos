@@ -9,4 +9,6 @@ void init(tty::IDevice *dev) {
   out_device = dev;
   printf("Successfully initted tty at 0x%.8X\n", dev);
 }
+
+void flush() { out_device->flush(); }
 } // namespace kernel::print

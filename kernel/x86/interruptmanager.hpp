@@ -25,6 +25,8 @@ public:
   void disable_interrupts();
   void enable_interrupts();
 
+  void disable_non_printing_interrupts();
+
   class InterruptGuard {
     friend class InterruptManager;
     BU_NOCOPY(InterruptGuard)

@@ -10,6 +10,7 @@ class Serial final : public IDevice {
 public:
   Serial();
   virtual void write(const char *buf, usize length) override;
+  virtual void flush() override;
 
   void transmit();
   static Serial *instance();

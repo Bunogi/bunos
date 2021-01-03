@@ -14,6 +14,7 @@ public:
   Vga(Vga &&other);
 
   virtual void write(const char *text, usize len) override;
+  virtual void flush() override;
   void putchar(char c);
 
   enum class Color : u8 {

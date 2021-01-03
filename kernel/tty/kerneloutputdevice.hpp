@@ -9,6 +9,7 @@ class KernelOutputDevice final : public IDevice {
 public:
   KernelOutputDevice(x86::Vga &&vga);
   virtual void write(const char *buf, usize length) override;
+  virtual void flush() override;
 
 private:
   x86::Serial m_serial;

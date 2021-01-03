@@ -1,6 +1,8 @@
 #include <bustd/math.hpp>
 #include <bustd/ringbuffer.hpp>
 #include <bustd/string_view.hpp>
+#include <kernel/process.hpp>
+#include <kernel/scheduler.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/io.hpp>
@@ -161,6 +163,16 @@ void Serial::transmit() {
     const auto to_send = m_buffer.take(send_buffer, Local::fifo_size);
     kernel::x86::io::out_u8_string(Local::regs::transmit_buffer, send_buffer,
                                    to_send);
+  }
+}
+
+void Serial::flush() {
+  if (!m_buffer.is_empty()) {
+    ASSERT(kernel::interrupt::x86::InterruptManager::instance()
+               ->interrupts_enabled());
+    while (m_buffer.len() > 0) {
+      timer::delay(10);
+    }
   }
 }
 } // namespace kernel::tty::x86

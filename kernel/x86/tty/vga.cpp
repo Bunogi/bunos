@@ -96,4 +96,6 @@ void Vga::update_cursor() {
   out_u8(0x3D5, static_cast<u8>((pos >> 8) & 0xFF));
 }
 
+void Vga::flush() {}
+
 } // namespace kernel::tty::x86
