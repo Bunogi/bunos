@@ -56,7 +56,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} -fno-omit-frame-pointer
 
 enable_testing()
 
-include_directories(${CMAKE_SOURCE_DIR} libc) #TODO: remove libc from this when able
+if (BUNOS_BUILD_HOST)
+  include_directories(${CMAKE_SOURCE_DIR} libraries)
+else()
+  include_directories(${CMAKE_SOURCE_DIR} libraries libc) #TODO: remove libc from this when able
+endif()
 
 set(KERNEL_BUILD_FLAGS "-nostdlib -ffreestanding")
 
