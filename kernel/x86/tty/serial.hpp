@@ -15,6 +15,6 @@ public:
   static Serial *instance();
 
 private:
-  bu::SizedRingBuffer<16 * 16> m_buffer;
+  bu::SizedRingBuffer<64 * 16> m_buffer;
 };
 } // namespace kernel::tty::x86

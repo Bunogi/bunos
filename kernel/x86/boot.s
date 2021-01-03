@@ -24,7 +24,7 @@ doesn't make sense to return from this function as the bootloader is gone.
 .section .bootstrap_stack, "aw", @nobits
 .align 16
 stack_bottom:
-.skip 32768 # 32K
+.skip 4096
 stack_top:
 
 .section .bss, "aw", @nobits

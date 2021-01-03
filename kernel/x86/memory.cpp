@@ -12,10 +12,6 @@ extern char _kernel_nonwritable_start, _kernel_nonwritable_end,
     _kernel_writable_start, _kernel_writable_end, _kernel_heap_start,
     _kernel_heap_end;
 
-// memory.s
-extern void _x86_set_page_directory(u32 addr);
-extern void _x86_refresh_page_directory();
-
 extern u32 boot_page_directory[1024];
 extern u32 boot_page_table1[1024];
 }
@@ -169,10 +165,6 @@ public:
   }
 };
 
-static u32 kernel_page_table[1024] __attribute__((aligned(4096)));
-static u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
-constexpr u32 kernel_address_space_dir_index = 768;
-
 u32 virtual_address_from_indices(const u16 page_directory_index,
                                  const u16 page_table_index = 0) {
   constexpr u32 dir_entries = 1024;
@@ -219,7 +211,7 @@ public:
         kernel::memory::x86::virt_to_phys_addr(
             static_cast<u64>(kernel::vmem::ReservedRegion::Temp)) /
         0x1000;
-    kernel_page_table[index] = entry.as_u32();
+    kernel::memory::x86::kernel_page_table[index] = entry.as_u32();
     _x86_refresh_page_directory();
   }
 
@@ -232,7 +224,7 @@ public:
         0x1000;
     PageTableEntry entry{};
     entry.present = false;
-    kernel_page_table[index] = entry.as_u32();
+    kernel::memory::x86::kernel_page_table[index] = entry.as_u32();
     _x86_refresh_page_directory();
     s_m_in_use = false;
   }
@@ -265,7 +257,7 @@ void init_kernel_area(PageTableEntry &&table_settings, const u32 start,
 
     // We can do this because the address translation is linear.
     const auto index = physical_page % 0x1000;
-    kernel_page_table[index] = table_settings.as_u32();
+    kernel::memory::x86::kernel_page_table[index] = table_settings.as_u32();
   }
 }
 
@@ -313,7 +305,7 @@ void init_other_sections() {
   constexpr u32 index = kernel::memory::x86::virt_to_phys_addr(static_cast<u64>(
                             kernel::vmem::ReservedRegion::Vga)) /
                         0x1000;
-  kernel_page_table[index] = entry.as_u32();
+  kernel::memory::x86::kernel_page_table[index] = entry.as_u32();
 }
 
 void reinit_page_directory() {
@@ -325,17 +317,19 @@ void reinit_page_directory() {
   init_kernel_heap_section();
   init_other_sections();
 
-  uintptr_t table_address = reinterpret_cast<uintptr_t>(&kernel_page_table[0]);
+  uintptr_t table_address =
+      reinterpret_cast<uintptr_t>(&kernel::memory::x86::kernel_page_table[0]);
   table_address -= 0xC0000000;
 
   PageDirectoryEntry entry{};
   entry.page_table_address = table_address;
   entry.present = true;
   entry.read_write = true;
-  kernel_page_directory[kernel_address_space_dir_index] = entry.as_u32();
+  kernel::memory::x86::kernel_page_directory
+      [kernel::memory::x86::kernel_address_space_dir_index] = entry.as_u32();
 
   u32 address = kernel::memory::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&kernel_page_directory));
+      reinterpret_cast<uintptr_t>(&kernel::memory::x86::kernel_page_directory));
   _x86_set_page_directory(address);
 }
 
@@ -343,6 +337,9 @@ void reinit_page_directory() {
 } // namespace
 
 namespace kernel::memory::x86 {
+u32 kernel_page_table[1024] __attribute__((aligned(4096)));
+u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
+
 void init_memory_management() {
   Local::reinit_page_directory();
 
@@ -367,10 +364,11 @@ void *map_kernel_memory(u32 page_count) {
   ASSERT(kernel_end_as_table_index < 1024);
   // reinterpret_cast<u64>(&_kernel_heap_end) / 1024;
   for (u16 i = kernel_end_as_table_index; i < 1024; i++) {
-    const auto entry =
-        Local::PageTableEntry::from_u32(Local::kernel_page_table[i]);
+    const auto entry = Local::PageTableEntry::from_u32(
+        kernel::memory::x86::kernel_page_table[i]);
     if (!entry.present) {
-      page_directory_index = Local::kernel_address_space_dir_index;
+      page_directory_index =
+          kernel::memory::x86::kernel_address_space_dir_index;
       page_table_index = i;
       break;
     }
@@ -379,9 +377,10 @@ void *map_kernel_memory(u32 page_count) {
   // Did not find free space in the first page dir entry, have to look further
   // ahead
   if (page_directory_index == 0) {
-    for (u16 i = Local::kernel_address_space_dir_index + 1; i < 1024; i++) {
-      const auto entry =
-          Local::PageDirectoryEntry::from_u32(Local::kernel_page_directory[i]);
+    for (u16 i = kernel::memory::x86::kernel_address_space_dir_index + 1;
+         i < 1024; i++) {
+      const auto entry = Local::PageDirectoryEntry::from_u32(
+          kernel::memory::x86::kernel_page_directory[i]);
       if (!entry.present) {
         TODO("Need to create a new page directory entry");
       }
@@ -416,7 +415,7 @@ found_entry:
                                              page_table_index));
 
   const auto entry = Local::PageDirectoryEntry::from_u32(
-      Local::kernel_page_directory[page_directory_index]);
+      kernel::memory::x86::kernel_page_directory[page_directory_index]);
   u32 table = entry.page_table_address;
 
   Local::PageTableEntry new_entry{};

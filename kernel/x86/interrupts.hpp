@@ -3,6 +3,7 @@
 #include <bustd/stddef.hpp>
 
 namespace kernel::interrupt::x86 {
+// If this changes, scheduler code has to be updated!
 struct InterruptFrame {
   u32 ds;
   // The registers as they were when in the interrupt handler

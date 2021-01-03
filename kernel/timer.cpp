@@ -1,5 +1,6 @@
 #include <bustd/assert.hpp>
 #include <bustd/math.hpp>
+#include <kernel/scheduler.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/pit.hpp>
@@ -9,9 +10,11 @@
 static constexpr u32 SLEEP_TIMER_COUNT = 16;
 static volatile u32 SLEEP_TIMERS[SLEEP_TIMER_COUNT];
 
+extern kernel::Scheduler *s_scheduler;
+
 namespace kernel::timer {
 
-bool interrupt_handler(interrupt::x86::InterruptFrame *) {
+bool interrupt_handler(interrupt::x86::InterruptFrame *frame) {
   for (u32 i = 0; i < SLEEP_TIMER_COUNT; i++) {
     if (SLEEP_TIMERS[i] != 0) {
       SLEEP_TIMERS[i]--;
@@ -25,6 +28,8 @@ bool interrupt_handler(interrupt::x86::InterruptFrame *) {
   if (instance != nullptr) {
     instance->transmit();
   }
+
+  s_scheduler->wake(frame);
 
   return true;
 }

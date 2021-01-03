@@ -11,6 +11,7 @@
 
 #include "tty/kerneloutputdevice.hpp"
 #include <kernel/kmalloc.hpp>
+#include <kernel/scheduler.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/interruptmanager.hpp>
 #include <kernel/x86/physicalmalloc.hpp>
@@ -37,7 +38,13 @@ void kernel_main() {
   kernel::tty::KernelOutputDevice print_device(bu::move(early_printer));
   kernel::print::init(&print_device);
 
+  kernel::Scheduler::init();
+
   kernel::timer::initialize();
+  printf("Welcome to Bunos 0.0-dev!\n");
+  printf("Running scheduler...\n");
+
+  kernel::Scheduler::run();
 
   manager.enable_interrupts();
 

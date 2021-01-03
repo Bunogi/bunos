@@ -52,6 +52,8 @@ add_executable(
   kmalloc.cpp
   kprint.cpp
   panic.cpp
+  process.cpp
+  scheduler.cpp
   timer.cpp
   tty/kerneloutputdevice.cpp
   utils.cpp
@@ -68,6 +70,7 @@ add_executable(
   x86/physicalmalloc.cpp
   x86/pic.cpp
   x86/pit.cpp
+  x86/scheduler.s
   x86/tty/serial.cpp
   x86/tty/vga.cpp
 )
