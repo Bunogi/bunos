@@ -12,9 +12,7 @@ template <typename T> class OwnedPtr {
 
 public:
   OwnedPtr() = delete;
-  explicit OwnedPtr(OwnedPtr &&other) : m_data(other.m_data) {
-    other.m_valid = false;
-  }
+  OwnedPtr(OwnedPtr &&other) : m_data(other.m_data) { other.m_valid = false; }
   OwnedPtr &operator=(OwnedPtr &&other) {
     other.m_valid = false;
     m_data = other.m_data;
