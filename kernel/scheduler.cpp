@@ -9,7 +9,6 @@ constexpr usize ticks_per_task = 10;
 
 extern "C" {
 extern void _x86_task_switch();
-extern void _test();
 
 volatile u32 new_esp;
 volatile u32 new_eip;
