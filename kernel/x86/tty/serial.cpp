@@ -1,6 +1,6 @@
 #include <bustd/math.hpp>
 #include <bustd/ringbuffer.hpp>
-#include <bustd/string_view.hpp>
+#include <bustd/stringview.hpp>
 #include <kernel/interruptmanager.hpp>
 #include <kernel/process.hpp>
 #include <kernel/scheduler.hpp>

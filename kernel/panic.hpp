@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bustd/string_view.hpp>
+#include <bustd/stringview.hpp>
 #include <kernel/x86/interrupts.hpp>
 
 #define KERNEL_PANIC(_r) ::kernel::panic_in_code(__FILE__, __LINE__, _r);

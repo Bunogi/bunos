@@ -23,8 +23,11 @@ public:
   bool operator==(const StringView &other) const;
   bool operator!=(const StringView &other) const;
 
+  bool is_null_terminated() const;
+
 private:
   const char *m_data;
-  usize m_length;
+  const usize m_length;
+  const bool m_is_null_terminated;
 };
 } // namespace bu

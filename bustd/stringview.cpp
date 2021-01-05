@@ -1,18 +1,19 @@
-#include "string_view.hpp"
-
 #include <bustd/math.hpp>
+#include <bustd/stringview.hpp>
 #include <string.h>
 
 namespace bu {
 StringView::StringView() : StringView(nullptr) {}
-StringView::StringView(nullptr_t) : m_data(nullptr), m_length(0) {}
-StringView::StringView(const char *s) : m_data(s), m_length(strlen(s)) {}
+StringView::StringView(nullptr_t)
+    : m_data(nullptr), m_length(0), m_is_null_terminated(false) {}
+StringView::StringView(const char *s)
+    : m_data(s), m_length(strlen(s)), m_is_null_terminated(true) {}
 StringView::StringView(const char *s, const usize length)
-    : m_data(length == 0 ? nullptr : s), m_length(length) {}
+    : m_data(length == 0 ? nullptr : s), m_length(length),
+      m_is_null_terminated(false) {}
 
 const char *StringView::data_or(const char *s) const {
   if (m_data == nullptr || m_length == 0) {
-
     return s;
   } else {
     return m_data;
@@ -46,5 +47,7 @@ StringView StringView::last_part(const usize from) const {
 StringView StringView::substr(const usize from, const usize upto) const {
   return StringView(m_data + from, bu::min(upto - from, m_length));
 }
+
+bool StringView::is_null_terminated() const { return m_is_null_terminated; }
 
 } // namespace bu

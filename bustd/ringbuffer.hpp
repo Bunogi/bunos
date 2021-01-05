@@ -4,7 +4,7 @@
 #include <bustd/macros.hpp>
 #include <bustd/math.hpp>
 #include <bustd/stddef.hpp>
-#include <bustd/string_view.hpp>
+#include <bustd/stringview.hpp>
 #include <string.h>
 namespace bu {
 // TODO: This does not have to be a template class when we get a memory
