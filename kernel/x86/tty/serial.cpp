@@ -164,9 +164,16 @@ void Serial::transmit() {
 
 void Serial::flush() {
   if (!m_buffer.is_empty()) {
-    ASSERT(InterruptManager::instance()->interrupts_enabled());
-    while (m_buffer.len() > 0) {
-      timer::delay(10);
+    if (InterruptManager::instance()->interrupts_enabled()) {
+      while (m_buffer.len() > 0) {
+        timer::delay(10);
+      }
+    } else {
+      while (!m_buffer.is_empty()) {
+        while (!ready_to_send()) {
+        }
+        transmit();
+      }
     }
   }
 }
