@@ -1,7 +1,7 @@
 #pragma once
 
 #include <bustd/stddef.hpp>
-#include <bustd/string_view.hpp>
+#include <bustd/stringview.hpp>
 #include <stdio.h>
 
 namespace test {

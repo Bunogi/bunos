@@ -1,6 +1,6 @@
 #include <bustd/assert.hpp>
 #include <bustd/ringbuffer.hpp>
-#include <bustd/string_view.hpp>
+#include <bustd/stringview.hpp>
 #include <libraries/libtest/libtest.hpp>
 #include <string.h>
 
