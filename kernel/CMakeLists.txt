@@ -49,7 +49,6 @@ add_executable(
   filesystem/ext2.cpp
   tty/kerneloutputdevice.cpp
   utils.cpp
-  vfs.cpp
   x86/boot.s
   x86/gdt.cpp
   x86/gdt.s
