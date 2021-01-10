@@ -12,6 +12,7 @@
 #include <kernel/x86/interrupts.hpp>
 #include <kernel/x86/io.hpp>
 #include <kernel/x86/memory.hpp>
+#include <kernel/x86/pata.hpp>
 #include <kernel/x86/tty/vga.hpp>
 #include <stdio.h>
 
@@ -42,6 +43,7 @@ void kernel_main() {
 
   kernel::timer::initialize();
   printf("Welcome to Bunos 0.0-dev!\n");
+  kernel::x86::initialize_pata();
   printf("Running scheduler...\n");
 
   kernel::Scheduler::run();

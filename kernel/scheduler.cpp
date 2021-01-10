@@ -3,6 +3,9 @@
 #include <kernel/x86/memory.hpp>
 #include <stdio.h>
 
+// TODO: Remove, testing only!
+#include <kernel/filesystem/ext2.hpp>
+
 kernel::Scheduler *s_scheduler;
 
 constexpr usize ticks_per_task = 10;
@@ -32,12 +35,22 @@ void idle_thread_func() {
   UNREACHABLE();
 }
 
+void test_func() {
+  fs::Ext2 ext2;
+
+  while (1) {
+    __asm__ volatile("hlt");
+  }
+}
+
 void Scheduler::run() {
   ASSERT_NE(s_scheduler, nullptr);
 
   Process idle_thread(idle_thread_func);
+  Process test_thread(test_func);
 
   spawn(bu::move(idle_thread));
+  spawn(bu::move(test_thread));
 
   // Wait to be woken up to do stuff
   while (1) {

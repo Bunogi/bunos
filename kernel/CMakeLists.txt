@@ -21,28 +21,17 @@
 
 # standard QEMU flags for use with everything
 set(QEMU_FLAGS -m 4G -serial stdio)
+set(DISK_IMAGE -drive file=../disk.img,format=raw)
+
 add_custom_target(
   run
-  COMMAND qemu-system-i386 -kernel kernel.bin -no-reboot ${QEMU_FLAGS}
-  DEPENDS kernel.bin
+  COMMAND qemu-system-i386 -kernel kernel.bin -no-reboot ${QEMU_FLAGS} ${DISK_IMAGE}
+  DEPENDS kernel.bin image
 )
-add_custom_target(
-  image
-  COMMAND mkdir -p isodir/boot/grub
-  COMMAND cp kernel.bin isodir/boot
-  COMMAND cp ${CMAKE_SOURCE_DIR}/grub.cfg isodir/boot/grub/grub.cfg
-  COMMAND grub-mkrescue isodir -o image.iso
-  VERBATIM
-  DEPENDS kernel.bin
-)
-add_custom_target(
-  run_image
-  COMMAND qemu-system-i386 -cdrom image.iso -no-reboot ${QEMU_FLAGS}
-  DEPENDS image
-)
+
 add_custom_target(
   run_debug
-  COMMAND qemu-system-i386 -kernel kernel.bin -s -S ${QEMU_FLAGS} -d int
+  COMMAND qemu-system-i386 -kernel kernel.bin -s -S ${QEMU_FLAGS} -d int ${DISK_IMAGE}
   DEPENDS kernel.bin
 )
 
@@ -57,8 +46,10 @@ add_executable(
   process.cpp
   scheduler.cpp
   timer.cpp
+  filesystem/ext2.cpp
   tty/kerneloutputdevice.cpp
   utils.cpp
+  vfs.cpp
   x86/boot.s
   x86/gdt.cpp
   x86/gdt.s

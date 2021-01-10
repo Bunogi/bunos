@@ -56,6 +56,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} -fno-omit-frame-pointer
 
 enable_testing()
 
+set(BUNOS_ROOT_DIR ${CMAKE_SOURCE_DIR}/root)
+
 if (BUNOS_BUILD_HOST)
   include_directories(${CMAKE_SOURCE_DIR} libraries)
 else()
@@ -70,5 +72,10 @@ add_subdirectory(libraries)
 
 if(NOT BUNOS_BUILD_HOST)
   add_subdirectory(kernel)
-endif()
 
+  add_custom_target(
+    image
+    COMMAND ${CMAKE_SOURCE_DIR}/build_disk_image.sh disk.img ${BUNOS_ROOT_DIR}
+    DEPENDS kernel.bin ${BUNOS_ROOT_DIR}
+  )
+endif()
