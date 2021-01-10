@@ -5,6 +5,7 @@
 extern "C" {
 // These sucked to write in inline asm
 void _x86_out_u8_string(u16 port, const u8 *buffer, usize length);
+void _x86_in_u16_string(u16 port, u16 *buffer, usize length);
 }
 
 namespace kernel::x86 {
@@ -40,6 +41,21 @@ u8 in_u8(u16 port) {
                    : "r"(port)
                    : "%al", "%dx");
   return out;
+}
+
+u16 in_u16(u16 port) {
+  u16 out;
+  __asm__ volatile("movw %1, %%dx\n"
+                   "in %%dx, %%ax\n"
+                   "movw %%ax, %0"
+                   : "=r"(out)
+                   : "r"(port)
+                   : "%ax", "%dx");
+  return out;
+}
+
+void in_u16_string(u16 port, u16 *buffer, usize length) {
+  _x86_in_u16_string(port, buffer, length);
 }
 
 } // namespace kernel::x86
