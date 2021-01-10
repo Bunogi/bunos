@@ -68,6 +68,7 @@ add_executable(
   x86/io.s
   x86/memory.cpp
   x86/memory.s
+  x86/pata.cpp
   x86/pic.cpp
   x86/pit.cpp
   x86/scheduler.s
