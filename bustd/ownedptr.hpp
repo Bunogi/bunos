@@ -34,6 +34,15 @@ public:
   bool is_null() const { return m_data == nullptr; }
   operator bool() const { return !is_null(); }
 
+  T *get() {
+    ASSERT(!is_null());
+    return m_data;
+  }
+  const T *get() const {
+    ASSERT(!is_null());
+    return m_data;
+  }
+
 private:
   T *m_data;
   bool m_valid{true};

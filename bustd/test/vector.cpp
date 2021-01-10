@@ -216,6 +216,33 @@ test::Result fill() {
   LIBTEST_SUCCEED();
 }
 
+test::Result resize_to_fit() {
+  bu::Vector<int> v(300);
+  LIBTEST_ASSERT_EQ(v.capacity(), 300);
+  for (int i = 0; i < 150; i++) {
+    v.push(i);
+  }
+  LIBTEST_ASSERT_EQ(v.len(), 150);
+  LIBTEST_ASSERT_EQ(v.capacity(), 300);
+  v.resize_to_fit();
+  LIBTEST_ASSERT_EQ(v.len(), 150);
+  LIBTEST_ASSERT_EQ(v.capacity(), 150);
+  LIBTEST_SUCCEED();
+}
+
+test::Result clear() {
+  bu::Vector<int> v(200);
+  for (int i = 0; i < 200; i++) {
+    v.push(i);
+  }
+  LIBTEST_ASSERT_EQ(v.len(), 200);
+  LIBTEST_ASSERT_EQ(v.capacity(), 200);
+  v.clear();
+  LIBTEST_ASSERT_EQ(v.len(), 0);
+  LIBTEST_ASSERT_EQ(v.capacity(), 200);
+  LIBTEST_SUCCEED();
+}
+
 int main() {
   RUN_TEST(basic_push_pop);
   RUN_TEST(pop_value);
@@ -225,5 +252,6 @@ int main() {
   RUN_TEST(preallocate);
   RUN_TEST(index);
   RUN_TEST(fill);
+  RUN_TEST(resize_to_fit);
   LIBTEST_CLEANUP();
 }

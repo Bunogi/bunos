@@ -124,8 +124,17 @@ public:
 
   usize len() const { return m_size; }
   usize capacity() const { return m_capacity; }
+  bool is_empty() const { return m_size == 0; }
 
-  T &operator[](usize index) { return at(index); }
+  void clear() {
+    while (!is_empty()) {
+      pop();
+    }
+  }
+
+  void resize_to_fit() { set_size(m_size); }
+
+  T &operator[](usize index) { return *slot(index); }
   const T &operator[](usize index) const { return *slot(index); }
 
   T &at(usize index) { return *slot(index); }
@@ -139,6 +148,7 @@ private:
   }
 
   T *slot(usize i) const {
+    // printf("i: %u\n");
     ASSERT(i < m_capacity);
     return m_data + i;
   }
