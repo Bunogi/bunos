@@ -47,14 +47,20 @@ void *Allocator::allocate(size_t size) {
       node_with_space = current_node;
       break;
     }
+    ASSERT(current_node != current_node->next);
     current_node = current_node->next;
   }
   ASSERT_NE(node_with_space, nullptr); // out of heap memory
 
+  // If node_with_space's capacity _exactly_ matches the size we want to
+  // allocate, there's no point in splitting the node.
+  // This requires that the new node actually has space to allocate stuff
+  // afterwards. If it doesn't, we have to waste the space
   node_with_space->state = State::Used;
   const auto margin = node_with_space->capacity - size;
-  // Split the node in two
-  if (margin != 0) {
+  const auto waste_margin = 64;
+  if (margin != 0 && node_with_space->capacity > m_data_offset + waste_margin) {
+    // Need to add some space by splitting the node in half
     DEBUG_PRINTF("Found node with space at 0x%.8X, with %u bytes capacity\n",
                  node_with_space, node_with_space->capacity);
     const uintptr_t new_node_addr =
@@ -96,6 +102,7 @@ void Allocator::deallocate(void *p) {
       try_merge_free_nodes(prev_node);
       return;
     }
+    ASSERT(prev_node != prev_node->next);
     prev_node = prev_node->next;
   }
 
@@ -149,6 +156,7 @@ void Allocator::print_allocations() {
     bu::StringView status = node->state == State::Free ? "Free" : "Used";
     printf("[kmalloc] Node %p: capacity %u, status: %s\n", node, node->capacity,
            status.data());
+    ASSERT_NE(node, node->next);
     node = node->next;
   }
   printf("[kmalloc] ===> Print allocations stop\n");
