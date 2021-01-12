@@ -4,13 +4,8 @@
 #include <bustd/math.hpp>
 #include <bustd/new.hpp>
 #include <bustd/stddef.hpp>
-#include <string.h>
-
-#ifdef __IN_KERNEL__
-#include <kernel/kmalloc.hpp>
-#else
 #include <stdlib.h>
-#endif
+#include <string.h>
 
 namespace bu {
 
@@ -19,23 +14,24 @@ public:
   Vector() = default;
   Vector(usize preallocated) { set_size(preallocated); }
 
-  Vector(const Vector &other) : Vector(other.len()) {
-    if (other.len() == 0) {
-      return;
-    }
+  Vector(const Vector &other) : Vector(other.len()) { *this = other; }
+
+  Vector &operator=(const Vector &other) {
+    clear();
 
     for (usize i = 0; i < other.len(); i++) {
       new (slot(i)) T(other[i]);
     }
-    m_size = other.len();
-  }
-
-  Vector &operator=(const Vector &other) {
-    *this = Vector(other);
     return *this;
   }
 
-  Vector(Vector &&other) {
+  Vector(Vector &&other) { *this = forward(other); }
+
+  Vector &operator=(Vector &&other) {
+    if (m_data != nullptr) {
+      free(m_data);
+    }
+
     m_size = other.m_size;
     m_capacity = other.m_capacity;
     m_data = other.m_data;
@@ -43,10 +39,7 @@ public:
     other.m_size = 0;
     other.m_capacity = 0;
     other.m_data = nullptr;
-  }
 
-  Vector &operator=(Vector &&other) {
-    *this = Vector(move(other));
     return *this;
   }
   // TODO: List initializer?
@@ -57,11 +50,7 @@ public:
     }
 
     if (m_data != nullptr) {
-#ifdef __IN_KERNEL__
-      kernel::malloc::Allocator::instance()->deallocate(m_data);
-#else
       free(m_data);
-#endif
     }
   }
 
@@ -155,22 +144,13 @@ private:
 
   void set_size(usize new_size) {
     ASSERT(new_size >= m_size);
-#ifdef __IN_KERNEL__
-    T *new_data = reinterpret_cast<T *>(
-        kernel::malloc::Allocator::instance()->allocate(new_size * sizeof(T)));
-#else
     T *new_data = reinterpret_cast<T *>(malloc(new_size * sizeof(T)));
-#endif
     if (m_data != nullptr) {
       for (usize i = 0; i < m_size; i++) {
         new (&new_data[i]) T(move(at(i)));
         slot(i)->~T();
       }
-#ifdef __IN_KERNEL__
-      kernel::malloc::Allocator::instance()->deallocate(m_data);
-#else
       free(m_data);
-#endif
     }
     m_data = new_data;
     m_capacity = new_size;

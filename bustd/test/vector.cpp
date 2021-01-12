@@ -253,5 +253,6 @@ int main() {
   RUN_TEST(index);
   RUN_TEST(fill);
   RUN_TEST(resize_to_fit);
+  RUN_TEST(clear);
   LIBTEST_CLEANUP();
 }
