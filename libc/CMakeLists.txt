@@ -1,2 +1,7 @@
-set (LIBC_SOURCES string.cpp stdio.cpp)
+set (
+  LIBC_SOURCES
+  stdio.cpp
+  stdlib.cpp
+  string.cpp
+)
 bunos_lib(NAME c KERNEL_SPECIFIC_BUILD_REQUIRED KERNEL_ONLY HOST_DISABLE SOURCES ${LIBC_SOURCES})
