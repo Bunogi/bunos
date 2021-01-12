@@ -1,5 +1,6 @@
 set (
   LIBC_SOURCES
+  ctype.cpp
   stdio.cpp
   stdlib.cpp
   string.cpp
