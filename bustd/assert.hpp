@@ -20,7 +20,8 @@
 
 #define ASSERT(_x)                                                             \
   do {                                                                         \
-    if ((_x) != true) {                                                        \
+    if (_x) {                                                                  \
+    } else {                                                                   \
       FAIL("Assertion failed: '" #_x "'");                                     \
     }                                                                          \
   } while (0)
