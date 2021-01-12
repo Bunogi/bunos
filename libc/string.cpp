@@ -22,6 +22,25 @@ int strcmp(const char *lhs, const char *rhs) {
   return memcmp(lhs, rhs, bu::min(s1, s2));
 }
 
+int strncmp(const char *lhs, const char *rhs, size_t n) {
+  for (size_t i = 0; i < n; i++) {
+    if (*lhs == '\0' && *rhs == '\0') {
+      return 0;
+    } else if (*lhs == '\0') {
+      return -1;
+    } else if (*rhs == '\0') {
+      return 1;
+    }
+
+    if (*lhs < *rhs) {
+      return -1;
+    } else if (*lhs > *rhs) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 void *memcpy(void *dest, const void *src, size_t n) {
   for (size_t i = 0; i < n; i++) {
     *(reinterpret_cast<char *>(dest) + i) =

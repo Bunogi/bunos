@@ -9,6 +9,7 @@ extern "C" {
 size_t strlen(const char *);
 char *strcpy(char *dest, const char *src);
 int strcmp(const char *lhs, const char *rhs);
+int strncmp(const char *lhs, const char *rhs, size_t n);
 
 void *memcpy(void *dest, const void *src, size_t n);
 void *memset(void *ptr, int value, size_t n);
