@@ -38,6 +38,7 @@ Allocator *Allocator::instance() {
 }
 
 void *Allocator::allocate(size_t size) {
+  ASSERT_NE(size, 0);
   // Find the first region with enough space
   Node *current_node = m_alloc_head;
   Node *node_with_space = nullptr;
@@ -51,6 +52,7 @@ void *Allocator::allocate(size_t size) {
     current_node = current_node->next;
   }
   ASSERT_NE(node_with_space, nullptr); // out of heap memory
+  ASSERT_EQ(node_with_space->state, State::Free);
 
   // If node_with_space's capacity _exactly_ matches the size we want to
   // allocate, there's no point in splitting the node.
@@ -58,8 +60,9 @@ void *Allocator::allocate(size_t size) {
   // afterwards. If it doesn't, we have to waste the space
   node_with_space->state = State::Used;
   const auto margin = node_with_space->capacity - size;
-  const auto waste_margin = 64;
-  if (margin != 0 && node_with_space->capacity > m_data_offset + waste_margin) {
+  const auto waste_margin = 32;
+  if (margin != 0 &&
+      node_with_space->capacity > size + m_data_offset + waste_margin) {
     // Need to add some space by splitting the node in half
     DEBUG_PRINTF("Found node with space at 0x%.8X, with %u bytes capacity\n",
                  node_with_space, node_with_space->capacity);
@@ -75,6 +78,7 @@ void *Allocator::allocate(size_t size) {
                  node_with_space, node_with_space->next);
     DEBUG_PRINTF("New node addr: %p with next %p and capacity %u\n", new_node,
                  new_node->next, new_node->capacity);
+    ASSERT_NE(new_node, new_node->next);
   }
   DEBUG_PRINTF("Allocated %u bytes at %p\n", size, node_with_space);
 
@@ -96,6 +100,7 @@ void Allocator::deallocate(void *p) {
 
   auto *prev_node = m_alloc_head;
   while (prev_node->next != nullptr) {
+    ASSERT(prev_node != prev_node->next);
     if (is_allocated_in_node(p, prev_node->next)) {
       prev_node->next->state = State::Free;
       try_merge_free_nodes(prev_node->next);
@@ -131,7 +136,7 @@ void Allocator::try_merge_free_nodes(Node *node) {
         old_capacity + node->next->capacity + m_data_offset;
     DEBUG_PRINTF("Merging %p and %p into one of capacity %u\n", node,
                  node->next, new_capacity);
-    node->capacity += new_capacity;
+    node->capacity = new_capacity;
     node->next = node->next->next;
   }
 }
@@ -154,8 +159,8 @@ void Allocator::print_allocations() {
   printf("[kmalloc] ===> Print allocations start...\n");
   while (node != nullptr) {
     bu::StringView status = node->state == State::Free ? "Free" : "Used";
-    printf("[kmalloc] Node %p: capacity %u, status: %s\n", node, node->capacity,
-           status.data());
+    printf("[kmalloc] Node %p: capacity %u, status: %s, next: %p\n", node,
+           node->capacity, status.data(), node->next);
     ASSERT_NE(node, node->next);
     node = node->next;
   }
