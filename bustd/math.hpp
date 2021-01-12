@@ -11,6 +11,11 @@ template <typename T> inline constexpr auto min(const T &lhs, const T &rhs) {
   }
 }
 
+template <typename T, typename... Args>
+inline constexpr auto min(const T &lhs, const T &rhs, Args... args) {
+  return min(lhs, min(rhs, args...));
+}
+
 template <typename T> inline constexpr auto max(const T &lhs, const T &rhs) {
   if (lhs > rhs) {
     return lhs;
@@ -19,6 +24,10 @@ template <typename T> inline constexpr auto max(const T &lhs, const T &rhs) {
   }
 }
 
+template <typename T, typename... Args>
+inline constexpr auto max(const T &lhs, const T &rhs, Args... args) {
+  return max(lhs, max(rhs, args...));
+}
 template <typename T>
 inline constexpr auto divide_ceil(const T &n, const T &div) {
   static_assert(is_integral_type<T>::value,
