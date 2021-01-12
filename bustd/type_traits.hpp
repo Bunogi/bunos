@@ -24,6 +24,9 @@ _MARK_INTEGRAL(i8)
 _MARK_INTEGRAL(i16)
 _MARK_INTEGRAL(i32)
 _MARK_INTEGRAL(i64)
+#ifdef __IN_KERNEL__
+_MARK_INTEGRAL(int)
+#endif
 #undef _MARK_INTEGRAL
 
 template <typename T, typename U> struct is_same : FalseType {};
