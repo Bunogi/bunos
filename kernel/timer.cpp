@@ -29,7 +29,9 @@ bool interrupt_handler(x86::InterruptFrame *frame) {
     instance->transmit();
   }
 
-  s_scheduler->wake(frame);
+  if (s_scheduler) {
+    s_scheduler->wake(frame);
+  }
 
   return true;
 }
