@@ -23,6 +23,8 @@ public:
   bool operator==(const StringView &other) const;
   bool operator!=(const StringView &other) const;
 
+  char operator[](const usize i) const;
+
   bool is_null_terminated() const;
 
 private:

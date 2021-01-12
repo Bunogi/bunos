@@ -1,3 +1,4 @@
+#include <bustd/assert.hpp>
 #include <bustd/math.hpp>
 #include <bustd/stringview.hpp>
 #include <string.h>
@@ -49,5 +50,10 @@ StringView StringView::substr(const usize from, const usize upto) const {
 }
 
 bool StringView::is_null_terminated() const { return m_is_null_terminated; }
+
+char StringView::operator[](const usize i) const {
+  ASSERT(i <= m_length);
+  return m_data[i];
+}
 
 } // namespace bu
