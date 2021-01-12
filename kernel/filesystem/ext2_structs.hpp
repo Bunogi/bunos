@@ -56,6 +56,8 @@ struct SuperBlock {
   u8 __unused2[1024 - 236];
 };
 
+#define EXT2_I_DIRECTORY 0x4000
+
 struct Inode {
   u16 type;
   u16 uid;
@@ -78,6 +80,8 @@ struct Inode {
   u32 size_upper; // Reserved in version 0
   u32 fragment_block_addr;
   u32 os_specific_value_2[3];
+
+  bool is_directory() const { return (type & EXT2_I_DIRECTORY) != 0; }
 };
 
 struct BlockGroupDescriptor {

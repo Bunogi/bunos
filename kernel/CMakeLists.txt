@@ -30,13 +30,24 @@ add_custom_target(
 )
 
 add_custom_target(
+  kernel.sym
+  ALL
+  COMMAND nm -n kernel.bin | c++filt > ${BUNOS_ROOT_DIR}/boot/kernel.sym
+  VERBATIM
+  DEPENDS kernel.bin
+)
+
+add_custom_target(
   run_debug
   COMMAND qemu-system-i386 -kernel kernel.bin -s -S ${QEMU_FLAGS} -d int ${DISK_IMAGE}
-  DEPENDS kernel.bin
+  DEPENDS kernel.bin image
 )
 
 add_executable(
   kernel.bin
+  debugsymbols.cpp
+  filesystem/ext2.cpp
+  filesystem/vfs.cpp
   interruptmanager.cpp
   kernel_main.cpp
   kmalloc.cpp
@@ -46,7 +57,6 @@ add_executable(
   process.cpp
   scheduler.cpp
   timer.cpp
-  filesystem/ext2.cpp
   tty/kerneloutputdevice.cpp
   utils.cpp
   x86/boot.s

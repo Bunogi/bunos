@@ -1,5 +1,8 @@
 #include <bustd/assert.hpp>
 #include <bustd/vector.hpp>
+#include <kernel/debugsymbols.hpp>
+#include <kernel/filesystem/ext2.hpp>
+#include <kernel/filesystem/vfs.hpp>
 #include <kernel/interruptmanager.hpp>
 #include <kernel/kmalloc.hpp>
 #include <kernel/kprint.hpp>
@@ -43,26 +46,18 @@ void kernel_main() {
 
   kernel::timer::initialize();
   printf("Welcome to Bunos 0.0-dev!\n");
+
   kernel::x86::initialize_pata();
+
+  kernel::Vfs::instance()->mount(bu::OwnedPtr<IFileSystem>(new fs::Ext2()));
+
+  printf("Main: Disk has %u sectors\n", x86::disk_sector_count());
+  kernel::load_debug_symbols();
+
   printf("Running scheduler...\n");
 
   kernel::Scheduler::run();
 
-  manager.enable_interrupts();
-
-  printf("Welcome to Bunos 0.0-dev!\n");
-  printf("Booting...\n");
-
-  printf("Nothing more to do, relaxing here for a while...   ");
-  const char *const animation = "\\|/-\\|/";
-  u16 i = 0;
-  while (1) {
-    if (i >= sizeof animation) {
-      i = 0;
-    }
-    printf("\b%c", animation[i++]);
-    kernel::timer::delay(1000);
-  }
   KERNEL_PANIC("Reached end of kernel_main");
 }
 }

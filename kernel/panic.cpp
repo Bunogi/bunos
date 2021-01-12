@@ -1,4 +1,5 @@
 #include <bustd/stddef.hpp>
+#include <kernel/debugsymbols.hpp>
 #include <kernel/interruptmanager.hpp>
 #include <kernel/kprint.hpp>
 #include <kernel/panic.hpp>
@@ -14,11 +15,22 @@ struct StackFrame {
 void print_stack_trace(u32 current_eip, StackFrame *frame) {
   printf("Stack trace:\n");
   if (current_eip != 0) {
-    printf("%p\n", current_eip);
+    printf("%p     ", current_eip);
+
+    if (kernel::debug_symbols_loaded()) {
+      printf("%s\n", kernel::function_name_from_pc(current_eip).data());
+    } else {
+      puts("<missing debug symbols>");
+    }
   }
   // assumption: bottom-most stack frame has a base pointer of 0
   while (frame) {
-    printf("%p\n", frame->eip);
+    printf("%p     ", frame->eip);
+    if (kernel::debug_symbols_loaded()) {
+      printf("%s\n", kernel::function_name_from_pc(frame->eip).data());
+    } else {
+      puts("<missing debug symbols>");
+    }
     frame = frame->ebp;
   }
 }
@@ -77,6 +89,7 @@ void disable_non_printing_interrupts() {
   kernel::Scheduler::disable();
   auto *instance = kernel::InterruptManager::instance();
   instance->disable_non_printing_interrupts();
+  kernel::print::flush();
   instance->enable_interrupts();
 }
 } // namespace
@@ -84,7 +97,6 @@ void disable_non_printing_interrupts() {
 namespace kernel {
 void panic_from_interrupt(x86::InterruptFrame *frame,
                           const bu::StringView reason, bool has_errcode) {
-  disable_non_printing_interrupts();
   printf("====KERNEL_PANIC====\n"
          "%s\n",
          reason.data_or("No message given"));
@@ -123,7 +135,8 @@ void panic_from_interrupt(x86::InterruptFrame *frame,
 
 void panic_in_code(const char *file, const u32 line,
                    const bu::StringView reason) {
-  disable_non_printing_interrupts();
+  // disable_non_printing_interrupts();
+  kernel::print::flush();
   printf("====KERNEL_PANIC====\n%s", reason.data_or("No message given"));
   printf("\nLOCATION: %s:%u\n", file, line);
 

@@ -14,6 +14,9 @@ typedef int8_t i8;
 typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
+#ifdef __IS_X86__
+typedef int32_t isize;
+#endif
 
 template <class T> struct remove_reference { typedef T type; };
 template <class T> struct remove_reference<T &> { typedef T type; };
@@ -34,4 +37,6 @@ using bu::usize;
 
 using bu::i16;
 using bu::i32;
+using bu::i64;
 using bu::i8;
+using bu::isize;

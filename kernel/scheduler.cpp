@@ -1,14 +1,10 @@
 #include <kernel/scheduler.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/memory.hpp>
-#include <stdio.h>
-
-// TODO: Remove, testing only!
-#include <kernel/filesystem/ext2.hpp>
 
 kernel::Scheduler *s_scheduler;
 
-constexpr usize ticks_per_task = 10;
+constexpr usize ticks_per_task = 1000;
 
 extern "C" {
 extern void _x86_task_switch();
@@ -35,22 +31,14 @@ void idle_thread_func() {
   UNREACHABLE();
 }
 
-void test_func() {
-  fs::Ext2 ext2;
-
-  while (1) {
-    __asm__ volatile("hlt");
-  }
-}
-
 void Scheduler::run() {
   ASSERT_NE(s_scheduler, nullptr);
 
   Process idle_thread(idle_thread_func);
-  Process test_thread(test_func);
 
   spawn(bu::move(idle_thread));
-  spawn(bu::move(test_thread));
+
+  //*((volatile u32 *)0) = 0;
 
   // Wait to be woken up to do stuff
   while (1) {
@@ -125,5 +113,9 @@ void Scheduler::wake(x86::InterruptFrame *frame) {
   this_tick++;
 }
 
-void Scheduler::disable() { s_scheduler->m_enabled = false; }
+void Scheduler::disable() {
+  if (s_scheduler) {
+    s_scheduler->m_enabled = false;
+  }
+}
 } // namespace kernel
