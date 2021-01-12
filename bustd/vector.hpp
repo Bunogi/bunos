@@ -20,7 +20,7 @@ public:
     clear();
 
     for (usize i = 0; i < other.len(); i++) {
-      new (slot(i)) T(other[i]);
+      push(other[i]);
     }
     return *this;
   }
