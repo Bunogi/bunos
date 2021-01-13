@@ -6,4 +6,4 @@ toolchain/prefix
 toolchain/work/*
 toolchain/work/.*
 toolchain/*.tar*
-
+root/

@@ -32,7 +32,7 @@ add_custom_target(
 add_custom_target(
   kernel.sym
   ALL
-  COMMAND nm -n kernel.bin | c++filt > ${BUNOS_ROOT_DIR}/boot/kernel.sym
+  COMMAND mkdir -p ${BUNOS_INSTALL_DIR}/boot/ && nm -n kernel.bin | c++filt > ${BUNOS_INSTALL_DIR}/boot/kernel.sym
   VERBATIM
   DEPENDS kernel.bin
 )
