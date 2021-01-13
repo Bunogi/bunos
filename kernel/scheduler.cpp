@@ -51,10 +51,6 @@ void Scheduler::wake(x86::InterruptFrame *frame) {
   static volatile usize ticks_left = 0;
   static volatile bool first_switch = true;
 
-  if (!m_enabled) {
-    return;
-  }
-
   if (ticks_left == 0) {
     // TODO: Purge the done processes?
 
@@ -111,11 +107,5 @@ void Scheduler::wake(x86::InterruptFrame *frame) {
   }
 
   this_tick++;
-}
-
-void Scheduler::disable() {
-  if (s_scheduler) {
-    s_scheduler->m_enabled = false;
-  }
 }
 } // namespace kernel

@@ -24,7 +24,7 @@ void print_stack_trace(u32 current_eip, StackFrame *frame) {
     }
   }
   // assumption: bottom-most stack frame has a base pointer of 0
-  while (frame) {
+  while (frame->ebp) {
     printf("%p     ", frame->eip);
     if (kernel::debug_symbols_loaded()) {
       printf("%s\n", kernel::function_name_from_pc(frame->eip).data());
@@ -85,18 +85,16 @@ bu::StringView exception_vector_to_string(u16 vector) {
     return nullptr;
   }
 }
-void disable_non_printing_interrupts() {
-  kernel::Scheduler::disable();
-  auto *instance = kernel::InterruptManager::instance();
-  instance->disable_non_printing_interrupts();
-  kernel::print::flush();
-  instance->enable_interrupts();
-}
+
+static bool s_panicking;
 } // namespace
 
 namespace kernel {
+bool in_panic() { return s_panicking; }
+
 void panic_from_interrupt(x86::InterruptFrame *frame,
                           const bu::StringView reason, bool has_errcode) {
+  s_panicking = true;
   printf("====KERNEL_PANIC====\n"
          "%s\n",
          reason.data_or("No message given"));
@@ -135,8 +133,9 @@ void panic_from_interrupt(x86::InterruptFrame *frame,
 
 void panic_in_code(const char *file, const u32 line,
                    const bu::StringView reason) {
-  // disable_non_printing_interrupts();
-  kernel::print::flush();
+  __asm__ volatile("cli");
+  s_panicking = true;
+
   printf("====KERNEL_PANIC====\n%s", reason.data_or("No message given"));
   printf("\nLOCATION: %s:%u\n", file, line);
 

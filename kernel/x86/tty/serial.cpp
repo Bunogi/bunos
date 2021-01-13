@@ -135,12 +135,18 @@ void Serial::write(const char *buf, const usize length) {
     // Block until we can fit the rest of the buffer in
     const auto remaining = length - written;
 
-    instance->enable_interrupts();
-    volatile auto &buffer = m_buffer;
-    while (buffer.vol_remaining_space() < remaining) {
-      timer::delay(10);
+    if (kernel::in_panic()) {
+      while (m_buffer.remaining_space() < remaining) {
+        transmit();
+      }
+    } else {
+      instance->enable_interrupts();
+      volatile auto &buffer = m_buffer;
+      while (buffer.vol_remaining_space() < remaining) {
+        timer::delay(10);
+      }
+      instance->disable_interrupts();
     }
-    instance->disable_interrupts();
     const auto written_again =
         m_buffer.write(reinterpret_cast<const u8 *>(buf) + written, remaining);
     if (written_again + written != length) {
@@ -150,12 +156,11 @@ void Serial::write(const char *buf, const usize length) {
     }
     ASSERT_EQ(written_again + written, length);
   }
-}
+} // namespace kernel::x86::tty
 
 void Serial::transmit() {
   const auto guard = InterruptManager::instance()->disable_interrupts_guarded();
   if (ready_to_send()) {
-    // m_buffer.drop(fifo_size);
     u8 send_buffer[fifo_size] = {};
     const auto to_send = m_buffer.take(send_buffer, fifo_size);
     out_u8_string(regs::transmit_buffer, send_buffer, to_send);
