@@ -2,10 +2,6 @@
 #include <kernel/process.hpp>
 #include <kernel/x86/memory.hpp>
 
-extern "C" {
-extern void _x86_process_entry();
-}
-
 namespace kernel {
 void x86::Registers::update_from_frame(InterruptFrame *frame) {
   edi = frame->edi;
