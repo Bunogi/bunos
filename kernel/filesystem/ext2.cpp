@@ -83,9 +83,8 @@ ext2::Inode Ext2::read_inode_from_disk(u32 inode_index) {
   const auto inode_table = descriptor.inode_table_start_block_addr;
 
 #ifdef EXT2_DEBUG
-  DEBUG_PRINTF("Block group: %u,", block_group);
-  printf(" inode_table: %u,", inode_table);
-  printf(" table_index: %u\n", table_index);
+  DEBUG_PRINTF("Block group: %u, inode_table: %u, table_index: %u\n",
+               block_group, inode_table, table_index);
 #endif
 
   static_assert(sizeof(ext2::Inode) == 128);
@@ -159,9 +158,10 @@ bu::Vector<u8> Ext2::read_inode_block_from_disk(const ext2::Inode &inode,
   const auto triple_indirect_block_count =
       m_block_size * m_block_size * m_block_size / sizeof(u32);
 
-  if (block_number <= direct_block_count) {
+  if (block_number < direct_block_count) {
     return read_block_from_disk(inode.direct_block_pointers[block_number]);
   } else if (block_number <= indirect_block_count) {
+    puts("==> READING INDIRECT");
     return read_indirect_block_from_disk(inode.indir_block_pointer,
                                          block_number - direct_block_count);
   } else {
@@ -177,7 +177,7 @@ isize Ext2::read_file(bu::StringView file, u8 *buffer, u64 offset, usize len) {
          ((u64)inode->size_upper << 32 | (u64)inode->size_lower));
 
   const auto start_block = offset / m_block_size;
-  const auto end_block = bu::divide_ceil(offset + len, (u64)m_block_size);
+  const auto end_block = bu::divide_ceil(offset + len, (u64)m_block_size) - 1;
 
   // First block is special and might have to be offset based on the file offset
   // to start reading from.
@@ -186,22 +186,24 @@ isize Ext2::read_file(bu::StringView file, u8 *buffer, u64 offset, usize len) {
   memcpy(buffer, this_block.data() + first_block_offset,
          m_block_size - first_block_offset);
 
+  // Whole blocks to read
   auto *buffer_offset = buffer + m_block_size - first_block_offset;
-  for (auto i = start_block + 1; i < end_block - 1; i++) {
+  for (auto i = start_block + 1; i < end_block; i++) {
     this_block = read_inode_block_from_disk(*inode.get(), i);
     memcpy(buffer_offset, this_block.data(), m_block_size);
     buffer_offset += m_block_size;
   }
 
-  // Last block is also special
-  this_block = read_inode_block_from_disk(*inode.get(), end_block);
-  const auto bytes_left =
-      (len % m_block_size == 0) ? m_block_size : len % m_block_size;
-  const auto final_read_offset = offset % m_block_size;
-  memcpy(buffer_offset, this_block.data() + final_read_offset, bytes_left);
+  // Read the final block
+  auto bytes_read = static_cast<uintptr_t>(buffer_offset - buffer);
+  const auto bytes_left = len - bytes_read;
+  if (bytes_left > 0) {
+    this_block = read_inode_block_from_disk(*inode.get(), end_block);
+    memcpy(buffer_offset, this_block.data(), bytes_left);
+    bytes_read += bytes_left;
+  }
 
-  return reinterpret_cast<uintptr_t>(buffer_offset) -
-         reinterpret_cast<uintptr_t>(buffer) + bytes_left;
+  return bytes_read;
 }
 
 void Ext2::for_each_entry_in_dir(
