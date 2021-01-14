@@ -20,8 +20,13 @@
 #include <stdio.h>
 
 extern "C" {
+extern void _init();
+}
+
+extern "C" {
 void kernel_main() {
   using namespace kernel;
+  _init();
 
   x86::tty::Vga early_printer;
   print::init(&early_printer);

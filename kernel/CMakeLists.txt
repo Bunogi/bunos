@@ -10,15 +10,6 @@
 #  SOURCES "${CMAKE_SOURCE_DIR}/kernel/x86/boot.s")
 #set_source_files_properties(boot.o PROPERTIES GENERATED true)
 
-# TODO: Setup crtbegin.o and crtend.o
-
-#add_custom_command(
-#  OUTPUT crtbegin.o crtend.o
-#  COMMAND sh -c "cp \$(${CMAKE_CXX_COMPILER} -print-file-name=crtbegin.o) ."
-#  COMMAND sh -c "cp \$(${CMAKE_CXX_COMPILER} -print-file-name=crtend.o) ."
-#  VERBATIM
-#)
-
 # standard QEMU flags for use with everything
 set(QEMU_FLAGS -m 4G -serial stdio)
 set(DISK_IMAGE -drive file=../disk.img,format=raw)
@@ -43,8 +34,8 @@ add_custom_target(
   DEPENDS kernel.bin image
 )
 
-add_executable(
-  kernel.bin
+add_library(kernel.object
+  STATIC
   debugsymbols.cpp
   filesystem/ext2.cpp
   filesystem/vfs.cpp
@@ -75,12 +66,46 @@ add_executable(
   x86/tty/serial.cpp
   x86/tty/vga.cpp
 )
-#add_dependencies(kernel.bin boot.o)
 
 set(KERNEL_LINK_SCRIPT "${CMAKE_SOURCE_DIR}/kernel/x86/linker.ld")
-set_target_properties(kernel.bin PROPERTIES LINK_DEPENDS ${KERNEL_LINK_SCRIPT})
-set_target_properties(kernel.bin PROPERTIES COMPILE_FLAGS "${KERNEL_BUILD_FLAGS}")
+set_target_properties(kernel.object PROPERTIES COMPILE_FLAGS "${KERNEL_BUILD_FLAGS}")
+target_compile_definitions(kernel.object PRIVATE __IN_KERNEL__=1 __IS_X86__=1)
 
-target_link_options(kernel.bin PRIVATE -T ${KERNEL_LINK_SCRIPT} -nostdlib)
-target_link_libraries(kernel.bin -lgcc c-kernel bustd-kernel)
-target_compile_definitions(kernel.bin PRIVATE __IN_KERNEL__=1 __IS_X86__=1)
+add_custom_command(
+  OUTPUT crtbegin.o crtend.o
+  COMMAND sh -c "cp \$(${CMAKE_CXX_COMPILER} -print-file-name=crtbegin.o) ."
+  COMMAND sh -c "cp \$(${CMAKE_CXX_COMPILER} -print-file-name=crtend.o) ."
+  VERBATIM
+)
+
+add_custom_target(
+  crti.o
+  COMMAND ${CMAKE_ASM_COMPILER} -c ${CMAKE_SOURCE_DIR}/kernel/x86/crti.s -o crti.o
+  DEPENDS ${CMAKE_SOURCE_DIR}/kernel/x86/crti.s
+)
+
+add_custom_target(
+  crtn.o
+  COMMAND ${CMAKE_ASM_COMPILER} -c ${CMAKE_SOURCE_DIR}/kernel/x86/crtn.s -o crtn.o
+  DEPENDS ${CMAKE_SOURCE_DIR}/kernel/x86/crtn.s
+)
+
+set(KERNEL_LINK_LIBS
+  crti.o
+  crtbegin.o
+  -L. -lkernel.object
+  -L../libc -lc-kernel
+  -L../bustd -lbustd-kernel
+  -lgcc
+  crtend.o
+  crtn.o)
+
+set(KERNEL_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+separate_arguments(KERNEL_CXX_FLAGS)
+
+add_custom_target(
+  kernel.bin
+  COMMAND ${CMAKE_CXX_COMPILER} ${KERNEL_CXX_FLAGS} ${KERNEL_LINK_LIBS} -T ${KERNEL_LINK_SCRIPT} -nostdlib -o kernel.bin
+  DEPENDS kernel.object ${KERNEL_LINK_SCRIPT} crti.o crtn.o crtbegin.o crtend.o bustd-kernel c-kernel
+  VERBATIM
+)
