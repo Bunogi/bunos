@@ -1,5 +1,6 @@
 #include <bustd/assert.hpp>
 #include <kernel/interruptmanager.hpp>
+#include <kernel/memory.hpp>
 #include <kernel/physicalmalloc.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/memory.hpp>
@@ -103,11 +104,11 @@ public:
   bool zero : 1; // must be zero in a valid entry
   bool global : 1;
   u8 available : 3;
-  u32 physical_page_address;
+  kernel::PhysicalAddress page_address;
 
   u32 as_u32() const {
-    ASSERT_EQ(physical_page_address & 0x00000FFF, 0);
-    u32 out = (physical_page_address & 0xFFFFF000);
+    ASSERT_EQ(page_address.get() & 0x00000FFF, 0);
+    u32 out = (page_address.get() & 0xFFFFF000);
     out |= static_cast<u8>(present) << 0;
     out |= static_cast<u8>(read_write) << 1;
     out |= static_cast<u8>(user) << 2;
@@ -159,7 +160,7 @@ public:
       }
     }
     out.available = (from >> 9) & 0x7;
-    out.physical_page_address = from & 0xFFFFF000;
+    out.page_address = kernel::PhysicalAddress(from & 0xFFFFF000);
     return out;
   }
 };
@@ -174,19 +175,21 @@ u32 virtual_address_from_indices(const u16 page_directory_index,
   return from_directory + from_table;
 }
 
+/*
 u16 page_dir_index_from_virtual_addr(const u32 addr) {
-  constexpr u32 dir_entries = 1024;
-  constexpr u32 bytes_per_entry = 0x1000; // 4M
-  const u32 to_check = addr & 0xFFFFF000;
+constexpr u32 dir_entries = 1024;
+constexpr u32 bytes_per_entry = 0x1000; // 4M
+const u32 to_check = addr & 0xFFFFF000;
 
-  return to_check / (dir_entries * bytes_per_entry);
+return to_check / (dir_entries * bytes_per_entry);
 }
+*/
 
 // TODO: bustd should have some generic guard type to make stuff like this
 // easier
 class TemporaryPageMapGuard {
 public:
-  TemporaryPageMapGuard(const u64 physical_address)
+  TemporaryPageMapGuard(kernel::PhysicalAddress address)
       : m_guard(kernel::InterruptManager::instance()
                     ->disable_interrupts_guarded()) {
     // FIXME: use spinlock?
@@ -202,13 +205,12 @@ public:
     s_m_in_use = true;
 
     PageTableEntry entry{};
-    entry.physical_page_address = physical_address;
+    entry.page_address = address;
     entry.present = true;
     entry.read_write = true;
     // FIXME: Do to all threads
-    constexpr u32 index = kernel::x86::virt_to_phys_addr(static_cast<u64>(
-                              kernel::vmem::ReservedRegion::Temp)) /
-                          0x1000;
+    constexpr u32 index =
+        kernel::vmem::reserved::Temp.to_linked_location().get() / 0x1000;
     kernel::x86::kernel_page_table[index] = entry.as_u32();
     _x86_refresh_page_directory();
   }
@@ -216,9 +218,8 @@ public:
   ~TemporaryPageMapGuard() {
     ASSERT(s_m_in_use);
     // FIXME: do for all threads
-    constexpr u32 index = kernel::x86::virt_to_phys_addr(static_cast<u64>(
-                              kernel::vmem::ReservedRegion::Temp)) /
-                          0x1000;
+    constexpr u32 index =
+        kernel::vmem::reserved::Temp.to_linked_location().get() / 0x1000;
     PageTableEntry entry{};
     entry.present = false;
     kernel::x86::kernel_page_table[index] = entry.as_u32();
@@ -226,9 +227,7 @@ public:
     s_m_in_use = false;
   }
 
-  void *mapped_address() const {
-    return reinterpret_cast<void *>(kernel::vmem::ReservedRegion::Temp);
-  }
+  void *mapped_address() const { return kernel::vmem::reserved::Temp.ptr(); }
 
 private:
   kernel::InterruptManager::InterruptGuard m_guard;
@@ -237,7 +236,9 @@ private:
 
 volatile bool TemporaryPageMapGuard::s_m_in_use{false};
 
-u16 page_table_index_from_virtual_addr(const u32 addr) { return addr / 0x1000; }
+u16 page_table_index_from_addr(kernel::VirtualAddress addr) {
+  return addr.get() / 0x1000;
+}
 
 void init_kernel_area(PageTableEntry &&table_settings, const u32 start,
                       const u32 stop) {
@@ -248,8 +249,7 @@ void init_kernel_area(PageTableEntry &&table_settings, const u32 start,
   // we have to do end_offset - start_offset pages + 1 to account for overrun
   for (uintptr_t physical_page = start_page; physical_page < end_page;
        physical_page++) {
-    const auto physical_address = physical_page * 4096;
-    table_settings.physical_page_address = physical_address;
+    table_settings.page_address = kernel::PhysicalAddress(physical_page * 4096);
     table_settings.present = true;
 
     // We can do this because the address translation is linear.
@@ -259,10 +259,12 @@ void init_kernel_area(PageTableEntry &&table_settings, const u32 start,
 }
 
 void init_nonwritable_kernel_sections() {
-  const u32 start_offset = kernel::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&_kernel_nonwritable_start));
-  const u32 end_offset = kernel::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&_kernel_nonwritable_end));
+  const u32 start_offset = kernel::VirtualAddress(&_kernel_nonwritable_start)
+                               .to_linked_location()
+                               .get();
+  const u32 end_offset = kernel::VirtualAddress(&_kernel_nonwritable_end)
+                             .to_linked_location()
+                             .get();
 
   PageTableEntry entry{};
   init_kernel_area(bu::move(entry), start_offset, end_offset);
@@ -271,10 +273,12 @@ void init_nonwritable_kernel_sections() {
 }
 
 void init_writable_kernel_sections() {
-  const u32 start_offset = kernel::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&_kernel_writable_start));
-  const u32 end_offset = kernel::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&_kernel_writable_end));
+  const u32 start_offset = kernel::VirtualAddress(&_kernel_writable_start)
+                               .to_linked_location()
+                               .get();
+
+  const u32 end_offset =
+      kernel::VirtualAddress(&_kernel_writable_end).to_linked_location().get();
 
   PageTableEntry entry{}; // All fields zero
   entry.read_write = true;
@@ -282,10 +286,10 @@ void init_writable_kernel_sections() {
 }
 
 void init_kernel_heap_section() {
-  const u32 start_offset = kernel::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&_kernel_heap_start));
-  const u32 end_offset = kernel::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&_kernel_heap_end));
+  const u32 start_offset =
+      kernel::VirtualAddress(&_kernel_heap_start).to_linked_location().get();
+  const u32 end_offset =
+      kernel::VirtualAddress(&_kernel_heap_end).to_linked_location().get();
 
   PageTableEntry entry{}; // All fields zero
   entry.read_write = true;
@@ -295,13 +299,12 @@ void init_kernel_heap_section() {
 void init_other_sections() {
   // VGA -> 0xxxx2000
   PageTableEntry entry{};
-  entry.physical_page_address = 0xB8000;
+  entry.page_address = kernel::PhysicalAddress(0xB8000);
   entry.present = true;
   entry.read_write = true;
 
-  constexpr u32 index = kernel::x86::virt_to_phys_addr(static_cast<u64>(
-                            kernel::vmem::ReservedRegion::Vga)) /
-                        0x1000;
+  constexpr u32 index =
+      kernel::vmem::reserved::Vga.to_linked_location().get() / 0x1000;
   kernel::x86::kernel_page_table[index] = entry.as_u32();
 }
 
@@ -325,8 +328,9 @@ void reinit_page_directory() {
   kernel::x86::kernel_page_directory
       [kernel::x86::kernel_address_space_dir_index] = entry.as_u32();
 
-  u32 address = kernel::x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(&kernel::x86::kernel_page_directory));
+  u32 address = kernel::VirtualAddress(&kernel::x86::kernel_page_directory)
+                    .to_linked_location()
+                    .get();
   _x86_set_page_directory(address);
 }
 
@@ -343,7 +347,7 @@ void init_memory_management() {
 }
 
 // FIXME: This should be able to allocate several pages at once
-void *map_kernel_memory(u32 page_count) {
+VirtualAddress map_kernel_memory(u32 page_count) {
   // TODO: do this for every kernel thread
   // FIXME: This way of detecting free entries won't work if we have explicitly
   // mapped some memory as not present
@@ -354,8 +358,8 @@ void *map_kernel_memory(u32 page_count) {
   // starting point.
   u16 page_directory_index = 0;
   u16 page_table_index = 0;
-  const auto kernel_end_as_table_index = page_table_index_from_virtual_addr(
-      reinterpret_cast<uintptr_t>(&_kernel_heap_end));
+  const auto kernel_end_as_table_index =
+      page_table_index_from_addr(VirtualAddress(&_kernel_heap_end));
   ASSERT(kernel_end_as_table_index < 1024);
   // reinterpret_cast<u64>(&_kernel_heap_end) / 1024;
   for (u16 i = kernel_end_as_table_index; i < 1024; i++) {
@@ -382,7 +386,8 @@ void *map_kernel_memory(u32 page_count) {
       for (u16 j = 0; j < 0x1000; j++) {
         const u32 *table =
             reinterpret_cast<u32 *>(virtual_address_from_indices(i, j));
-        const TemporaryPageMapGuard guard(reinterpret_cast<uintptr_t>(table));
+        const TemporaryPageMapGuard guard((kernel::PhysicalAddress(
+            reinterpret_cast<kernel::PhysicalAddress::Type>(table))));
         const auto entry = PageTableEntry::from_u32(
             *reinterpret_cast<u32 *>(guard.mapped_address()));
         if (!entry.present) {
@@ -413,14 +418,14 @@ found_entry:
   PageTableEntry new_entry{};
   // FIXME: Have some way to de-allocate afterwards
   const auto physical_page = kernel::pmem::allocate();
-  new_entry.physical_page_address = physical_page.address();
+  new_entry.page_address = physical_page.address();
   new_entry.read_write = true;
   new_entry.present = true;
 
   // Temporarily map this table in memory instead of trying to find it mapped
   // somewhere.
   {
-    const TemporaryPageMapGuard guard(static_cast<u64>(table));
+    const TemporaryPageMapGuard guard((PhysicalAddress(table)));
     u32 *const mapped = reinterpret_cast<u32 *>(guard.mapped_address());
     mapped[page_table_index] = new_entry.as_u32();
   }
@@ -428,7 +433,7 @@ found_entry:
   auto *const retval = reinterpret_cast<void *>(
       virtual_address_from_indices(page_directory_index, page_table_index));
   printf("Successfully allocated kernel page at %p\n", retval);
-  return retval;
+  return VirtualAddress(retval);
 }
 
 } // namespace kernel::x86

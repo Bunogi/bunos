@@ -37,24 +37,24 @@ void x86::Registers::prepare_frame(InterruptFrame *frame) {
 Process::Process(void (*entry)()) : m_registers() {
   m_registers.eip = reinterpret_cast<uintptr_t>(entry);
   m_registers.ebp = 0;
-  m_page_directory = x86::virt_to_phys_addr(
-      reinterpret_cast<uintptr_t>(x86::kernel_page_directory));
+  m_page_directory =
+      VirtualAddress(x86::kernel_page_directory).to_linked_location();
   m_kernel_stack_start = x86::map_kernel_memory(1);
   // Stack must be 16 byte aligned
   m_registers.esp =
-      reinterpret_cast<uintptr_t>(m_kernel_stack_start) + (4096 - 16);
+      reinterpret_cast<VirtualAddress::Type>(m_kernel_stack_start.get()) +
+      (4096 - 16);
   m_last_run = 0;
   m_has_run = false;
 }
 
 void Process::push_return_address() {
   m_registers.esp -= 4;
-  const auto index =
-      (m_registers.esp - reinterpret_cast<uintptr_t>(m_kernel_stack_start)) / 4;
-  reinterpret_cast<u32 *>(m_kernel_stack_start)[index] = m_registers.eip;
+  const auto index = (m_registers.esp - m_kernel_stack_start.get()) / 4;
+  reinterpret_cast<u32 *>(m_kernel_stack_start.ptr())[index] = m_registers.eip;
 }
 
 bool Process::has_overflowed_stack() const {
-  return m_registers.esp < reinterpret_cast<uintptr_t>(m_kernel_stack_start);
+  return m_registers.esp < m_kernel_stack_start.get();
 }
 } // namespace kernel

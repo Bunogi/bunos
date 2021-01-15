@@ -1,16 +1,17 @@
 #pragma once
 
 #include <bustd/stddef.hpp>
+#include <kernel/memory.hpp>
 
 namespace kernel::pmem {
 class PhysicalPage {
 
 public:
-  PhysicalPage(u64 addr);
-  u64 address() const;
+  PhysicalPage(PhysicalAddress addr);
+  PhysicalAddress address() const;
 
 private:
-  u64 m_address{0};
+  PhysicalAddress m_address{PhysicalAddress(0)};
 };
 
 void init();

@@ -91,7 +91,11 @@ void Scheduler::wake(x86::InterruptFrame *frame) {
     }
 
     auto &proc = m_processes[lowest_run];
-    _x86_set_page_directory(reinterpret_cast<u32>(proc.m_page_directory));
+#ifdef __IS_X86__
+    _x86_set_page_directory(proc.m_page_directory.get());
+#else
+#error Expected x86!
+#endif
 
     // proc.push_return_address();
     new_esp = proc.m_registers.esp;

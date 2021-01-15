@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kernel/memory.hpp>
 #include <kernel/x86/interrupts.hpp>
 #include <kernel/x86/memory.hpp>
 
@@ -29,8 +30,8 @@ public:
 
 private:
   Registers m_registers;
-  void *m_kernel_stack_start;
-  uintptr_t m_page_directory;
+  VirtualAddress m_kernel_stack_start;
+  PhysicalAddress m_page_directory;
   u32 m_last_run;
   bool m_has_run;
 };
