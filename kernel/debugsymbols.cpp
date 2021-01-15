@@ -88,24 +88,15 @@ bu::StringView function_name_from_pc(u32 pc) {
   ASSERT(s_symbols->len() >= 2);
 
   auto &symbols = *s_symbols;
-  auto &prev_pc = symbols[0];
+  auto *prev_pc = &symbols[0];
   for (usize i = 0; i < s_symbols->len(); i++) {
     if (pc < symbols[i].offset) {
-      return bu::StringView(prev_pc.name.data());
+      return bu::StringView(prev_pc->name.data());
     }
-    prev_pc = symbols[i];
+    prev_pc = &symbols[i];
   }
-  /*
-  usize i = 0;
-  auto &next_pc = s_symbols->at(i);
-  i = 1;
-  while (i < s_symbols->len() && pc > next_pc.offset) {
-    printf("Hi %u\n", i);
-    next_pc = s_symbols->at(i++);
-  }
-  */
 
-  return bu::StringView(prev_pc.name.data());
+  return bu::StringView(prev_pc->name.data());
 }
 
 bool debug_symbols_loaded() { return s_symbols_loaded; }
