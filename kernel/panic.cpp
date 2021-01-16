@@ -87,6 +87,14 @@ bu::StringView exception_vector_to_string(u16 vector) {
 }
 
 static bool s_panicking;
+
+void nested_panic_check() {
+  if (s_panicking) {
+    puts("Kernel panic while panicking!");
+    kernel::print::flush();
+    __asm__ volatile("cli\nhlt");
+  }
+}
 } // namespace
 
 namespace kernel {
@@ -94,7 +102,6 @@ bool in_panic() { return s_panicking; }
 
 void panic_from_interrupt(x86::InterruptFrame *frame,
                           const bu::StringView reason, bool has_errcode) {
-  s_panicking = true;
   printf("====KERNEL_PANIC====\n"
          "%s\n",
          reason.data_or("No message given"));
@@ -125,6 +132,11 @@ void panic_from_interrupt(x86::InterruptFrame *frame,
          "0x%.8X\n",
          frame->eip, frame->cs, frame->eflags, frame->useresp, frame->ss);
 
+  // It's safe to wait with this check for a while because the most likely way
+  // for us to crash here is when printing the stack trace.
+  nested_panic_check();
+  s_panicking = true;
+
   print_stack_trace(frame->eip, reinterpret_cast<StackFrame *>(frame->ebp));
 
   kernel::print::flush();
@@ -134,10 +146,14 @@ void panic_from_interrupt(x86::InterruptFrame *frame,
 void panic_in_code(const char *file, const u32 line,
                    const bu::StringView reason) {
   __asm__ volatile("cli");
-  s_panicking = true;
 
   printf("====KERNEL_PANIC====\n%s", reason.data_or("No message given"));
   printf("\nLOCATION: %s:%u\n", file, line);
+
+  // It's safe to wait with this check for a while because the most likely way
+  // for us to crash here is when printing the stack trace.
+  nested_panic_check();
+  s_panicking = true;
 
   StackFrame *frame;
   __asm__ volatile("movl %%ebp, %0\n" : "=r"(frame));
