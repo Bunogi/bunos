@@ -346,8 +346,8 @@ void init_memory_management() {
   printf("Re-initialized paging\n");
 }
 
-// FIXME: This should be able to allocate several pages at once
-VirtualAddress map_kernel_memory(u32 page_count) {
+VirtualAddress map_kernel_memory(u32 continous_page_count) {
+  ASSERT(continous_page_count > 0);
   // TODO: do this for every kernel thread
   // FIXME: This way of detecting free entries won't work if we have explicitly
   // mapped some memory as not present
@@ -361,20 +361,32 @@ VirtualAddress map_kernel_memory(u32 page_count) {
   const auto kernel_end_as_table_index =
       page_table_index_from_addr(VirtualAddress(&_kernel_heap_end));
   ASSERT(kernel_end_as_table_index < 1024);
-  // reinterpret_cast<u64>(&_kernel_heap_end) / 1024;
+
+  u16 free_in_a_row = 0;
   for (u16 i = kernel_end_as_table_index; i < 1024; i++) {
     const auto entry =
         PageTableEntry::from_u32(kernel::x86::kernel_page_table[i]);
     if (!entry.present) {
-      page_directory_index = kernel::x86::kernel_address_space_dir_index;
-      page_table_index = i;
-      break;
+      free_in_a_row++;
+      if (free_in_a_row == continous_page_count) {
+        page_directory_index = kernel::x86::kernel_address_space_dir_index;
+        ASSERT(i > continous_page_count);
+        page_table_index = i - continous_page_count;
+        break;
+      }
+    } else {
+      free_in_a_row = 0;
     }
   }
 
   // Did not find free space in the first page dir entry, have to look further
   // ahead
   if (page_directory_index == 0) {
+    if (free_in_a_row != 0) {
+      puts("[vmem] Would probably be able to allocate across page-directory "
+           "boundaries");
+    }
+
     for (u16 i = kernel::x86::kernel_address_space_dir_index + 1; i < 1024;
          i++) {
       const auto entry =
@@ -383,6 +395,9 @@ VirtualAddress map_kernel_memory(u32 page_count) {
         TODO("Need to create a new page directory entry");
       }
 
+      // FIXME: We should support using addresses across page-directory
+      // boundaries for multipage allocs
+      free_in_a_row = 0;
       for (u16 j = 0; j < 0x1000; j++) {
         const u32 *table =
             reinterpret_cast<u32 *>(virtual_address_from_indices(i, j));
@@ -391,9 +406,15 @@ VirtualAddress map_kernel_memory(u32 page_count) {
         const auto entry = PageTableEntry::from_u32(
             *reinterpret_cast<u32 *>(guard.mapped_address()));
         if (!entry.present) {
-          page_directory_index = i;
-          page_table_index = j;
-          goto found_entry;
+          free_in_a_row++;
+          if (free_in_a_row == continous_page_count) {
+            page_directory_index = i;
+            ASSERT(j > continous_page_count);
+            page_table_index = j - continous_page_count;
+            goto found_entry;
+          }
+        } else {
+          free_in_a_row = 0;
         }
       }
     }
@@ -406,7 +427,7 @@ found_entry:
   }
 
   ASSERT(page_directory_index < 1024);
-  ASSERT(page_table_index < 1024);
+  ASSERT(page_table_index + continous_page_count < 1024);
   printf("Found room at PD[%u], PT[%u], addr: %p\n", page_directory_index,
          page_table_index,
          virtual_address_from_indices(page_directory_index, page_table_index));
@@ -415,19 +436,20 @@ found_entry:
       kernel::x86::kernel_page_directory[page_directory_index]);
   u32 table = entry.page_table_address;
 
-  PageTableEntry new_entry{};
-  // FIXME: Have some way to de-allocate afterwards
-  const auto physical_page = kernel::pmem::allocate();
-  new_entry.page_address = physical_page.address();
-  new_entry.read_write = true;
-  new_entry.present = true;
+  const TemporaryPageMapGuard guard((PhysicalAddress(table)));
+  u32 *const page_table = reinterpret_cast<u32 *>(guard.mapped_address());
 
-  // Temporarily map this table in memory instead of trying to find it mapped
-  // somewhere.
-  {
-    const TemporaryPageMapGuard guard((PhysicalAddress(table)));
-    u32 *const mapped = reinterpret_cast<u32 *>(guard.mapped_address());
-    mapped[page_table_index] = new_entry.as_u32();
+  for (u32 i = page_table_index; i < page_table_index + continous_page_count;
+       i++) {
+
+    PageTableEntry new_entry{};
+    // FIXME: Have some way to de-allocate afterwards
+    const auto physical_page = kernel::pmem::allocate();
+    new_entry.page_address = physical_page.address();
+    new_entry.read_write = true;
+    new_entry.present = true;
+
+    page_table[i] = new_entry.as_u32();
   }
 
   auto *const retval = reinterpret_cast<void *>(
