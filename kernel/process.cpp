@@ -34,16 +34,16 @@ void x86::Registers::prepare_frame(InterruptFrame *frame) {
   frame->eflags = eflags;
 }
 
-Process::Process(void (*entry)()) : m_registers() {
+Process::Process(void (*entry)()) : m_registers(), m_kernel_stack_pages(2) {
   m_registers.eip = reinterpret_cast<uintptr_t>(entry);
   m_registers.ebp = 0;
   m_page_directory =
       VirtualAddress(x86::kernel_page_directory).to_linked_location();
-  m_kernel_stack_start = x86::map_kernel_memory(1);
+  m_kernel_stack_start = x86::map_kernel_memory(m_kernel_stack_pages);
   // Stack must be 16 byte aligned
   m_registers.esp =
       reinterpret_cast<VirtualAddress::Type>(m_kernel_stack_start.get()) +
-      (4096 - 16);
+      (PAGE_SIZE * m_kernel_stack_pages - 16);
   m_last_run = 0;
   m_has_run = false;
 }

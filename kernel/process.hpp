@@ -33,6 +33,7 @@ private:
   VirtualAddress m_kernel_stack_start;
   PhysicalAddress m_page_directory;
   u32 m_last_run;
+  u32 m_kernel_stack_pages;
   bool m_has_run;
 };
 } // namespace kernel
