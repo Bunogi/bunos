@@ -3,6 +3,8 @@
 #include <bustd/stddef.hpp>
 #include <kernel/memory.hpp>
 
+#define PAGE_SIZE 0x1000
+
 extern "C" {
 // memory.s
 extern void _x86_set_page_directory(u32 addr);

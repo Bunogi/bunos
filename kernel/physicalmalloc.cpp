@@ -1,4 +1,5 @@
 #include <bustd/bitfield.hpp>
+#include <kernel/memory.hpp>
 #include <kernel/physicalmalloc.hpp>
 #include <kernel/x86/memory.hpp>
 
@@ -9,38 +10,27 @@ extern "C" {
 extern char _kernel_heap_end;
 }
 
-// TODO: Parse memory map and stuff
-// TODO: This does not have to be heap-allocated when global constructors get
-// called
-static bu::Bitfield<8192> *s_allocations;
-static u64 s_allocatable_page_start;
-constexpr u64 physical_page_size = 0x1000;
-
 namespace kernel::pmem {
+static bu::Bitfield<8192> s_allocations;
+static const u64 s_allocatable_page_start =
+    VirtualAddress(reinterpret_cast<uintptr_t>(&_kernel_heap_end))
+        .to_linked_location()
+        .get();
+
 PhysicalPage::PhysicalPage(PhysicalAddress addr) : m_address(addr) {}
 PhysicalAddress PhysicalPage::address() const { return m_address; }
 
-void init() {
-  ASSERT_EQ(s_allocations, nullptr);
-  s_allocations = new bu::Bitfield<8192>();
-  // TODO: call global constructors, put this outside
-  s_allocatable_page_start =
-      VirtualAddress(reinterpret_cast<uintptr_t>(&_kernel_heap_end))
-          .to_linked_location()
-          .get() +
-      physical_page_size;
-  ASSERT_EQ(s_allocatable_page_start & 0xFFF, 0);
-}
+// TODO: Parse memory map and stuff
+void init() { ASSERT_EQ(s_allocatable_page_start & 0xFFF, 0); }
 
 PhysicalPage allocate() {
-  ASSERT_NE(s_allocations, nullptr);
-  // printf("[pmem] start: %p \n", s_allocatable_page_start);
+  printf("[pmem] start: %p \n", s_allocatable_page_start);
 
   // TODO: This should allow you to use a range-based for
-  for (usize i = 0; i < s_allocations->size(); i++) {
-    if (!s_allocations->at(i)) {
-      s_allocations->set(i, true);
-      const auto address = i * physical_page_size + s_allocatable_page_start;
+  for (usize i = 0; i < s_allocations.size(); i++) {
+    if (!s_allocations.at(i)) {
+      s_allocations.set(i, true);
+      const auto address = i * PAGE_SIZE + s_allocatable_page_start;
       printf("[pmem] Allocated physical page at %p\n", address);
       return PhysicalPage(PhysicalAddress(address));
     }
@@ -50,15 +40,13 @@ PhysicalPage allocate() {
 }
 
 void deallocate(PhysicalPage page) {
-  ASSERT_NE(s_allocations, nullptr);
-
   // They have to be page aligned
-  ASSERT_EQ(page.address().get() & (physical_page_size - 1), 0);
+  ASSERT_EQ(page.address().get() & (PAGE_SIZE - 1), 0);
   ASSERT(page.address().get() >= s_allocatable_page_start);
 
   const auto as_index =
-      (page.address().get() - s_allocatable_page_start) / physical_page_size;
-  ASSERT_EQ(s_allocations->at(as_index), true);
-  s_allocations->set(as_index, false);
+      (page.address().get() - s_allocatable_page_start) / PAGE_SIZE;
+  ASSERT_EQ(s_allocations.at(as_index), true);
+  s_allocations.set(as_index, false);
 }
 } // namespace kernel::pmem
