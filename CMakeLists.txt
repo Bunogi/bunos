@@ -4,7 +4,6 @@ if(NOT BUNOS_BUILD_HOST)
   set(CMAKE_C_COMPILER_WORKS 1)
   set(CMAKE_CXX_COMPILER_WORKS 1)
   set(CMAKE_TOOLCHAIN_FILE cross.cmake)
-  add_compile_definitions(__BUNOS__) #TODO: should be done with os-specific compiler
 endif()
 
 function(bunos_test FILE LIBS)
@@ -19,10 +18,9 @@ function(bunos_test FILE LIBS)
 endfunction()
 
 function(bunos_lib)
-  #FIXME: Remove KERNEL_ONLY when we have a userspace
   cmake_parse_arguments(
     LIB
-    "KERNEL_SPECIFIC_BUILD_REQUIRED;HOST_DISABLE;KERNEL_ONLY"
+    "KERNEL_SPECIFIC_BUILD_REQUIRED;HOST_DISABLE"
     "NAME"
     "SOURCES"
     ${ARGN})
@@ -37,14 +35,38 @@ function(bunos_lib)
     if (NOT LIB_HOST_DISABLE)
       add_library(${LIB_NAME} STATIC ${LIB_SOURCES})
     endif()
-  elseif(NOT LIB_KERNEL_ONLY)
+  else()
     add_library(${LIB_NAME} STATIC ${LIB_SOURCES})
+  endif()
+endfunction()
+
+function(bunos_app)
+  cmake_parse_arguments(
+    APP
+    "HOST_ENABLE"
+    "NAME"
+    "SOURCES;LIBS"
+    ${ARGN}
+  )
+
+  set(SHOULD_BUILD TRUE)
+  if (BUNOS_BUILD_HOST AND NOT APP_HOST_ENABLE)
+    set(SHOULD_BUILD FALSE)
+  endif()
+
+  if (SHOULD_BUILD)
+    add_executable(${APP_NAME} ${APP_SOURCES})
+    target_link_libraries(${APP_NAME} PRIVATE ${APP_LIBS})
+    if (NOT BUNOS_BUILD_HOST)
+      # FIXME: stdc++ should be removed from this list
+      add_dependencies(${APP_NAME} c m stdc++)
+    endif()
   endif()
 endfunction()
 
 add_compile_definitions(__IS_X86__=1)
 
-project(bunos CXX ASM)
+project(bunos C CXX ASM)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 17)
@@ -59,20 +81,16 @@ enable_testing()
 set(BUNOS_INSTALL_DIR ${CMAKE_SOURCE_DIR}/root)
 set(BUNOS_FS_ROOT_DIR ${CMAKE_SOURCE_DIR}/fsroot)
 
-if (BUNOS_BUILD_HOST)
-  include_directories(${CMAKE_SOURCE_DIR} libraries)
-else()
-  include_directories(${CMAKE_SOURCE_DIR} libraries libc) #TODO: remove libc from this when able
-endif()
+include_directories(${CMAKE_SOURCE_DIR} libraries)
 
 set(KERNEL_BUILD_FLAGS "-nostdlib -ffreestanding")
 
 add_subdirectory(bustd)
-add_subdirectory(libc)
 add_subdirectory(libraries)
 
 if(NOT BUNOS_BUILD_HOST)
   add_subdirectory(kernel)
+  add_subdirectory(libc)
 
   add_custom_target(
     image ALL

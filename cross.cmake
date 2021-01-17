@@ -1,4 +1,4 @@
-set(TOOLCHAIN_PREFIX "${CMAKE_SOURCE_DIR}/toolchain/prefix/bin/i686-elf")
+set(TOOLCHAIN_PREFIX "${CMAKE_SOURCE_DIR}/toolchain/prefix/bin/i686-bunos")
 set(CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++")
 set(CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc")
 set(CMAKE_OBJCOPY "${TOOLCHAIN_PREFIX}-objcopy")
@@ -8,6 +8,6 @@ set(CMAKE_SIZE "${TOOLCHAIN_PREFIX}-size")
 set(CMAKE_AR "${TOOLCHAIN_PREFIX}-ar")
 set(ASSEMBLER "${TOOLCHAIN_PREFIX}-as")
 
-set(CMAKE_SYSROOT "${CMAKE_SOURCE_DIR}/sysroot")
+set(CMAKE_SYSROOT "${CMAKE_SOURCE_DIR}/fsroot")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} -fno-exceptions -ffreestanding -fno-rtti -nostdlib")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")

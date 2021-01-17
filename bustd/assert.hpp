@@ -3,7 +3,7 @@
 #ifdef __IN_KERNEL__
 #include <kernel/panic.hpp>
 #define FAIL(message) KERNEL_PANIC(message)
-#elif not defined(__bunos__)
+#else
 #include <stdio.h>
 #include <stdlib.h>
 // TODO: This should print a backtrace
@@ -13,9 +13,6 @@
            __LINE__);                                                          \
     exit(1);                                                                   \
   } while (0)
-#else
-// FIXME: This version should output to the debug console and some other stuff
-#error No assertion fail
 #endif
 
 #define ASSERT(_x)                                                             \

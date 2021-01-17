@@ -7,13 +7,35 @@
 
 #ifdef __IN_KERNEL__
 #include <kernel/kmalloc.hpp>
+#define NON_KERNELSPACE(name)                                                  \
+  KERNEL_PANIC(name "is not defined in kernel-space!")
 #endif
+
+int atexit(void (*function)(void)) {
+  (void)function;
+#ifdef __IN_KERNEL__
+  NON_KERNELSPACE("atexit");
+#else
+  TODO();
+#endif
+  return 0;
+}
+
+char *getenv(const char *) {
+#ifdef __IN_KERNEL__
+  NON_KERNELSPACE("getenv");
+#else
+  TODO();
+#endif
+  return nullptr;
+}
 
 void *malloc(size_t size) {
 #ifdef __IN_KERNEL__
   return kernel::malloc::Allocator::instance()->allocate(size);
 #else
-#error Missing malloc implementation in userspace
+  (void)size;
+  TODO();
 #endif
 }
 
@@ -21,7 +43,8 @@ void free(void *ptr) {
 #ifdef __IN_KERNEL__
   return kernel::malloc::Allocator::instance()->deallocate(ptr);
 #else
-#error Missing free implementation in userspace
+  (void)ptr;
+  TODO();
 #endif
 }
 
@@ -127,4 +150,30 @@ long long strtoll(const char *ptr, char **endptr, int base) {
 long strtol(const char *ptr, char **end, int base) {
   // FIXME: Errors
   return strtoll(ptr, end, base);
+}
+
+void exit(int) {
+#ifdef __IN_KERNEL__
+  KERNEL_PANIC("Called exit!");
+#else
+  // FIXME: Needs an implementation
+  // Can't just use TODO() here because it'll cause infinite recursion
+  while (1) {
+    // This will at best cause a general protection fault, at worst we will hang
+    // here. Good enough for now~
+    __asm__ volatile("cli\nhlt");
+  }
+#endif
+  while (1) {
+  }
+}
+
+void abort() {
+#ifdef __IN_KERNEL__
+  KERNEL_PANIC("Abort() called!");
+#else
+  TODO();
+#endif
+  while (1) {
+  }
 }

@@ -5,9 +5,17 @@
 #include <bustd/assert.hpp>
 #include <bustd/stddef.hpp>
 
-#ifndef __IN_KERNEL__
-#error Stdio not implemented outside the kernel
-#endif
+FILE *stderr = 0;
+FILE *stdin = 0;
+FILE *stdout = 0;
+int fflush(FILE *) {
+  TODO();
+  return 0;
+}
+int fprintf(int, const char *, ...) {
+  TODO();
+  return 0;
+}
 
 namespace {
 bool is_digit(char c) { return c >= '0' && c <= '9'; }
@@ -192,7 +200,7 @@ int sprintf_impl(char *buffer, const char *format, va_list args) {
   do {                                                                         \
     _x += 1;                                                                   \
     if (*(_x) == 0) {                                                          \
-      KERNEL_PANIC(nullptr);                                                   \
+      /*KERNEL_PANIC(nullptr); */                                              \
       return -1;                                                               \
     }                                                                          \
   } while (0)
@@ -257,18 +265,27 @@ int printf(const char *format, ...) {
   }
   ASSERT(static_cast<size_t>(retval) < sizeof buffer);
 
+#ifdef __IN_KERNEL__
   if (kernel::print::out_device != nullptr) {
     kernel::print::out_device->write(buffer, retval);
   }
+#else
+  TODO();
+#endif
 
   return retval;
 }
 
 int puts(const char *s) {
+#ifdef __IN_KERNEL__
   if (kernel::print::out_device != nullptr) {
     kernel::print::out_device->write(s, strlen(s));
     kernel::print::out_device->write("\n", 1);
   }
+#else
+  (void)s;
+  TODO();
+#endif
 
   return 0;
 }

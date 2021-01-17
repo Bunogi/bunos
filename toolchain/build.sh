@@ -9,13 +9,12 @@ typeset -r GCC_DOWNLOAD_URL=https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-$
 BINUTILS_TAR_FILE=$(basename $BINUTILS_DOWNLOAD_URL)
 GCC_TAR_FILE=$(basename $GCC_DOWNLOAD_URL)
 
-export TARGET=i686-elf
+export TARGET=i686-bunos
 export PREFIX="$PWD/prefix"
-export PATH="$PREFIX/bin:$PATH"
-#export SYSROOT="$PWD/../sysroot"
+export SYSROOT="$PWD/../fsroot"
 
-# GCC is stinky and expects this to exists
-mkdir -p $PREFIX/$TARGET/sys-root/usr/include
+typeset -r BUNOS_SOURCE_DIR="$PWD/.."
+
 mkdir -p work
 
 echo $PREFIX
@@ -24,6 +23,9 @@ echo $TARGET
 typeset -i makejobs=$(nproc)
 makejobs=${makejobs}+1
 echo $makejobs
+
+typeset -r binutils_patch=$PWD/binutils.patch
+typeset -r gcc_patch=$PWD/gcc.patch
 
 #mkdir -p $PREFIX/include
 #mkdir -p $PREFIX/lib
@@ -35,12 +37,26 @@ function build_binutils() {
         curl $BINUTILS_DOWNLOAD_URL > $BINUTILS_TAR_FILE
     fi
 
-    (cd work && tar xvf ../$BINUTILS_TAR_FILE)
+    (cd work && tar xvf ../$BINUTILS_TAR_FILE && patch -p1 -ruN -d binutils-${BINUTILS_VERSION} < ${binutils_patch})
+    #patch -ruN -d $PWD/work/binutils-${BINUTILS_VERSION} < ${binutils_patch}
 
     mkdir ${BINUTILS_BUILD_DIR}
     pushd .
+
+    # The patch messes with ld, so we have to re-run automake
+    pushd .
+    cd work/binutils-${BINUTILS_VERSION}/ld
+    aclocal
+    automake
+    popd
+
     cd ${BINUTILS_BUILD_DIR}
-    ../binutils-${BINUTILS_VERSION}/configure --target=$TARGET --prefix=$PREFIX --with-sysroot --disable-nls --disable-werror
+    ../binutils-${BINUTILS_VERSION}/configure \
+        --target=$TARGET \
+        --prefix=$PREFIX \
+        --with-sysroot=$SYSROOT \
+        --disable-nls \
+        --disable-werror
     make -j ${makejobs}
     make install
     popd
@@ -53,21 +69,30 @@ function build_gcc() {
         curl $GCC_DOWNLOAD_URL > $GCC_TAR_FILE
     fi
 
-    (cd work && tar xvf ../$GCC_TAR_FILE)
+    (cd work && tar xvf ../$GCC_TAR_FILE && patch -p1 -ruN -d gcc-${GCC_VERSION} < ${gcc_patch})
+
+    pushd .
+    cd work/gcc-${GCC_VERSION}/libstdc++-v3
+    autoconf
+    popd
     
     mkdir $GCC_BUILD_DIR
     pushd .
     cd $GCC_BUILD_DIR
     ../gcc-${GCC_VERSION}/configure --target=$TARGET --prefix="$PREFIX" \
         --disable-nls \
-	--with-gnu-as \
-	--with-as="$PREFIX/bin/i686-elf-as" \
-	--with-gnu-ld \
-	--with-ld="$PREFIX/bin/i686-elf-ld" \
-        --enable-languages=c,c++ \
-        --without-headers
+        --with-gnu-as \
+        --with-as="$PREFIX/bin/$TARGET-as" \
+        --with-gnu-ld \
+        --with-ld="$PREFIX/bin/$TARGET-ld" \
+        --with-sysroot=$SYSROOT \
+        --enable-languages=c,c++
+
+    $BUNOS_SOURCE_DIR/copy_libc_headers.sh
+
     make all-gcc -j ${makejobs}
     make all-target-libgcc -j ${makejobs}
+
     make install-gcc -j ${makejobs} 
     make install-target-libgcc -j ${makejobs}
     popd

@@ -11,6 +11,8 @@ void exit(int status);
 
 void *malloc(size_t size);
 void free(void *ptr);
+void abort(void);
+int atexit(void (*function)(void));
 
 int atoi(const char *ptr);
 long atol(const char *ptr);
