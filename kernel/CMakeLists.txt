@@ -59,6 +59,8 @@ add_library(kernel.object
   x86/io.s
   x86/memory.cpp
   x86/memory.s
+  x86/pagemapguard.cpp
+  x86/paging.cpp
   x86/pata.cpp
   x86/pic.cpp
   x86/pit.cpp

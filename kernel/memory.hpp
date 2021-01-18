@@ -31,6 +31,8 @@ public:
     return m_addr == other.m_addr;
   }
 
+  constexpr operator bool() const { return m_addr != 0; }
+
   using Type = T;
 
   void *ptr() const {

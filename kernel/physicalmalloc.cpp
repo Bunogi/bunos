@@ -17,13 +17,10 @@ static const u64 s_allocatable_page_start =
         .to_linked_location()
         .get();
 
-PhysicalPage::PhysicalPage(PhysicalAddress addr) : m_address(addr) {}
-PhysicalAddress PhysicalPage::address() const { return m_address; }
-
 // TODO: Parse memory map and stuff
 void init() { ASSERT_EQ(s_allocatable_page_start & 0xFFF, 0); }
 
-PhysicalPage allocate() {
+PhysicalAddress allocate() {
   printf("[pmem] start: %p \n", s_allocatable_page_start);
 
   // TODO: This should allow you to use a range-based for
@@ -32,20 +29,19 @@ PhysicalPage allocate() {
       s_allocations.set(i, true);
       const auto address = i * PAGE_SIZE + s_allocatable_page_start;
       printf("[pmem] Allocated physical page at %p\n", address);
-      return PhysicalPage(PhysicalAddress(address));
+      return PhysicalAddress(address);
     }
   }
   KERNEL_PANIC("Out of physical pages to allocate!");
-  return PhysicalPage(PhysicalAddress(0));
+  return PhysicalAddress(0);
 }
 
-void deallocate(PhysicalPage page) {
+void deallocate(PhysicalAddress page) {
   // They have to be page aligned
-  ASSERT_EQ(page.address().get() & (PAGE_SIZE - 1), 0);
-  ASSERT(page.address().get() >= s_allocatable_page_start);
+  ASSERT_EQ(page.get() & (PAGE_SIZE - 1), 0);
+  ASSERT(page.get() >= s_allocatable_page_start);
 
-  const auto as_index =
-      (page.address().get() - s_allocatable_page_start) / PAGE_SIZE;
+  const auto as_index = (page.get() - s_allocatable_page_start) / PAGE_SIZE;
   ASSERT_EQ(s_allocations.at(as_index), true);
   s_allocations.set(as_index, false);
 }
