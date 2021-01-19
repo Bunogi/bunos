@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bustd/vector.hpp>
 #include <kernel/memory.hpp>
 #include <kernel/x86/interrupts.hpp>
 #include <kernel/x86/memory.hpp>
@@ -28,10 +29,21 @@ public:
   bool has_overflowed_stack() const;
   void push_return_address();
 
+  void take_page_table_page(PhysicalAddress &&addr);
+  void take_memory_page(PhysicalAddress &&addr);
+  PhysicalAddress page_dir();
+
 private:
   Registers m_registers;
   VirtualAddress m_kernel_stack_start;
   PhysicalAddress m_page_directory;
+
+  // FIXME: These must be de-allocated when the process exits!
+  // Owned physical pages used for page directory entries
+  bu::Vector<PhysicalAddress> m_page_table_pages;
+  // Owned memory pages used for whatever
+  bu::Vector<PhysicalAddress> m_general_memory_pages;
+
   u32 m_last_run;
   u32 m_kernel_stack_pages;
   bool m_has_run;

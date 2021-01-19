@@ -1,6 +1,10 @@
 #include <bustd/assert.hpp>
+#include <kernel/physicalmalloc.hpp>
 #include <kernel/process.hpp>
 #include <kernel/x86/memory.hpp>
+#include <kernel/x86/pagemapguard.hpp>
+
+#include <stdio.h>
 
 namespace kernel {
 void x86::Registers::update_from_frame(InterruptFrame *frame) {
@@ -37,8 +41,14 @@ void x86::Registers::prepare_frame(InterruptFrame *frame) {
 Process::Process(void (*entry)()) : m_registers(), m_kernel_stack_pages(2) {
   m_registers.eip = reinterpret_cast<uintptr_t>(entry);
   m_registers.ebp = 0;
-  m_page_directory =
-      VirtualAddress(x86::kernel_page_directory).to_linked_location();
+  {
+    m_page_directory = pmem::allocate();
+    printf("Pagedir: %p\n", m_page_directory.get());
+    const x86::PageMapGuard guard((m_page_directory));
+    memcpy(guard.mapped_address(), x86::kernel_page_directory,
+           1024 * sizeof(u32));
+  }
+
   m_kernel_stack_start = x86::map_kernel_memory(m_kernel_stack_pages);
   // Stack must be 16 byte aligned
   m_registers.esp =
@@ -57,4 +67,15 @@ void Process::push_return_address() {
 bool Process::has_overflowed_stack() const {
   return m_registers.esp < m_kernel_stack_start.get();
 }
+
+void Process::take_page_table_page(PhysicalAddress &&addr) {
+  m_page_table_pages.push(addr);
+}
+
+void Process::take_memory_page(PhysicalAddress &&addr) {
+  m_general_memory_pages.push(addr);
+}
+
+PhysicalAddress Process::page_dir() { return m_page_directory; }
+
 } // namespace kernel

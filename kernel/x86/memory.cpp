@@ -273,4 +273,49 @@ found_entry:
   return VirtualAddress(retval);
 }
 
+bool map_user_memory(Process &process, VirtualAddress at) {
+  const auto pd_entry = page_dir_index_from_addr(at);
+  const auto pt_entry = page_table_index_from_addr(at);
+  ASSERT(at.ptr() < &_kernel_start);
+
+  auto page_dir = process.page_dir();
+  PhysicalAddress page_table;
+  {
+    const PageMapGuard guard((page_dir));
+    u32 *const dir = static_cast<u32 *>(guard.mapped_address());
+    auto entry = PageDirectoryEntry::from_u32(dir[pd_entry]);
+    if (!entry.present) {
+      entry = PageDirectoryEntry();
+
+      auto allocated = pmem::allocate();
+      entry.page_table_address = allocated.get();
+      process.take_page_table_page(bu::move(allocated));
+
+      entry.user = true;
+      entry.present = true;
+      dir[pd_entry] = entry.as_u32();
+    }
+    page_table = PhysicalAddress(entry.page_table_address);
+  }
+
+  {
+    const PageMapGuard guard((page_table));
+    u32 *const table = static_cast<u32 *>(guard.mapped_address());
+
+    const auto entry = PageTableEntry::from_u32(table[pt_entry]);
+    ASSERT(!entry.present);
+
+    auto physical_page = pmem::allocate();
+    PageTableEntry new_entry{};
+    new_entry.page_address = physical_page;
+    process.take_memory_page(bu::move(physical_page));
+    new_entry.read_write = true; // FIXME: Find out if it should be read-write
+    new_entry.user = true;
+    new_entry.present = true;
+
+    table[pt_entry] = new_entry.as_u32();
+  }
+  return true;
+}
+
 } // namespace kernel::x86

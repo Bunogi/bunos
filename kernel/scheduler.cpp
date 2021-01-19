@@ -1,10 +1,11 @@
 #include <kernel/scheduler.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/memory.hpp>
+#include <stdio.h>
 
 kernel::Scheduler *s_scheduler;
 
-constexpr usize ticks_per_task = 1000;
+constexpr usize ticks_per_task = 10;
 
 extern "C" {
 extern void _x86_task_switch();
@@ -31,16 +32,31 @@ void idle_thread_func() {
   UNREACHABLE();
 }
 
+void init_process_func() {
+  while (1) {
+    puts("=== HELLO FROM INIT ===");
+    printf("Attempting to read from the mapped memory: 0x%.8X\n",
+           *((volatile u32 *)0x4000));
+    timer::delay(1000 * 20);
+  }
+  UNREACHABLE();
+}
+
+static volatile bool s_enabled;
+
 void Scheduler::run() {
   ASSERT_NE(s_scheduler, nullptr);
 
   Process idle_thread(idle_thread_func);
+  Process init_process(init_process_func);
+
+  ASSERT(x86::map_user_memory(init_process, VirtualAddress(0x4000)));
 
   spawn(bu::move(idle_thread));
-
-  //*((volatile u32 *)0) = 0;
+  spawn(bu::move(init_process));
 
   // Wait to be woken up to do stuff
+  s_enabled = true;
   while (1) {
     __asm__ volatile("sti\nhlt");
   }
@@ -50,6 +66,10 @@ void Scheduler::wake(x86::InterruptFrame *frame) {
   static volatile usize this_tick = 0;
   static volatile usize ticks_left = 0;
   static volatile bool first_switch = true;
+
+  if (!s_enabled) {
+    return;
+  }
 
   if (ticks_left == 0) {
     // TODO: Purge the done processes?
@@ -97,7 +117,7 @@ void Scheduler::wake(x86::InterruptFrame *frame) {
 #error Expected x86!
 #endif
 
-    // proc.push_return_address();
+    proc.push_return_address();
     new_esp = proc.m_registers.esp;
     new_eip = proc.m_registers.eip;
 
