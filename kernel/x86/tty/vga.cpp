@@ -59,6 +59,7 @@ void Vga::putchar(char c) {
   case '\b':
     if (m_column > 0) {
       m_column--;
+      write_char_at(' ', m_column, m_row);
     }
     break;
   case '\r':
