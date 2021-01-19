@@ -43,6 +43,7 @@ public:
     m_current_size += to_write;
     return to_write;
   }
+
   usize read(u8 *buffer, const usize length) const {
     const auto to_read = bu::min(length, m_current_size);
     if (to_read == 0) {
@@ -59,10 +60,25 @@ public:
     }
     return to_read;
   }
+
   usize take(u8 *buffer, const usize upto) {
     const auto bytes_read = read(buffer, upto);
     drop(bytes_read);
     return bytes_read;
+  }
+
+  void push(const u8 byte) { write(&byte, 1); }
+
+  u8 pop() {
+    u8 retval;
+    ASSERT_EQ(take(&retval, 1), 1);
+    return retval;
+  }
+
+  u8 head() const {
+    u8 retval;
+    ASSERT_EQ(read(&retval, 1), 1);
+    return retval;
   }
 
   usize remaining_space() const { return N - m_current_size; }

@@ -95,7 +95,6 @@ test::Result write_until_full() {
     buf.write(s.data_u8(), s.len());
   }
 
-  printf("Dropping %lu values\n", len / 2);
   while (buf.len() > len / 2) {
     buf.drop(4);
   }
@@ -103,6 +102,23 @@ test::Result write_until_full() {
   while (!buf.is_full()) {
     buf.write(s.data_u8(), s.len());
   }
+
+  LIBTEST_SUCCEED();
+}
+
+test::Result push_pop() {
+  bu::SizedRingBuffer<10> buf;
+  for (int i = 0; i < 10; i++) {
+    buf.push(i);
+  }
+
+  LIBTEST_ASSERT_EQ(buf.len(), 10);
+  LIBTEST_ASSERT_EQ(buf.head(), 9);
+
+  for (int i = 10; i >= 0; i++) {
+    LIBTEST_ASSERT_EQ(buf.pop(), i);
+  }
+  LIBTEST_ASSERT(buf.is_empty());
 
   LIBTEST_SUCCEED();
 }
