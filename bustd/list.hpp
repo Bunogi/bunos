@@ -6,6 +6,16 @@
 
 namespace bu {
 template <typename T> class List {
+  struct Node {
+    Node() = delete;
+    Node(T &&v) : val(forward(v)) {}
+    Node(const T &v) : val(v) {}
+
+    Node *prev{nullptr};
+    Node *next{nullptr};
+    T val;
+  };
+
 public:
   // FIXME: Needs iterator more than most
   List() = default;
@@ -36,22 +46,22 @@ public:
   ~List() { clear(); }
 
   void append_back(const T &val) {
-    auto *new_node = new Node{nullptr, nullptr, val};
+    auto *new_node = new Node(val);
     insert_back(new_node);
   }
 
   void emplace_back(T &&val) {
-    auto *new_node = new Node{nullptr, nullptr, move(val)};
+    auto *new_node = new Node(forward(val));
     insert_back(new_node);
   }
 
   void append_front(const T &val) {
-    auto *new_node = new Node{nullptr, nullptr, val};
+    auto *new_node = new Node(val);
     insert_front(new_node);
   }
 
   void emplace_front(T &&val) {
-    auto *new_node = new Node{nullptr, nullptr, move(val)};
+    auto *new_node = new Node(forward(val));
     insert_front(new_node);
   }
 
@@ -77,6 +87,33 @@ public:
     ASSERT(m_tail);
     return m_tail->val;
   }
+
+  class Iterator {
+  public:
+    Iterator operator++() const {
+      m_this = m_reverse ? m_this->prev : m_this->next;
+      return *this;
+    }
+    Iterator operator++(int) const { return operator++(); }
+    T &operator*() { return m_this->val; }
+    const T &operator*() const { return m_this->val; }
+    bool operator!=(const Iterator &other) const {
+      return m_this != other.m_this;
+    }
+
+  private:
+    friend class List<T>;
+    Iterator(Node *start, bool reverse) : m_this(start), m_reverse(reverse) {}
+    mutable Node *m_this;
+    bool m_reverse;
+  };
+
+  Iterator begin() { return Iterator(m_head, false); }
+
+  Iterator rbegin() { return Iterator(m_tail, true); }
+
+  Iterator end() { return Iterator(nullptr, false); }
+  Iterator rend() { return Iterator(nullptr, false); }
 
   void remove(usize index) {
     ASSERT(index < m_size);
@@ -123,18 +160,15 @@ public:
         }
         Node *next = this_node->next;
         delete this_node;
-        m_size--;
         this_node = next;
+        m_size--;
+      } else {
+        this_node = this_node->next;
       }
     }
   }
 
 private:
-  struct Node {
-    Node *prev;
-    Node *next;
-    T val;
-  };
   Node *at_index(usize index) {
     ASSERT(index < m_size);
     Node *node = m_head;

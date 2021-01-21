@@ -74,8 +74,41 @@ test::Result remove_if() {
   LIBTEST_SUCCEED();
 }
 
+test::Result range_for() {
+  bu::List<usize> v;
+  for (usize i = 0; i < 50; i++) {
+    v.append_back(i);
+  }
+
+  // Mutable iterator
+  usize current = 0;
+  for (auto &i : v) {
+    LIBTEST_ASSERT_EQ(i, current++);
+    i *= 2;
+  }
+
+  current = 0;
+  for (const auto &i : v) {
+    LIBTEST_ASSERT_EQ(i, 2 * current++);
+  }
+
+  for (usize i = 0; i < v.len(); i++) {
+    LIBTEST_ASSERT_EQ(v.get(i), i * 2);
+  }
+
+  bu::List<usize> v2;
+  for (auto &i : v2) {
+    LIBTEST_ASSERT(false);
+    (void)i;
+  }
+
+  LIBTEST_SUCCEED();
+}
+
 int main() {
   RUN_TEST(basic_append);
   RUN_TEST(cleans_up);
+  RUN_TEST(remove_if);
+  RUN_TEST(range_for);
   LIBTEST_CLEANUP();
 }

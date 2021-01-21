@@ -10,10 +10,8 @@ test::Result basic_push_pop() {
   }
 
   const auto current_capacity = foo.capacity();
-  printf("BACK IS %u\n", foo.back());
   LIBTEST_ASSERT_EQ(foo.back(), 4);
   foo.pop();
-  printf("NEW BACK IS %u\n", foo.back());
   LIBTEST_ASSERT_EQ(foo.back(), 3);
   foo.pop();
   LIBTEST_ASSERT_EQ(foo.back(), 2);
@@ -41,10 +39,7 @@ test::Result pop_value() {
 test::Result destructor_call_pop() {
   static int num_destroyed = 0;
   struct Destructable {
-    ~Destructable() {
-      num_destroyed++;
-      printf("destroyed: %u\n", num_destroyed);
-    }
+    ~Destructable() { num_destroyed++; }
   };
 
   {
@@ -68,10 +63,7 @@ test::Result destructor_call_pop() {
 test::Result no_duplicate_constructor_call() {
   static int num_constructed = 0;
   struct Constructable {
-    Constructable() {
-      num_constructed++;
-      printf("constructed: %u\n", num_constructed);
-    }
+    Constructable() { num_constructed++; }
   };
 
   {
@@ -148,22 +140,10 @@ test::Result move() {
   static int num_moved = 0;
   static int num_destroyed = 0;
   struct Copyable {
-    Copyable() {
-      num_constructed++;
-      printf("constructed: %u\n", num_constructed);
-    }
-    Copyable(const Copyable &) {
-      num_copied++;
-      printf("copied: %u\n", num_copied);
-    }
-    Copyable(Copyable &&) {
-      num_moved++;
-      printf("moved: %u\n", num_moved);
-    }
-    ~Copyable() {
-      num_destroyed++;
-      printf("destroyed: %u\n", num_destroyed);
-    }
+    Copyable() { num_constructed++; }
+    Copyable(const Copyable &) { num_copied++; }
+    Copyable(Copyable &&) { num_moved++; }
+    ~Copyable() { num_destroyed++; }
   };
 
   bu::Vector<Copyable> v;
@@ -243,6 +223,68 @@ test::Result clear() {
   LIBTEST_SUCCEED();
 }
 
+test::Result remove() {
+  bu::Vector<usize> v;
+  for (usize i = 0; i < 10; i++) {
+    v.push(i);
+  }
+
+  v.remove(0);
+  LIBTEST_ASSERT_EQ(v.len(), 9);
+  LIBTEST_ASSERT_NE(v[0], 0);
+  for (usize i = 0; i < v.len(); i++) {
+    LIBTEST_ASSERT_EQ(v[i], i + 1);
+  }
+
+  LIBTEST_SUCCEED();
+}
+
+test::Result remove_if() {
+  bu::Vector<usize> v;
+  for (usize i = 0; i < 100; i++) {
+    v.push(i);
+  }
+
+  const auto old_len = v.len();
+
+  v.remove_if([](int v) { return v % 2 == 0; });
+
+  LIBTEST_ASSERT_EQ(v.len(), old_len / 2);
+  for (usize i = 0; i < v.len(); i++) {
+    LIBTEST_ASSERT_NE(v[i] % 2, 0);
+  }
+  LIBTEST_SUCCEED();
+}
+
+test::Result range_for() {
+  bu::Vector<usize> v;
+  for (usize i = 0; i < 50; i++) {
+    v.push(i);
+  }
+
+  usize current = 0;
+  for (auto &i : v) {
+    LIBTEST_ASSERT_EQ(i, current++);
+    i *= 2;
+  }
+
+  current = 0;
+  for (const auto &i : v) {
+    LIBTEST_ASSERT_EQ(i, 2 * current++);
+  }
+
+  for (usize i = 0; i < v.len(); i++) {
+    LIBTEST_ASSERT_EQ(v[i], i * 2);
+  }
+
+  bu::Vector<usize> v2;
+  for (auto &i : v2) {
+    LIBTEST_ASSERT(false);
+    (void)i;
+  }
+  LIBTEST_SUCCEED();
+}
+
 int main() {
   RUN_TEST(basic_push_pop);
   RUN_TEST(pop_value);
@@ -254,5 +296,8 @@ int main() {
   RUN_TEST(fill);
   RUN_TEST(resize_to_fit);
   RUN_TEST(clear);
+  RUN_TEST(remove);
+  RUN_TEST(remove_if);
+  RUN_TEST(range_for);
   LIBTEST_CLEANUP();
 }

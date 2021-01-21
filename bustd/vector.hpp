@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bustd/assert.hpp>
+#include <bustd/function.hpp>
 #include <bustd/math.hpp>
 #include <bustd/new.hpp>
 #include <bustd/stddef.hpp>
@@ -12,7 +13,11 @@ namespace bu {
 template <typename T> class Vector {
 public:
   Vector() = default;
-  Vector(usize preallocated) { set_size(preallocated); }
+  Vector(usize preallocated) {
+    if (preallocated != 0) {
+      set_size(preallocated);
+    }
+  }
 
   Vector(const Vector &other) : Vector(other.len()) { *this = other; }
 
@@ -97,19 +102,13 @@ public:
   void pop(T &val) {
     ASSERT(m_size > 0);
     m_size--;
-    val = at(m_size);
+    val = *slot(m_size);
     slot(m_size)->~T();
   }
 
-  const T &back() const {
-    ASSERT(m_size > 0);
-    return at(m_size - 1);
-  };
+  const T &back() const { return *safe_slot(m_size - 1); };
 
-  T &back() {
-    ASSERT(m_size > 0);
-    return at(m_size - 1);
-  };
+  T &back() { return *safe_slot(m_size - 1); };
 
   usize len() const { return m_size; }
   usize capacity() const { return m_capacity; }
@@ -123,11 +122,65 @@ public:
 
   void resize_to_fit() { set_size(m_size); }
 
-  T &operator[](usize index) { return *slot(index); }
-  const T &operator[](usize index) const { return *slot(index); }
+  T &operator[](usize index) { return *safe_slot(index); }
+  const T &operator[](usize index) const { return *safe_slot(index); }
 
-  T &at(usize index) { return *slot(index); }
-  const T &at(usize index) const { return *slot(index); }
+  T &at(usize index) { return *safe_slot(index); }
+  const T &at(usize index) const { return *safe_slot(index); }
+
+  // FIXME: insert() is probably good to have too
+  void remove(usize index) {
+    ASSERT(index < m_size);
+
+    slot(index)->~T();
+
+    for (usize i = index; i + 1 < m_size; i++) {
+      slot(i)->~T();
+      new (slot(i)) T(move(at(i + 1)));
+    }
+    m_size--;
+  }
+
+  void remove_if(Function<bool(const T &)> f) {
+    for (usize i = 0; i < m_size; i++) {
+      if (f(at(i))) {
+        remove(i);
+      }
+    }
+  }
+
+  class Iterator {
+  public:
+    Iterator operator++() const {
+      if (m_reverse) {
+        m_index--;
+      } else {
+        m_index++;
+      }
+      return *this;
+    }
+    Iterator operator++(int) const { return operator++(); }
+    T &operator*() { return m_parent[m_index]; }
+    const T &operator*() const { return m_parent[m_index]; }
+    bool operator!=(const Iterator &other) const {
+      return m_index != other.m_index;
+    }
+
+  private:
+    friend class Vector<T>;
+    Iterator(Vector<T> &parent, usize index, bool reverse)
+        : m_parent(parent), m_index(index), m_reverse(reverse) {}
+    Vector<T> &m_parent;
+    mutable usize m_index;
+    bool m_reverse;
+  };
+
+  Iterator begin() { return Iterator(*this, 0, false); }
+
+  Iterator rbegin() { return Iterator(*this, m_size - 1, false); }
+
+  Iterator end() { return Iterator(*this, m_size, false); }
+  Iterator rend() { return Iterator(*this, -1, false); }
 
 private:
   void grow() {
@@ -137,8 +190,12 @@ private:
   }
 
   T *slot(usize i) const {
-    // printf("i: %u\n");
     ASSERT(i < m_capacity);
+    return m_data + i;
+  }
+
+  T *safe_slot(usize i) const {
+    ASSERT(i < m_size);
     return m_data + i;
   }
 
