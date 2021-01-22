@@ -1,0 +1,5 @@
+file(GLOB COREUTILS_FILES *.cpp)
+foreach(FILENAME ${COREUTILS_FILES})
+  get_filename_component(EXE_NAME ${FILENAME} NAME_WE)
+  bunos_app(HOST_ENABLE NAME ${EXE_NAME} SOURCES ${FILENAME})
+endforeach()

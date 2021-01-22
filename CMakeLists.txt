@@ -60,6 +60,7 @@ function(bunos_app)
     if (NOT BUNOS_BUILD_HOST)
       # FIXME: stdc++ should be removed from this list
       add_dependencies(${APP_NAME} c m stdc++)
+      install(TARGETS ${APP_NAME} DESTINATION ${BUNOS_INSTALL_DIR}/bin)
     endif()
   endif()
 endfunction()
@@ -87,6 +88,7 @@ set(KERNEL_BUILD_FLAGS "-nostdlib -ffreestanding")
 
 add_subdirectory(bustd)
 add_subdirectory(libraries)
+add_subdirectory(coreutils)
 
 if(NOT BUNOS_BUILD_HOST)
   add_subdirectory(kernel)
