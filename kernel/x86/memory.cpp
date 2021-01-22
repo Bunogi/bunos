@@ -258,7 +258,7 @@ found_entry:
 
     PageTableEntry new_entry{};
     // FIXME: Have some way to de-allocate afterwards
-    const auto physical_page = kernel::pmem::allocate();
+    const auto physical_page = kernel::allocate_physical_page();
     new_entry.page_address = physical_page;
     new_entry.read_write = true;
     new_entry.present = true;
@@ -287,7 +287,7 @@ bool map_user_memory(Process &process, VirtualAddress at) {
     if (!entry.present) {
       entry = PageDirectoryEntry();
 
-      auto allocated = pmem::allocate();
+      auto allocated = allocate_physical_page();
       entry.page_table_address = allocated.get();
       process.take_page_table_page(bu::move(allocated));
 
@@ -305,7 +305,7 @@ bool map_user_memory(Process &process, VirtualAddress at) {
     const auto entry = PageTableEntry::from_u32(table[pt_entry]);
     ASSERT(!entry.present);
 
-    auto physical_page = pmem::allocate();
+    auto physical_page = allocate_physical_page();
     PageTableEntry new_entry{};
     new_entry.page_address = physical_page;
     process.take_memory_page(bu::move(physical_page));

@@ -20,40 +20,41 @@ void Scheduler::init() {
   s_scheduler = new Scheduler();
 }
 
-void Scheduler::spawn(Process &&p) {
+void Scheduler::spawn(void (*func)()) {
   ASSERT_NE(s_scheduler, nullptr);
-  s_scheduler->m_processes.push(bu::forward(p));
+  Process proc(func);
+  s_scheduler->m_processes.emplace_back(bu::move(proc));
 }
 
 void idle_thread_func() {
   while (1) {
     __asm__ volatile("hlt");
   }
-  UNREACHABLE();
 }
 
 void init_process_func() {
   while (1) {
     puts("=== HELLO FROM INIT ===");
-    printf("Attempting to read from the mapped memory: 0x%.8X\n",
-           *((volatile u32 *)0x4000));
-    timer::delay(1000 * 20);
+    timer::delay(1000 * 5);
   }
+}
+
+void exit_test() {
+  puts("Calling exit from syscall!");
+  __asm__ volatile("movl $0, %eax\nint $0x80");
   UNREACHABLE();
 }
 
 static volatile bool s_enabled;
 
+Scheduler::Scheduler() {}
+
 void Scheduler::run() {
   ASSERT_NE(s_scheduler, nullptr);
 
-  Process idle_thread(idle_thread_func);
-  Process init_process(init_process_func);
-
-  ASSERT(x86::map_user_memory(init_process, VirtualAddress(0x4000)));
-
-  spawn(bu::move(idle_thread));
-  spawn(bu::move(init_process));
+  spawn(idle_thread_func);
+  spawn(init_process_func);
+  spawn(exit_test);
 
   // Wait to be woken up to do stuff
   s_enabled = true;
@@ -63,73 +64,88 @@ void Scheduler::run() {
 }
 
 void Scheduler::wake(x86::InterruptFrame *frame) {
-  static volatile usize this_tick = 0;
-  static volatile usize ticks_left = 0;
-  static volatile bool first_switch = true;
-
   if (!s_enabled) {
     return;
   }
 
-  if (ticks_left == 0) {
-    // TODO: Purge the done processes?
+  auto &current_proc = m_processes.get(m_current_process);
+  if (current_proc.m_has_exit) {
+    m_processes.remove(m_current_process);
+    auto next_proc = get_next_process();
+    switch_task(next_proc, frame, false);
+  } else if (m_ticks_left == 0) {
+    auto next_proc = get_next_process();
+    switch_task(next_proc, frame, true);
+  } else {
+    m_ticks_left--;
+  }
 
-    // Find a new thing to run
-    usize lowest_run = 0;
-    usize max_delta = 0;
-    // FIXME: need range-based for :)
-    for (usize i = 0; i < m_processes.len(); i++) {
-      usize delta;
-      // Check overflow
-      if (m_processes[i].m_last_run > this_tick) {
-        delta = m_processes[i].m_last_run - this_tick;
-      } else {
-        delta = this_tick - m_processes[i].m_last_run;
-      }
+  m_this_tick++;
+}
 
-      if (delta > max_delta) {
-        if (i > 0 && i == m_current_process) {
-          continue;
-        }
-        max_delta = delta;
-        lowest_run = i;
-      }
-    }
+void Scheduler::yield(x86::InterruptFrame *frame) {
+  ASSERT_NE(s_scheduler, nullptr);
+  s_scheduler->m_ticks_left = 0;
+  s_scheduler->wake(frame);
+}
 
-    ticks_left = ticks_per_task;
+Process &Scheduler::current_process() {
+  ASSERT_NE(s_scheduler, nullptr);
+  return s_scheduler->m_processes.get(s_scheduler->m_current_process);
+}
 
-    if (!first_switch) {
-      // No reason to switch tasks if we can avoid it
-      if (m_current_process == lowest_run) {
-        m_processes[m_current_process].m_last_run = this_tick++;
-        return;
-      }
-
-      m_processes[m_current_process].m_registers.update_from_frame(frame);
+usize Scheduler::get_next_process() {
+  usize lowest_run = 0;
+  usize max_delta = 0;
+  usize index = 0;
+  for (auto &i : m_processes) {
+    usize delta;
+    // Check overflow
+    if (i.m_last_run > m_this_tick) {
+      delta = i.m_last_run - m_this_tick;
     } else {
-      first_switch = false;
+      delta = m_this_tick - i.m_last_run;
     }
 
-    auto &proc = m_processes[lowest_run];
+    if (delta > max_delta) {
+      max_delta = delta;
+      lowest_run = index;
+    }
+    index++;
+  }
+
+  return lowest_run;
+}
+
+void Scheduler::switch_task(usize new_process, x86::InterruptFrame *frame,
+                            bool allow_update) {
+  if (!m_first_switch && allow_update) {
+    auto &current_proc = m_processes.get(m_current_process);
+    current_proc.update_registers(frame);
+  } else {
+    m_first_switch = false;
+  }
+
+  auto &proc = m_processes.get(new_process);
 #ifdef __IS_X86__
-    _x86_set_page_directory(proc.m_page_directory.get());
+  _x86_set_page_directory(proc.page_dir().get());
 #else
 #error Expected x86!
 #endif
 
-    proc.push_return_address();
-    new_esp = proc.m_registers.esp;
-    new_eip = proc.m_registers.eip;
-
-    proc.m_registers.prepare_frame(frame);
-    frame->eip = reinterpret_cast<uintptr_t>(&_x86_task_switch);
-    frame->eflags |= 0x200;
-    proc.m_last_run = this_tick;
-    m_current_process = lowest_run;
-  } else {
-    ticks_left--;
+  if (!proc.m_has_run) {
+    proc.push_entry_address();
+    proc.m_has_run = true;
   }
+  new_esp = proc.m_registers.esp;
+  new_eip = proc.m_registers.eip;
 
-  this_tick++;
+  proc.m_registers.prepare_frame(frame);
+  frame->eip = reinterpret_cast<uintptr_t>(&_x86_task_switch);
+  frame->eflags |= 0x200;
+  proc.m_last_run = m_this_tick;
+  m_current_process = new_process;
+  m_ticks_left = ticks_per_task;
 }
+
 } // namespace kernel

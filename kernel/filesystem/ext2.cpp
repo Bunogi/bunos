@@ -161,7 +161,6 @@ bu::Vector<u8> Ext2::read_inode_block_from_disk(const ext2::Inode &inode,
   if (block_number < direct_block_count) {
     return read_block_from_disk(inode.direct_block_pointers[block_number]);
   } else if (block_number <= indirect_block_count) {
-    puts("==> READING INDIRECT");
     return read_indirect_block_from_disk(inode.indir_block_pointer,
                                          block_number - direct_block_count);
   } else {

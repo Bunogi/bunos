@@ -9,6 +9,7 @@
 #include <kernel/panic.hpp>
 #include <kernel/physicalmalloc.hpp>
 #include <kernel/scheduler.hpp>
+#include <kernel/syscalls.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/tty/kerneloutputdevice.hpp>
 #include <kernel/x86/gdt.hpp>
@@ -35,7 +36,7 @@ void kernel_main() {
   x86::setup_gdt();
   x86::init_memory_management();
   malloc::Allocator allocator;
-  pmem::init();
+  init_pmem();
 
   // TODO: Allocate in the ::instance() function instead of here when we get
   // memory allocation
@@ -59,6 +60,7 @@ void kernel_main() {
   printf("Main: Disk has %u sectors\n", x86::disk_sector_count());
   kernel::load_debug_symbols();
 
+  init_syscalls();
   printf("Running scheduler...\n");
 
   kernel::Scheduler::run();

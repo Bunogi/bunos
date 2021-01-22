@@ -16,12 +16,7 @@ _start:
     pushl $0
 
     call main
-
-    //FIXME: Call exit instead of this madness
-1:  
-    hlt
-    jmp 1b
-
-    //FIXME: Is this right?
-    call _fini
+    
+    push %eax
+    call exit
     

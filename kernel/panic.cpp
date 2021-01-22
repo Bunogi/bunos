@@ -24,7 +24,7 @@ void print_stack_trace(u32 current_eip, StackFrame *frame) {
     }
   }
   // assumption: bottom-most stack frame has a base pointer of 0
-  while (frame->ebp) {
+  while (frame) {
     printf("%p     ", frame->eip);
     if (kernel::debug_symbols_loaded()) {
       printf("%s\n", kernel::function_name_from_pc(frame->eip).data());

@@ -4,6 +4,8 @@ set -euo pipefail
 typeset -r this_dir=$(dirname $(realpath $0))
 cd $this_dir
 
+rm -rf fsroot/usr/include
+
 dirs=$(cd libc && find . -type d)
 for i in $dirs; do
     echo "Making fsroot/usr/include/$i" || true

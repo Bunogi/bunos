@@ -2,8 +2,10 @@
 #include <bustd/math.hpp>
 #include <bustd/stddef.hpp>
 #include <ctype.h>
+#include <kernel/syscalls.hpp>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef __IN_KERNEL__
 #include <kernel/kmalloc.hpp>
@@ -152,20 +154,15 @@ long strtol(const char *ptr, char **end, int base) {
   return strtoll(ptr, end, base);
 }
 
-void exit(int) {
-#ifdef __IN_KERNEL__
-  KERNEL_PANIC("Called exit!");
-#else
-  // FIXME: Needs an implementation
-  // Can't just use TODO() here because it'll cause infinite recursion
-  while (1) {
-    // This will at best cause a general protection fault, at worst we will hang
-    // here. Good enough for now~
-    __asm__ volatile("cli\nhlt");
-  }
+#ifndef __IN_KERNEL__
+extern "C" {
+extern void _fini();
+}
 #endif
-  while (1) {
-  }
+
+void exit(int code) {
+  syscall(SYS_EXIT, code);
+  UNREACHABLE();
 }
 
 void abort() {

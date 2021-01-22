@@ -10,7 +10,7 @@ extern "C" {
 extern char _kernel_heap_end;
 }
 
-namespace kernel::pmem {
+namespace kernel {
 static bu::Bitfield<8192> s_allocations;
 static const u64 s_allocatable_page_start =
     VirtualAddress(reinterpret_cast<uintptr_t>(&_kernel_heap_end))
@@ -18,9 +18,9 @@ static const u64 s_allocatable_page_start =
         .get();
 
 // TODO: Parse memory map and stuff
-void init() { ASSERT_EQ(s_allocatable_page_start & 0xFFF, 0); }
+void init_pmem() { ASSERT_EQ(s_allocatable_page_start & 0xFFF, 0); }
 
-PhysicalAddress allocate() {
+PhysicalAddress allocate_physical_page() {
   printf("[pmem] start: %p \n", s_allocatable_page_start);
 
   // TODO: This should allow you to use a range-based for
@@ -36,7 +36,8 @@ PhysicalAddress allocate() {
   return PhysicalAddress(0);
 }
 
-void deallocate(PhysicalAddress page) {
+void free_physical_page(PhysicalAddress page) {
+  printf("Supposed to delete %pP\n", page.get());
   // They have to be page aligned
   ASSERT_EQ(page.get() & (PAGE_SIZE - 1), 0);
   ASSERT(page.get() >= s_allocatable_page_start);
@@ -45,4 +46,5 @@ void deallocate(PhysicalAddress page) {
   ASSERT_EQ(s_allocations.at(as_index), true);
   s_allocations.set(as_index, false);
 }
-} // namespace kernel::pmem
+
+} // namespace kernel

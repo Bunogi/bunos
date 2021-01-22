@@ -47,6 +47,7 @@ add_library(kernel.object
   physicalmalloc.cpp
   process.cpp
   scheduler.cpp
+  syscalls.cpp
   timer.cpp
   tty/kerneloutputdevice.cpp
   utils.cpp
@@ -65,6 +66,7 @@ add_library(kernel.object
   x86/pic.cpp
   x86/pit.cpp
   x86/scheduler.s
+  x86/syscalls.cpp
   x86/tty/serial.cpp
   x86/tty/vga.cpp
 )

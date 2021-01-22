@@ -1,12 +1,13 @@
 #pragma once
 
+#include <bustd/macros.hpp>
 #include <bustd/stddef.hpp>
 #include <kernel/memory.hpp>
 
-namespace kernel::pmem {
-void init();
+namespace kernel {
+void init_pmem();
 
-PhysicalAddress allocate();
-void deallocate(PhysicalAddress page);
+PhysicalAddress allocate_physical_page();
+void free_physical_page(PhysicalAddress addr);
 
-} // namespace kernel::pmem
+} // namespace kernel

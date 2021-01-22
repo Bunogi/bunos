@@ -1,10 +1,28 @@
 #include <bustd/assert.hpp>
-#include <kernel/physicalmalloc.hpp>
 #include <kernel/process.hpp>
+#include <kernel/scheduler.hpp>
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pagemapguard.hpp>
+#include <libc/sys/syscall.h>
 
+#include <kernel/debugsymbols.hpp>
 #include <stdio.h>
+
+namespace {
+[[noreturn]] void proc_entry(void (*real_entry)()) {
+  real_entry();
+  // Should only get here if we are a kernel task
+  // Might be a better way to do this
+  __asm__ volatile("movl %0, %%eax\n"
+                   "int $0x80"
+                   :
+                   : "N"(SYS_EXIT)
+                   : "%eax");
+  UNREACHABLE();
+  while (1) {
+  }
+}
+} // namespace
 
 namespace kernel {
 void x86::Registers::update_from_frame(InterruptFrame *frame) {
@@ -38,11 +56,12 @@ void x86::Registers::prepare_frame(InterruptFrame *frame) {
   frame->eflags = eflags;
 }
 
-Process::Process(void (*entry)()) : m_registers(), m_kernel_stack_pages(2) {
-  m_registers.eip = reinterpret_cast<uintptr_t>(entry);
+Process::Process(void (*entry)())
+    : m_registers(), m_kernel_stack_pages(2), m_entry(entry) {
+  m_registers.eip = reinterpret_cast<uintptr_t>(proc_entry);
   m_registers.ebp = 0;
   {
-    m_page_directory = pmem::allocate();
+    m_page_directory = allocate_physical_page();
     printf("Pagedir: %p\n", m_page_directory.get());
     const x86::PageMapGuard guard((m_page_directory));
     memcpy(guard.mapped_address(), x86::kernel_page_directory,
@@ -56,12 +75,20 @@ Process::Process(void (*entry)()) : m_registers(), m_kernel_stack_pages(2) {
       (PAGE_SIZE * m_kernel_stack_pages - 16);
   m_last_run = 0;
   m_has_run = false;
+
+  push_entry_address();
 }
 
-void Process::push_return_address() {
-  m_registers.esp -= 4;
+void Process::push_entry_address() {
   const auto index = (m_registers.esp - m_kernel_stack_start.get()) / 4;
-  reinterpret_cast<u32 *>(m_kernel_stack_start.ptr())[index] = m_registers.eip;
+  reinterpret_cast<u32 *>(m_kernel_stack_start.ptr())[index] =
+      reinterpret_cast<uintptr_t>(m_entry);
+  m_registers.esp -= 4;
+}
+
+void Process::return_from_syscall(u32 return_value) {
+  m_registers.eax = return_value;
+  m_returning_from_syscall = true;
 }
 
 bool Process::has_overflowed_stack() const {
@@ -77,5 +104,20 @@ void Process::take_memory_page(PhysicalAddress &&addr) {
 }
 
 PhysicalAddress Process::page_dir() { return m_page_directory; }
+
+void Process::update_registers(x86::InterruptFrame *frame) {
+  if (m_returning_from_syscall) {
+    const auto sys_return = m_registers.eax;
+    m_registers.update_from_frame(frame);
+    m_registers.eax = sys_return;
+  } else {
+    m_registers.update_from_frame(frame);
+  }
+}
+
+void Process::sys_exit(int) {
+  // FIXME: Handle exit status
+  m_has_exit = true;
+}
 
 } // namespace kernel
