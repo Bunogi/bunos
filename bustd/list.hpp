@@ -94,7 +94,11 @@ public:
       m_this = m_reverse ? m_this->prev : m_this->next;
       return *this;
     }
-    Iterator operator++(int) const { return operator++(); }
+    Iterator operator++(int) const {
+      Iterator tmp(*this);
+      operator++();
+      return tmp;
+    }
     T &operator*() { return m_this->val; }
     const T &operator*() const { return m_this->val; }
     bool operator!=(const Iterator &other) const {

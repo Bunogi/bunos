@@ -159,7 +159,11 @@ public:
       }
       return *this;
     }
-    Iterator operator++(int) const { return operator++(); }
+    Iterator operator++(int) const {
+      Iterator tmp(*this);
+      operator++();
+      return tmp;
+    }
     T &operator*() { return m_parent[m_index]; }
     const T &operator*() const { return m_parent[m_index]; }
     bool operator!=(const Iterator &other) const {
