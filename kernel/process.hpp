@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bustd/macros.hpp>
+#include <bustd/stringview.hpp>
 #include <bustd/vector.hpp>
 #include <kernel/memory.hpp>
 #include <kernel/physicalmalloc.hpp>
@@ -31,6 +32,7 @@ public:
 
   friend class Scheduler;
   Process(void (*fp)());
+  Process(bu::StringView file);
   Process() = delete;
   bool has_overflowed_stack() const;
 
@@ -43,9 +45,11 @@ public:
 
   // syscall handlers
   void sys_exit(int code);
+  int sys_write(int fd, const void *buf, size_t bytes);
   // end syscall handlers
 
 private:
+  void (*read_elf(bu::StringView path))();
   void push_entry_address();
   Registers m_registers;
   VirtualAddress m_kernel_stack_start;

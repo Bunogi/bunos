@@ -39,12 +39,6 @@ void init_process_func() {
   }
 }
 
-void exit_test() {
-  puts("Calling exit from syscall!");
-  __asm__ volatile("movl $0, %eax\nint $0x80");
-  UNREACHABLE();
-}
-
 static volatile bool s_enabled;
 
 Scheduler::Scheduler() {}
@@ -54,7 +48,9 @@ void Scheduler::run() {
 
   spawn(idle_thread_func);
   spawn(init_process_func);
-  spawn(exit_test);
+
+  Process test("/bin/test_app");
+  s_scheduler->m_processes.emplace_back(bu::move(test));
 
   // Wait to be woken up to do stuff
   s_enabled = true;

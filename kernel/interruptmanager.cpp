@@ -49,7 +49,7 @@ bool InterruptManager::interrupts_enabled() {
 bool InterruptManager::handle_interrupt(x86::InterruptFrame *frame) {
   if (m_handlers[frame->int_vector] != nullptr) {
     const auto retval = m_handlers[frame->int_vector](frame);
-    if (retval) {
+    if (retval && frame->int_vector < 0x30) {
       x86::pic::acknowledge(frame->int_vector - 0x20);
     }
     return retval;

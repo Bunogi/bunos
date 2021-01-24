@@ -31,6 +31,14 @@ public:
     return m_addr == other.m_addr;
   }
 
+  constexpr AddressContainer operator+(T to_add) {
+    return AddressContainer<T>(to_add + m_addr);
+  }
+  constexpr AddressContainer &operator+=(T to_add) {
+    m_addr += to_add;
+    return *this;
+  }
+
   constexpr operator bool() const { return m_addr != 0; }
 
   using Type = T;

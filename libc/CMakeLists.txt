@@ -11,7 +11,7 @@ set(
   # FIXME: There are probably more, maybe there should be a neater split of what's available in the kernel and not?
   unistd.cpp
   errno.cpp
-  x86/syscall.s
+  x86/syscall.S
 )
 
 #FIXME: When userspace stuff is "done", these should not be part of kernel libc.

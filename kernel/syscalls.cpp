@@ -12,6 +12,10 @@ i32 do_syscall(Process &proc, u32 code, u32 *parameters) {
   case SYS_EXIT:
     proc.sys_exit(parameters[0]);
     return 0;
+  case SYS_WRITE:
+    return proc.sys_write(parameters[0],
+                          reinterpret_cast<const void *>(parameters[1]),
+                          parameters[2]);
   default:
     printf("[syscall] Unknown syscall code %u\n", code);
     // Invalid syscall :(

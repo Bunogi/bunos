@@ -10,4 +10,6 @@ void init(tty::IDevice *dev) {
 }
 
 void flush() { out_device->flush(); }
+
+void write(bu::StringView s) { out_device->write(s.data(), s.len()); }
 } // namespace kernel::print

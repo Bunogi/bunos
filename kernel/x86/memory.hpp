@@ -27,5 +27,6 @@ void init_memory_management();
 // TODO: use a pair structure thing
 VirtualAddress map_kernel_memory(u32 page_count);
 bool map_user_memory(Process &process, VirtualAddress at);
+void set_user_mem_no_write(Process &process, VirtualAddress at);
 
 } // namespace kernel::x86

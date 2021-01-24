@@ -1,6 +1,8 @@
+#include <libc/stdio.h>
+#include <libc/string.h>
+#include <libc/sys/syscall.h>
+#include <libc/unistd.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
 
 #include <bustd/assert.hpp>
 #include <bustd/stddef.hpp>
@@ -270,7 +272,8 @@ int printf(const char *format, ...) {
     kernel::print::out_device->write(buffer, retval);
   }
 #else
-  TODO();
+  // FIXME: We should probably look at the result of this
+  write(1, buffer, retval);
 #endif
 
   return retval;
@@ -282,10 +285,18 @@ int puts(const char *s) {
     kernel::print::out_device->write(s, strlen(s));
     kernel::print::out_device->write("\n", 1);
   }
-#else
-  (void)s;
-  TODO();
-#endif
 
   return 0;
+#else
+  const auto result = syscall(SYS_WRITE, 1, s, strlen(s));
+  if (result < 0) {
+    return EOF;
+  }
+
+  if (syscall(SYS_WRITE, 1, "\n", 1) < 0) {
+    return EOF;
+  } else {
+    return 1;
+  }
+#endif
 }

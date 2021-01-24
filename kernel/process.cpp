@@ -1,11 +1,14 @@
 #include <bustd/assert.hpp>
+#include <kernel/elfreader.hpp>
+#include <kernel/kprint.hpp>
 #include <kernel/process.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pagemapguard.hpp>
+#include <libc/errno.h>
+#include <libc/string.h>
 #include <libc/sys/syscall.h>
 
-#include <kernel/debugsymbols.hpp>
 #include <stdio.h>
 
 namespace {
@@ -79,6 +82,16 @@ Process::Process(void (*entry)())
   push_entry_address();
 }
 
+Process::Process(bu::StringView path) : Process(nullptr) {
+  // HACK: undo the push_entry_address call
+  // FIXME: Find a better way
+  m_registers.esp += 4;
+
+  m_entry = elf::parse(*this, path);
+  ASSERT(m_entry);
+  push_entry_address();
+}
+
 void Process::push_entry_address() {
   const auto index = (m_registers.esp - m_kernel_stack_start.get()) / 4;
   reinterpret_cast<u32 *>(m_kernel_stack_start.ptr())[index] =
@@ -110,6 +123,7 @@ void Process::update_registers(x86::InterruptFrame *frame) {
     const auto sys_return = m_registers.eax;
     m_registers.update_from_frame(frame);
     m_registers.eax = sys_return;
+    m_returning_from_syscall = false;
   } else {
     m_registers.update_from_frame(frame);
   }
@@ -118,6 +132,21 @@ void Process::update_registers(x86::InterruptFrame *frame) {
 void Process::sys_exit(int) {
   // FIXME: Handle exit status
   m_has_exit = true;
+}
+
+int Process::sys_write(int fd, const void *buf, size_t bytes) {
+  if (fd != 1) {
+    return -EBADF;
+  }
+  // FIXME: This needs some better validation
+  if (!buf) {
+    return -EINVAL;
+  }
+  const usize max_bytes_at_once = 256;
+  const auto to_write = bu::min(bytes, max_bytes_at_once);
+  // printf("Writing %u bytes from syscall\n", to_write);
+  print::write(bu::StringView(reinterpret_cast<const char *>(buf), to_write));
+  return to_write;
 }
 
 } // namespace kernel

@@ -281,6 +281,7 @@ bool map_user_memory(Process &process, VirtualAddress at) {
   auto page_dir = process.page_dir();
   PhysicalAddress page_table;
   {
+    // Page dir of the process is always initialized
     const PageMapGuard guard((page_dir));
     u32 *const dir = static_cast<u32 *>(guard.mapped_address());
     auto entry = PageDirectoryEntry::from_u32(dir[pd_entry]);
@@ -292,6 +293,7 @@ bool map_user_memory(Process &process, VirtualAddress at) {
       process.take_page_table_page(bu::move(allocated));
 
       entry.user = true;
+      entry.read_write = true;
       entry.present = true;
       dir[pd_entry] = entry.as_u32();
     }
@@ -302,20 +304,41 @@ bool map_user_memory(Process &process, VirtualAddress at) {
     const PageMapGuard guard((page_table));
     u32 *const table = static_cast<u32 *>(guard.mapped_address());
 
-    const auto entry = PageTableEntry::from_u32(table[pt_entry]);
-    ASSERT(!entry.present);
-
     auto physical_page = allocate_physical_page();
     PageTableEntry new_entry{};
     new_entry.page_address = physical_page;
     process.take_memory_page(bu::move(physical_page));
-    new_entry.read_write = true; // FIXME: Find out if it should be read-write
+    new_entry.read_write = true;
     new_entry.user = true;
     new_entry.present = true;
 
     table[pt_entry] = new_entry.as_u32();
   }
   return true;
+}
+
+void set_user_mem_no_write(Process &process, VirtualAddress at) {
+  printf("%p\n", at.get());
+  const auto pd_entry = page_dir_index_from_addr(at);
+  const auto pt_entry = page_table_index_from_addr(at);
+  PhysicalAddress page_table;
+  {
+    const auto page_dir = process.page_dir();
+    const PageMapGuard guard((page_dir));
+    auto *const dir = static_cast<u32 *>(guard.mapped_address());
+    const auto entry = PageDirectoryEntry::from_u32(dir[pd_entry]);
+    ASSERT(entry.present);
+    page_table = PhysicalAddress(entry.page_table_address);
+  }
+
+  {
+    const PageMapGuard guard((page_table));
+    u32 *const table = static_cast<u32 *>(guard.mapped_address());
+    auto entry = PageTableEntry::from_u32(table[pt_entry]);
+    ASSERT(entry.present);
+    entry.read_write = false;
+    table[pt_entry] = entry.as_u32();
+  }
 }
 
 } // namespace kernel::x86

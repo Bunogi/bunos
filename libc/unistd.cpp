@@ -8,7 +8,10 @@
 
 #ifdef __IS_X86__
 extern "C" {
-i32 _x86_do_syscall(u32 code, u32 *args, u32 count);
+i32 _x86_syscall_no_args(i32 code);
+i32 _x86_syscall_one_arg(i32 code, i32 arg);
+i32 _x86_syscall_two_args(i32 code, i32 arg1, i32 arg2);
+i32 _x86_syscall_three_args(i32 code, i32 arg1, i32 arg2, i32 arg3);
 }
 #endif
 
@@ -23,13 +26,14 @@ long syscall(long code, ...) {
   case SYS_EXIT:
     argcount = 1;
     break;
+  case SYS_WRITE:
+    argcount = 3;
+    break;
   default:
     // FIXME: set errno
-    abort();
+    // abort();
     return -1;
   }
-
-  ASSERT_NE(argcount, 0);
 
   u32 args[MAX_SYSCALL_ARG_COUNT];
 
@@ -40,9 +44,30 @@ long syscall(long code, ...) {
   }
   va_end(arg_list);
 
-  const auto retval = _x86_do_syscall(code, args, argcount);
+  i32 retval = 0;
+  switch (argcount) {
+  case 0:
+    retval = _x86_syscall_no_args(code);
+    break;
+  case 1:
+    retval = _x86_syscall_one_arg(code, args[0]);
+    break;
+  case 2:
+    retval = _x86_syscall_two_args(code, args[0], args[1]);
+    break;
+  case 3:
+    retval = _x86_syscall_three_args(code, args[0], args[1], args[2]);
+    break;
+  default:
+    UNREACHABLE();
+  }
+
   if (retval < 0) {
     errno = -retval;
   }
   return retval;
+}
+
+ssize_t write(int fd, const void *buf, size_t bytes) {
+  return syscall(SYS_WRITE, fd, buf, bytes);
 }

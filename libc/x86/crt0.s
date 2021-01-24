@@ -16,6 +16,8 @@ _start:
     pushl $0
 
     call main
+
+    addl $8, %esp
     
     push %eax
     call exit

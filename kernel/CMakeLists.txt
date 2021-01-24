@@ -37,6 +37,7 @@ add_custom_target(
 add_library(kernel.object
   STATIC
   debugsymbols.cpp
+  elfreader.cpp
   filesystem/ext2.cpp
   filesystem/vfs.cpp
   interruptmanager.cpp

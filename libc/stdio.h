@@ -9,6 +9,8 @@ extern "C" {
 typedef __SIZE_TYPE__ size_t;
 #define SEEK_SET 1
 
+#define EOF -1
+
 int sprintf(char *str, const char *format, ...);
 int printf(const char *format, ...);
 int puts(const char *s);
