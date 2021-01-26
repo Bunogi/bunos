@@ -48,6 +48,7 @@ add_library(kernel.object
   physicalmalloc.cpp
   process.cpp
   scheduler.cpp
+  spinlock.cpp
   syscalls.cpp
   timer.cpp
   tty/kerneloutputdevice.cpp

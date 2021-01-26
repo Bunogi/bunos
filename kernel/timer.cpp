@@ -55,6 +55,7 @@ u32 register_timer(usize ticks) {
 }
 
 void delay(usize ms) {
+  // FIXME: This should yield
   const auto index = register_timer(ms * x86::pit::ticks_per_ms);
   while (SLEEP_TIMERS[index] != 0) {
     __asm__ volatile("nop");
