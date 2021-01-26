@@ -95,7 +95,7 @@ if(NOT BUNOS_BUILD_HOST)
   add_subdirectory(libc)
 
   add_custom_target(
-    image ALL
+    image
     COMMAND ${CMAKE_SOURCE_DIR}/build_disk_image.sh disk.img ${BUNOS_FS_ROOT_DIR} ${BUNOS_INSTALL_DIR}
     DEPENDS kernel.bin kernel.sym ${BUNOS_ROOT_DIR}
   )
