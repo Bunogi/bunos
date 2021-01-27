@@ -1,7 +1,8 @@
 #include <bustd/assert.hpp>
 #include <bustd/math.hpp>
-#include <kernel/interruptmanager.hpp>
+#include <kernel/interrupts.hpp>
 #include <kernel/scheduler.hpp>
+#include <kernel/spinlock.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/x86/pit.hpp>
 #include <kernel/x86/tty/serial.hpp>
@@ -9,6 +10,8 @@
 // TODO: (maybe) use a static vector or something
 static constexpr u32 SLEEP_TIMER_COUNT = 16;
 static volatile u32 SLEEP_TIMERS[SLEEP_TIMER_COUNT];
+
+static kernel::SpinLock s_lock;
 
 extern kernel::Scheduler *s_scheduler;
 
@@ -38,12 +41,12 @@ bool interrupt_handler(x86::InterruptFrame *frame) {
 
 void initialize() {
   x86::pit::initialize();
-  InterruptManager::instance()->register_handler(0x20, &interrupt_handler);
+  kernel::interrupts::register_handler(0x20, &interrupt_handler);
 }
 
 u32 register_timer(usize ticks) {
   // TODO: should be a mutex or something when this is actually used
-  const auto guard = InterruptManager::instance()->disable_interrupts_guarded();
+  const auto guard = s_lock.lock();
   for (u32 i = 0; i < SLEEP_TIMER_COUNT; i++) {
     if (SLEEP_TIMERS[i] == 0) {
       SLEEP_TIMERS[i] = bu::max(ticks, 1ul);

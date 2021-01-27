@@ -20,4 +20,14 @@ struct InterruptFrame {
 typedef bool (*InterruptHandler)(InterruptFrame *frame);
 
 void initialize_interrupts();
+
+[[gnu::always_inline]] inline void cli() { __asm__ volatile("cli"); }
+[[gnu::always_inline]] inline void sti() { __asm__ volatile("sti"); }
+[[gnu::always_inline]] inline bool interrupts_enabled() {
+  u32 eflags;
+  __asm__ volatile("pushf\n"
+                   "popl %0"
+                   : "=r"(eflags));
+  return (eflags & 0x200) != 0;
+}
 } // namespace kernel::x86

@@ -1,4 +1,4 @@
-#include <kernel/interruptmanager.hpp>
+#include <kernel/interrupts.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/syscalls.hpp>
 #include <kernel/x86/interrupts.hpp>
@@ -23,8 +23,7 @@ bool interrupt_handler(InterruptFrame *frame) {
 
 constexpr u8 syscall_vector = 0x80;
 void register_syscall_handler() {
-  InterruptManager::instance()->register_handler(syscall_vector,
-                                                 interrupt_handler);
+  interrupts::register_handler(syscall_vector, interrupt_handler);
 }
 
 } // namespace kernel::x86

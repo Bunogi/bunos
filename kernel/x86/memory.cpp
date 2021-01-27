@@ -1,5 +1,4 @@
 #include <bustd/assert.hpp>
-#include <kernel/interruptmanager.hpp>
 #include <kernel/memory.hpp>
 #include <kernel/physicalmalloc.hpp>
 #include <kernel/process.hpp>

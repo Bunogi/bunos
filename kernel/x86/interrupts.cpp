@@ -1,5 +1,5 @@
 #include <bustd/stddef.hpp>
-#include <kernel/interruptmanager.hpp>
+#include <kernel/interrupts.hpp>
 #include <kernel/panic.hpp>
 #include <kernel/x86/handlers.inc>
 #include <kernel/x86/interrupts.hpp>
@@ -23,7 +23,7 @@ void _isr_callable_error_code(kernel::x86::InterruptFrame *frame) {
 }
 
 void _isr_callable_noerror(kernel::x86::InterruptFrame *frame) {
-  if (!kernel::InterruptManager::instance()->handle_interrupt(frame)) {
+  if (!kernel::interrupts::handle_interrupt(frame)) {
     kernel::panic_from_interrupt(frame, "Unhandled interrupt", false);
   }
 }

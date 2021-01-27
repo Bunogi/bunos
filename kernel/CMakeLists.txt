@@ -40,7 +40,8 @@ add_library(kernel.object
   elfreader.cpp
   filesystem/ext2.cpp
   filesystem/vfs.cpp
-  interruptmanager.cpp
+  interruptguard.cpp
+  interrupts.cpp
   kernel_main.cpp
   kmalloc.cpp
   kprint.cpp

@@ -1,9 +1,9 @@
 #include <bustd/stddef.hpp>
 #include <kernel/debugsymbols.hpp>
-#include <kernel/interruptmanager.hpp>
 #include <kernel/kprint.hpp>
 #include <kernel/panic.hpp>
 #include <kernel/scheduler.hpp>
+#include <kernel/x86/interrupts.hpp>
 #include <stdio.h>
 
 namespace {

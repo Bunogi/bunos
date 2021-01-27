@@ -3,7 +3,7 @@
 #include <kernel/debugsymbols.hpp>
 #include <kernel/filesystem/ext2.hpp>
 #include <kernel/filesystem/vfs.hpp>
-#include <kernel/interruptmanager.hpp>
+#include <kernel/interrupts.hpp>
 #include <kernel/kmalloc.hpp>
 #include <kernel/kprint.hpp>
 #include <kernel/panic.hpp>
@@ -13,7 +13,6 @@
 #include <kernel/timer.hpp>
 #include <kernel/tty/kerneloutputdevice.hpp>
 #include <kernel/x86/gdt.hpp>
-#include <kernel/x86/interrupts.hpp>
 #include <kernel/x86/io.hpp>
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pata.hpp>
@@ -38,27 +37,23 @@ void kernel_main() {
   malloc::Allocator allocator;
   init_pmem();
 
-  // TODO: Allocate in the ::instance() function instead of here when we get
-  // memory allocation
-  x86::initialize_interrupts();
-  InterruptManager manager;
-  InterruptManager::init(&manager);
+  interrupts::init();
 
   printf("=== Switching to late print device ===\n");
-  kernel::tty::KernelOutputDevice print_device(bu::move(early_printer));
-  kernel::print::init(&print_device);
+  tty::KernelOutputDevice print_device(bu::move(early_printer));
+  print::init(&print_device);
 
   kernel::Scheduler::init();
 
-  kernel::timer::initialize();
+  timer::initialize();
   printf("Welcome to Bunos 0.0-dev!\n");
 
-  kernel::x86::initialize_pata();
+  x86::initialize_pata();
 
-  kernel::Vfs::instance()->mount(bu::OwnedPtr<IFileSystem>(new fs::Ext2()));
+  Vfs::instance()->mount(bu::OwnedPtr<IFileSystem>(new fs::Ext2()));
 
   printf("Main: Disk has %u sectors\n", x86::disk_sector_count());
-  kernel::load_debug_symbols();
+  load_debug_symbols();
 
   init_syscalls();
   printf("Running scheduler...\n");

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bustd/macros.hpp>
-#include <kernel/interruptmanager.hpp>
 #include <kernel/memory.hpp>
 #include <kernel/spinlock.hpp>
 

@@ -1,7 +1,8 @@
 #include <bustd/math.hpp>
 #include <bustd/ringbuffer.hpp>
 #include <bustd/stringview.hpp>
-#include <kernel/interruptmanager.hpp>
+#include <kernel/interruptguard.hpp>
+#include <kernel/interrupts.hpp>
 #include <kernel/process.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/timer.hpp>
@@ -114,8 +115,7 @@ Serial::Serial() {
   ASSERT_EQ(s_serial_instance, nullptr);
   init();
 
-  InterruptManager::instance()->register_handler(com1_interrupt_vector,
-                                                 interrupt_handler);
+  interrupts::register_handler(com1_interrupt_vector, interrupt_handler);
 
   out_u8(regs::interrupt_enable, 0x02);
   s_serial_instance = this;
@@ -126,8 +126,7 @@ Serial *Serial::instance() { return s_serial_instance; }
 
 void Serial::write(const char *buf, const usize length) {
   // If the buffer cannot take any more, we have to wait until it can
-  auto *const instance = InterruptManager::instance();
-  const auto guard = instance->disable_interrupts_guarded();
+  const InterruptGuard guard;
   const auto written =
       m_buffer.write(reinterpret_cast<const u8 *>(buf), length);
 
@@ -140,12 +139,12 @@ void Serial::write(const char *buf, const usize length) {
         transmit();
       }
     } else {
-      instance->enable_interrupts();
+      x86::sti();
       volatile auto &buffer = m_buffer;
       while (buffer.vol_remaining_space() < remaining) {
         timer::delay(10);
       }
-      instance->disable_interrupts();
+      x86::cli();
     }
     const auto written_again =
         m_buffer.write(reinterpret_cast<const u8 *>(buf) + written, remaining);
@@ -159,7 +158,7 @@ void Serial::write(const char *buf, const usize length) {
 } // namespace kernel::x86::tty
 
 void Serial::transmit() {
-  const auto guard = InterruptManager::instance()->disable_interrupts_guarded();
+  const InterruptGuard guard;
   if (ready_to_send()) {
     u8 send_buffer[fifo_size] = {};
     const auto to_send = m_buffer.take(send_buffer, fifo_size);
@@ -169,7 +168,7 @@ void Serial::transmit() {
 
 void Serial::flush() {
   if (!m_buffer.is_empty()) {
-    if (InterruptManager::instance()->interrupts_enabled()) {
+    if (interrupts::enabled()) {
       while (m_buffer.len() > 0) {
         timer::delay(10);
       }
