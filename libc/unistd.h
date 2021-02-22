@@ -6,7 +6,8 @@
 #ifdef __IS_X86__
 typedef __INT32_TYPE__ ssize_t;
 #else
-#error Expected x86
+#warning Not x86, guessing amd64 
+typedef __INT64_TYPE__ ssize_t;
 #endif
 
 #ifdef __cplusplus
