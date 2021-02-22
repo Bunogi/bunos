@@ -8,6 +8,7 @@ extern "C" {
 
 #define o(s) SYS_##s,
 enum __bunos_syscall { __BUNOS_ENUMERATE_SYSCALL(o) __SYSCALL_COUNT };
+#undef o
 
 #ifdef __cplusplus
 }
