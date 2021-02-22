@@ -16,6 +16,7 @@
 #include <kernel/x86/io.hpp>
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pata.hpp>
+#include <kernel/x86/ps2.hpp>
 #include <kernel/x86/tty/vga.hpp>
 #include <stdio.h>
 
@@ -55,6 +56,7 @@ void kernel_main() {
   printf("Main: Disk has %u sectors\n", x86::disk_sector_count());
   load_debug_symbols();
 
+  x86::init_ps2_controller();
   init_syscalls();
   printf("Running scheduler...\n");
 

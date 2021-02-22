@@ -68,6 +68,8 @@ add_library(kernel.object
   x86/pata.cpp
   x86/pic.cpp
   x86/pit.cpp
+  x86/ps2.cpp
+  x86/ps2_keyboard.cpp
   x86/scheduler.s
   x86/syscalls.cpp
   x86/tty/serial.cpp
