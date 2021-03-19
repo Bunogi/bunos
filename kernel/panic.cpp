@@ -141,6 +141,8 @@ void panic_from_interrupt(x86::InterruptFrame *frame,
 
   kernel::print::flush();
   __asm__ volatile("cli\nhlt");
+  while (1) {
+  }
 }
 
 void panic_in_code(const char *file, const u32 line,
@@ -160,5 +162,7 @@ void panic_in_code(const char *file, const u32 line,
   print_stack_trace(0, frame);
   kernel::print::flush();
   __asm__ volatile("cli\nhlt");
+  while (1) {
+  }
 }
 } // namespace kernel
