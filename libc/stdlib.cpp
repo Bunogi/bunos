@@ -41,7 +41,16 @@ void *malloc(size_t size) {
 #endif
 }
 
-void *calloc(size_t nmemb, size_t size) { return malloc(nmemb * size); }
+void *calloc(size_t nmemb, size_t size) {
+  if (nmemb == 0 || size == 0) {
+    return nullptr;
+  }
+
+  const auto block_size = nmemb * size;
+  auto *out = malloc(block_size);
+  memset(out, 0, block_size);
+  return out;
+}
 
 void free(void *ptr) {
 #ifdef __IN_KERNEL__
