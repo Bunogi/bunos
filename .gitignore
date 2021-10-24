@@ -6,4 +6,5 @@ toolchain/prefix
 toolchain/work/*
 toolchain/work/.*
 toolchain/*.tar*
+toolchain/*.success
 root/

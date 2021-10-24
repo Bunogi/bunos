@@ -41,6 +41,8 @@ void *malloc(size_t size) {
 #endif
 }
 
+void *calloc(size_t nmemb, size_t size) { return malloc(nmemb * size); }
+
 void free(void *ptr) {
 #ifdef __IN_KERNEL__
   return kernel::malloc::Allocator::instance()->deallocate(ptr);

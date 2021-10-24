@@ -14,6 +14,7 @@ typedef __INT16_TYPE__ int16_t;
 typedef __INT8_TYPE__ int8_t;
 
 typedef __UINTPTR_TYPE__ uintptr_t;
+typedef __INTPTR_TYPE__ intptr_t;
 #ifdef __cplusplus
 }
 #endif

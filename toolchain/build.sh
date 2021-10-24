@@ -3,8 +3,10 @@ set -euo pipefail
 
 typeset -r BINUTILS_VERSION=2.35
 typeset -r BINUTILS_DOWNLOAD_URL=https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.xz
-typeset -r GCC_VERSION=10.2.0
+typeset -r GCC_VERSION=11.2.0
 typeset -r GCC_DOWNLOAD_URL=https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz
+
+typeset -r BINUTILS_SUCCESSFUL_FILE="$PWD/binutils.success"
 
 BINUTILS_TAR_FILE=$(basename $BINUTILS_DOWNLOAD_URL)
 GCC_TAR_FILE=$(basename $GCC_DOWNLOAD_URL)
@@ -31,8 +33,13 @@ typeset -r gcc_patch=$PWD/gcc.patch
 #mkdir -p $PREFIX/lib
 
 function build_binutils() {
-    local BINUTILS_BUILD_DIR=$PWD/work/build-binutils
+    local -r BINUTILS_BUILD_DIR=$PWD/work/build-binutils
+    # Would be nice to not build binutils twice
+    if [ -e $BINUTILS_BUILD_DIR ] && [-e $BINUTILS_SUCCESSFUL_FILE ]; then
+        return
+    fi
     rm -rf work/*binutils*
+    rm -rf $BINUTILS_SUCCESSFUL_FILE
     if [ ! -f $BINUTILS_TAR_FILE ]; then
         curl $BINUTILS_DOWNLOAD_URL > $BINUTILS_TAR_FILE
     fi
@@ -60,6 +67,8 @@ function build_binutils() {
     make -j ${makejobs}
     make install
     popd
+
+    touch $BINUTILS_SUCCESSFUL_FILE
 }
 
 function build_gcc() {
@@ -73,7 +82,7 @@ function build_gcc() {
 
     pushd .
     cd work/gcc-${GCC_VERSION}/libstdc++-v3
-    autoconf
+    #autoconf # Unsure if needed, seems to compile fine without this
     popd
     
     mkdir $GCC_BUILD_DIR
