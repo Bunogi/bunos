@@ -49,8 +49,10 @@ private:
 };
 
 template <typename T, typename... Ts>
-inline OwnedPtr<T> create_owned(Ts &&... args) {
-  return OwnedPtr(new T(forward(args)...));
+inline OwnedPtr<T> create_owned(Ts &&...args) {
+  auto s = OwnedPtr(new T(forward(args)...));
+  ASSERT(s);
+  return move(s);
 }
 
 } // namespace bu

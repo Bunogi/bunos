@@ -1,6 +1,7 @@
 #include <bustd/assert.hpp>
 #include <bustd/ringbuffer.hpp>
 #include <bustd/stringview.hpp>
+#include <bustd/vector.hpp>
 #include <libraries/libtest/libtest.hpp>
 #include <string.h>
 
@@ -12,15 +13,14 @@ test::Result basic_read_take() {
   buf.write(v.data_u8(), v.len());
   LIBTEST_ASSERT_EQ(buf.len(), v.len() * 2);
 
-  // TODO: switch to vector
-  char *const otherbuf = new char[v.len() + 1];
-  buf.take(reinterpret_cast<u8 *>(otherbuf), v.len());
+  // TODO: switch to Array-type or something
+  bu::Vector<char> otherbuf(v.len() + 1);
+  otherbuf.fill(0, otherbuf.capacity());
+  buf.take(reinterpret_cast<u8 *>(otherbuf.data()), v.len());
   otherbuf[v.len()] = 0;
-  LIBTEST_ASSERT_EQ(v, otherbuf);
+
+  LIBTEST_ASSERT_EQ(strcmp(v.data(), otherbuf.data()), 0);
   LIBTEST_ASSERT_EQ(buf.len(), v.len());
-
-  delete[] otherbuf;
-
   LIBTEST_SUCCEED();
 }
 

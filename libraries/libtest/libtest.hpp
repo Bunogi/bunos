@@ -8,7 +8,7 @@ namespace test {
 typedef bool Result;
 static int failures;
 static int successes;
-static const char *message;
+static const char *message = "";
 
 void handle_result(const char *name, Result res) {
   if (!res) {

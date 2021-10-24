@@ -206,6 +206,7 @@ private:
   void set_size(usize new_size) {
     ASSERT(new_size >= m_size);
     T *new_data = reinterpret_cast<T *>(malloc(new_size * sizeof(T)));
+    ASSERT(new_data);
     if (m_data != nullptr) {
       for (usize i = 0; i < m_size; i++) {
         new (&new_data[i]) T(move(at(i)));

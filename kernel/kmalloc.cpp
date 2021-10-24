@@ -13,7 +13,7 @@
 #endif
 
 extern "C" {
-extern char _kernel_heap_start, _kernel_heap_end;
+extern void *_kernel_heap_start, *_kernel_heap_end;
 }
 
 static kernel::malloc::Allocator *s_allocator;

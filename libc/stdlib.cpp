@@ -32,7 +32,13 @@ char *getenv(const char *) {
   return nullptr;
 }
 
+// It complains that we leak here, but that's the idea!
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wanalyzer-malloc-leak"
 void *malloc(size_t size) {
+  if (size == 0) {
+    return nullptr;
+  }
 #ifdef __IN_KERNEL__
   return kernel::malloc::Allocator::instance()->allocate(size);
 #else
@@ -42,17 +48,21 @@ void *malloc(size_t size) {
 }
 
 void *calloc(size_t nmemb, size_t size) {
-  if (nmemb == 0 || size == 0) {
+  const auto block_size = nmemb * size;
+  if (block_size == 0) {
     return nullptr;
   }
 
-  const auto block_size = nmemb * size;
   auto *out = malloc(block_size);
   memset(out, 0, block_size);
   return out;
 }
+#pragma GCC diagnostic pop
 
 void free(void *ptr) {
+  if (ptr == nullptr) {
+    return;
+  }
 #ifdef __IN_KERNEL__
   return kernel::malloc::Allocator::instance()->deallocate(ptr);
 #else

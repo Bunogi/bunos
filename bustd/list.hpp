@@ -47,21 +47,25 @@ public:
 
   void append_back(const T &val) {
     auto *new_node = new Node(val);
+    ASSERT_NE(new_node, nullptr);
     insert_back(new_node);
   }
 
   void emplace_back(T &&val) {
     auto *new_node = new Node(forward(val));
+    ASSERT_NE(new_node, nullptr);
     insert_back(new_node);
   }
 
   void append_front(const T &val) {
     auto *new_node = new Node(val);
+    ASSERT_NE(new_node, nullptr);
     insert_front(new_node);
   }
 
   void emplace_front(T &&val) {
     auto *new_node = new Node(forward(val));
+    ASSERT_NE(new_node, nullptr);
     insert_front(new_node);
   }
 
