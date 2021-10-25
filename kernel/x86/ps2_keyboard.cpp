@@ -18,11 +18,22 @@ bool interrupt_handler(kernel::x86::InterruptFrame *) {
 namespace cmd {
 constexpr u8 enable_scanning = 0xF4;
 constexpr u8 set_scancode_set = 0xF0;
+
+constexpr u8 max_data_byte_count = 1;
 } // namespace cmd
 namespace resp {
 constexpr u8 ack = 0xFA;
 constexpr u8 resend = 0xFE;
 } // namespace resp
+
+constexpr u8 get_data_byte_count(const u8 command) {
+  switch (command) {
+  case cmd::set_scancode_set:
+    return 1;
+  default:
+    return 0;
+  }
+}
 } // namespace
 
 namespace kernel::x86 {
@@ -48,7 +59,19 @@ PS2Keyboard::PS2Keyboard(PS2Device dev, PS2DeviceType type)
 
 void PS2Keyboard::send_command() {
   if (!m_command_queue.is_empty()) {
-    ps2::write(m_device, m_command_queue.head());
+    const auto command = m_command_queue.head();
+    ps2::write(m_device, command);
+    const auto num_data_bytes = get_data_byte_count(command);
+    if (num_data_bytes > 0) {
+      // Offset by 1 to avoid reading the command again
+      u8 buffer[cmd::max_data_byte_count + 1];
+      const auto read = m_command_queue.read(buffer, num_data_bytes + 1);
+      ASSERT_EQ(read, static_cast<usize>(num_data_bytes + 1));
+
+      for (int i = 1; i <= num_data_bytes; i++) {
+        ps2::write(m_device, buffer[i]);
+      }
+    }
   }
 }
 
@@ -60,13 +83,20 @@ void PS2Keyboard::handle_message(u8 message) {
     ASSERT(message == resp::resend || message == resp::ack);
     if (message == resp::resend) {
       send_command();
-    } else {
-      m_command_queue.pop();
+    } else if (message == resp::ack) {
+      const auto prev_command = m_command_queue.pop();
+      const auto prev_command_data_bytes = get_data_byte_count(prev_command);
+      if (prev_command_data_bytes > 0) {
+        m_command_queue.drop(prev_command_data_bytes);
+      }
+
       if (m_command_queue.is_empty()) {
         m_state = State::ExpectingKeyCode;
       } else {
         send_command();
       }
+    } else {
+      // unknown keycode :(
     }
     return;
   default:

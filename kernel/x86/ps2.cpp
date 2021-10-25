@@ -36,6 +36,7 @@ constexpr u8 enable_channel1 = 0xA8;
 namespace dev_cmd {
 constexpr u8 disable_scanning = 0xF5;
 constexpr u8 ack = 0xFA;
+constexpr u8 test_ok = 0xAA;
 constexpr u8 reset = 0xFF;
 constexpr u8 identify = 0xF2;
 } // namespace dev_cmd
@@ -215,6 +216,15 @@ void init_ps2_controller() {
         dev == PS2Device::First ? cmd::enable_channel0 : cmd::enable_channel1;
     out_u8(command_register, enable_command);
     ps2::write(dev, dev_cmd::reset);
+    const auto reset_response = read_input_response();
+    ASSERT_EQ(reset_response, dev_cmd::ack);
+    const auto reset_test_result = read_input_response();
+    ASSERT_EQ(reset_test_result, dev_cmd::test_ok);
+
+    // TODO: I don't understand why this fixes it but it does. Maybe find out?
+    const auto f = read_input_response();
+    static_cast<void>(f);
+
     PS2DeviceType type;
     if (detect_device_type(type, dev)) {
       if (dev == PS2Device::First) {
@@ -252,6 +262,7 @@ void ps2::write(const PS2Device &dev, u8 byte) {
 
   // FIXME: We should probably have a timeout here
   while ((in_u8(status_register) & status::input_buffer_full) != 0) {
+    asm volatile("nop");
   }
   out_u8(data_port, byte);
 }
