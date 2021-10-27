@@ -114,6 +114,8 @@ public:
     return to_drop;
   }
 
+  constexpr usize capacity() { return N; }
+
 private:
   usize m_buffer_start{0};
   usize m_current_size{0};

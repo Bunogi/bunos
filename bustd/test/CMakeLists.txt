@@ -4,6 +4,7 @@ set(test_sources
   ownedptr.cpp
   rc.cpp
   ringbuffer.cpp
+  stringview.cpp
   vector.cpp
 )
 foreach(test IN ITEMS ${test_sources})

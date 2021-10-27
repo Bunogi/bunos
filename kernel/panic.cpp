@@ -100,11 +100,10 @@ void nested_panic_check() {
 namespace kernel {
 bool in_panic() { return s_panicking; }
 
-void panic_from_interrupt(x86::InterruptFrame *frame,
-                          const bu::StringView reason, bool has_errcode) {
-  printf("====KERNEL_PANIC====\n"
-         "%s\n",
-         reason.data_or("No message given"));
+void panic_from_interrupt(x86::InterruptFrame *frame, const char *const reason,
+                          bool has_errcode) {
+
+  printf("====KERNEL_PANIC====\n%s\n", reason ? reason : "No message given");
 
   const auto exception_name = exception_vector_to_string(frame->int_vector);
   if (has_errcode) {
@@ -145,11 +144,10 @@ void panic_from_interrupt(x86::InterruptFrame *frame,
   }
 }
 
-void panic_in_code(const char *file, const u32 line,
-                   const bu::StringView reason) {
+void panic_in_code(const char *file, const u32 line, const char *const reason) {
   __asm__ volatile("cli");
 
-  printf("====KERNEL_PANIC====\n%s", reason.data_or("No message given"));
+  printf("====KERNEL_PANIC====\n%s", reason ? reason : "No message given");
   printf("\nLOCATION: %s:%u\n", file, line);
 
   // It's safe to wait with this check for a while because the most likely way

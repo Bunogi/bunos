@@ -5,9 +5,11 @@
 #include <libraries/libtest/libtest.hpp>
 #include <string.h>
 
+using namespace bu::literals;
+
 test::Result basic_read_take() {
   bu::RingBuffer buf;
-  bu::StringView v = "Why did the chicken cross the road?";
+  auto v = "Why did the chicken cross the road?"sv;
   buf.write(v.data_u8(), v.len());
   LIBTEST_ASSERT_EQ(buf.len(), v.len());
   buf.write(v.data_u8(), v.len());
@@ -123,6 +125,37 @@ test::Result push_pop() {
   LIBTEST_SUCCEED();
 }
 
+test::Result read_nocopy() {
+  bu::SizedRingBuffer<10> buf;
+
+  constexpr auto half_capacity = buf.capacity() / 2;
+  // Split the buffer in half with wrapping
+  for (usize i = 0; i < half_capacity; i++) {
+    buf.push('A');
+  }
+  LIBTEST_ASSERT_EQ(buf.drop(buf.len()), half_capacity);
+  for (usize i = 0; i < half_capacity; i++) {
+    buf.push('A');
+  }
+  for (usize i = buf.len(); i < buf.capacity(); i++) {
+    buf.push('B');
+  }
+  LIBTEST_ASSERT_EQ(buf.len(), buf.capacity());
+
+  bu::StringView lhs, rhs;
+  LIBTEST_ASSERT(buf.read_nocopy(lhs, rhs));
+  LIBTEST_ASSERT(lhs);
+  LIBTEST_ASSERT(rhs);
+  char left[half_capacity];
+  char right[half_capacity];
+  memset(left, 'A', half_capacity);
+  memset(right, 'B', half_capacity);
+
+  LIBTEST_ASSERT_EQ(lhs, bu::StringView(left, half_capacity));
+  LIBTEST_ASSERT_EQ(rhs, bu::StringView(right, half_capacity));
+  LIBTEST_SUCCEED();
+}
+
 int main() {
   RUN_TEST(basic_read_take);
   RUN_TEST(read_empty);
@@ -131,5 +164,6 @@ int main() {
   RUN_TEST(write_overrun_and_wrap);
   RUN_TEST(many_reads_and_writes);
   RUN_TEST(write_until_full);
+  RUN_TEST(read_nocopy);
   LIBTEST_CLEANUP();
 }

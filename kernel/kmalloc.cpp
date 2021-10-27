@@ -1,4 +1,5 @@
 #include <bustd/assert.hpp>
+#include <bustd/stringview.hpp>
 #include <kernel/kmalloc.hpp>
 #include <stdio.h>
 
