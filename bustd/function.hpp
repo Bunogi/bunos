@@ -24,7 +24,11 @@ private:
 
 public:
   Function();
-  template <class F> Function(F f) : m_func(new Callable<F>(move(f))) {}
+  // TODO: Should check if is function as well
+  template <class F, class = typename enable_if<is_pointer<F>>::type>
+  Function(F f) : m_func(new Callable<F>(move(f))) {}
+  template <class F, class = typename enable_if<!is_pointer<F>>::type>
+  Function(F &&f) : m_func(new Callable<F>(move(f))) {}
   T operator()(Args... a) { return m_func->call(a...); }
 };
 } // namespace bu
