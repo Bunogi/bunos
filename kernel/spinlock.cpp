@@ -26,6 +26,8 @@ void SpinLock::unlock() {
   m_locked = false;
 }
 
+bool SpinLock::is_locked() { return m_locked; }
+
 SpinLock::Guard::Guard(SpinLock &parent) : m_parent(parent) {}
 SpinLock::Guard::~Guard() { m_parent.unlock(); }
 

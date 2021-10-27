@@ -3,6 +3,10 @@
 #include <kernel/x86/pic.hpp>
 #include <string.h>
 
+namespace {
+volatile bool is_in_isr{false};
+}
+
 namespace kernel::interrupts {
 // TODO: Allow multiple listeners on the same interrupt?
 x86::InterruptHandler s_handlers[256]{};
@@ -34,16 +38,21 @@ bool handle_interrupt(x86::InterruptFrame *frame) {
   if (frame->int_vector == 0x27 || frame->int_vector == 0x2f) {
     return true;
   }
+  ::is_in_isr = true;
   if (s_handlers[frame->int_vector] != nullptr) {
     const auto retval = s_handlers[frame->int_vector](frame);
     if (retval && frame->int_vector < 0x30) {
       x86::pic::acknowledge(frame->int_vector - 0x20);
     }
+    ::is_in_isr = false;
     return retval;
   } else {
+    ::is_in_isr = false;
     return false;
   }
 }
 
 void disable_non_printing_interrupts() { x86::pic::mask_non_printing_irqs(); }
+
+bool is_in_isr() { return ::is_in_isr; }
 } // namespace kernel::interrupts

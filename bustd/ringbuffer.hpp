@@ -116,6 +116,8 @@ public:
 
   constexpr usize capacity() { return N; }
 
+  void clear() { drop(m_current_size); }
+
 private:
   usize m_buffer_start{0};
   usize m_current_size{0};

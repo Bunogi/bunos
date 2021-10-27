@@ -17,4 +17,6 @@ void disable_non_printing_interrupts();
   return x86::interrupts_enabled();
 }
 
+bool is_in_isr();
+
 } // namespace kernel::interrupts
