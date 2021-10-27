@@ -11,7 +11,7 @@
   do {                                                                         \
     printf("%s\n==>in %s()\n==>at %s:%u\n", message, __func__, __FILE__,       \
            __LINE__);                                                          \
-    exit(1);                                                                   \
+    abort();                                                                   \
   } while (0)
 #endif
 
