@@ -31,6 +31,7 @@ SECTIONS
     .rodata ALIGN(4K) : AT (ADDR (.rodata) - 0xC0000000)
     {
         *(.rodata)
+        __stack_chk_guard = .;
     }
     . = ALIGN(4K);
     _kernel_nonwritable_end = .;

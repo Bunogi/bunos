@@ -1,3 +1,6 @@
+// If we don't have random instruction stuff, use this
+#define DEFAULT_STACK_CHECK_GUARD 0x8192abcd
+
 /* Declare constants for the multiboot header. */
 .set ALIGN,    1<<0             /* align loaded modules on page boundaries */
 .set MEMINFO,  1<<1             /* provide memory map */
@@ -105,8 +108,28 @@ _start_high_half:
 	mov $stack_top, %esp
 	mov $0, %ebp // To tell stack traces where to stop
 
+	// can we try to generate a random stack check guard?
+	// have to do it before we call code built with stack check stuff
+	mov $7, %eax
+	mov $0, %ecx
+	cpuid
+	shr $18, %ebx
+	and $1, %ebx // rdseed supported?
+	jz .fail
+
+	// Try a while
+	mov $100, %ecx
+.retry:
+	rdseed %eax
+	jc .done
+	loop .retry
+.fail:
+	movl $DEFAULT_STACK_CHECK_GUARD, %eax
+.done:
+	movl %eax, __stack_chk_guard
+
 	call kernel_main
- 
+
 	cli
 1:	hlt
 	jmp 1b
