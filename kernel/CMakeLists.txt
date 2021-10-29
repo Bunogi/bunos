@@ -36,6 +36,7 @@ add_custom_target(
 
 add_library(kernel.object
   STATIC
+  cxxabi.cpp
   debugsymbols.cpp
   elfreader.cpp
   filesystem/ext2.cpp
@@ -53,7 +54,6 @@ add_library(kernel.object
   syscalls.cpp
   timer.cpp
   tty/kerneloutputdevice.cpp
-  utils.cpp
   x86/boot.S
   x86/gdt.cpp
   x86/gdt.s
