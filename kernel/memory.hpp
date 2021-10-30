@@ -43,7 +43,7 @@ public:
 
   using Type = T;
 
-  void *ptr() const {
+  constexpr void *ptr() const {
     static_assert(
         sizeof(T) == sizeof(void *),
         "The size of the address must be equal to the size of a pointer");
