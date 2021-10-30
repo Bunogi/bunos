@@ -56,7 +56,7 @@ function(bunos_app)
 
   if (SHOULD_BUILD)
     add_executable(${APP_NAME} ${APP_SOURCES})
-    target_link_libraries(${APP_NAME} PRIVATE ${APP_LIBS})
+    target_link_libraries(${APP_NAME} PRIVATE ${APP_LIBS} c.object)
     if (NOT BUNOS_BUILD_HOST)
       # FIXME: stdc++ should be removed from this list
       add_dependencies(${APP_NAME} c m stdc++)
