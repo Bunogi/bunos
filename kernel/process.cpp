@@ -2,14 +2,14 @@
 #include <kernel/elfreader.hpp>
 #include <kernel/kprint.hpp>
 #include <kernel/process.hpp>
+#include <kernel/process/keyboardfile.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pagemapguard.hpp>
 #include <libc/errno.h>
+#include <libc/stdio.h>
 #include <libc/string.h>
 #include <libc/sys/syscall.h>
-
-#include <stdio.h>
 
 namespace {
 [[noreturn]] void proc_entry(void (*real_entry)()) {
@@ -59,8 +59,8 @@ void x86::Registers::prepare_frame(InterruptFrame *frame) {
   frame->eflags = eflags;
 }
 
-Process::Process(void (*entry)())
-    : m_registers(), m_kernel_stack_pages(2), m_entry(entry) {
+Process::Process(void (*const entry)(), const pid_t pid)
+    : m_registers(), m_pid(pid), m_kernel_stack_pages(2), m_entry(entry) {
   m_registers.eip = reinterpret_cast<uintptr_t>(proc_entry);
   m_registers.ebp = 0;
   {
@@ -82,7 +82,8 @@ Process::Process(void (*entry)())
   push_entry_address();
 }
 
-Process::Process(bu::StringView path) : Process(nullptr) {
+Process::Process(const bu::StringView path, const pid_t pid)
+    : Process(nullptr, pid) {
   // HACK: undo the push_entry_address call
   // FIXME: Find a better way
   m_registers.esp += 4;
@@ -99,11 +100,6 @@ void Process::push_entry_address() {
   m_registers.esp -= 4;
 }
 
-void Process::return_from_syscall(u32 return_value) {
-  m_registers.eax = return_value;
-  m_returning_from_syscall = true;
-}
-
 bool Process::has_overflowed_stack() const {
   return m_registers.esp < m_kernel_stack_start.get();
 }
@@ -118,14 +114,65 @@ void Process::take_memory_page(PhysicalAddress &&addr) {
 
 PhysicalAddress Process::page_dir() { return m_page_directory; }
 
-void Process::update_registers(x86::InterruptFrame *frame) {
-  if (m_returning_from_syscall) {
-    const auto sys_return = m_registers.eax;
-    m_registers.update_from_frame(frame);
-    m_registers.eax = sys_return;
-    m_returning_from_syscall = false;
-  } else {
-    m_registers.update_from_frame(frame);
+void Process::update_registers(x86::InterruptFrame *const frame) {
+  m_registers.update_from_frame(frame);
+  switch (m_state) {
+  case ProcessState::startSyscall:
+    m_syscall_info.previous_registers.update_from_frame(frame);
+    m_registers.eip = reinterpret_cast<u32>(&Process::syscall_entry);
+    m_syscall_info.extract_parameters();
+    break;
+  case ProcessState::syscallDone:
+    memcpy(&m_registers, &m_syscall_info.previous_registers, sizeof(Registers));
+    m_registers.eax = m_syscall_info.retval;
+    m_state = ProcessState::running;
+    // TODO: with a separate kernel stack, we have to update esp here
+    break;
+  case ProcessState::inSyscall:
+  case ProcessState::running:
+    break;
+  }
+}
+
+void Process::SyscallInfo::extract_parameters() {
+  syscall = previous_registers.eax;
+  arguments[0] = previous_registers.ebx;
+  arguments[1] = previous_registers.ecx;
+  arguments[2] = previous_registers.edx;
+}
+
+void Process::start_syscall() {
+  if (m_state == ProcessState::syscallDone) {
+    // We're done and just have to return
+    return;
+  }
+  m_state = ProcessState::startSyscall;
+}
+
+// Entry point for syscalls. We must not return from this function accidentally.
+void Process::syscall_entry() {
+  auto &proc = Scheduler::current_process();
+  proc.m_syscall_info.retval = proc.do_syscall();
+  proc.m_state = ProcessState::syscallDone;
+  // Returning from here would be bad. So instead, trigger another syscall,
+  // which reschedules us.
+  asm volatile("int $0x80");
+}
+
+isize Process::do_syscall() {
+  switch (m_syscall_info.syscall) {
+  case SYS_EXIT:
+    sys_exit(m_syscall_info.arguments[0]);
+    return 0;
+  case SYS_WRITE:
+    return sys_write(
+        m_syscall_info.arguments[0],
+        reinterpret_cast<const void *>(m_syscall_info.arguments[1]),
+        m_syscall_info.arguments[2]);
+  default:
+    printf("[syscall] Unknown syscall %u\n", m_syscall_info.syscall);
+    // Invalid syscall :(
+    return -ENOSYS;
   }
 }
 
@@ -144,7 +191,7 @@ int Process::sys_write(int fd, const void *buf, size_t bytes) {
   }
   const usize max_bytes_at_once = 256;
   const auto to_write = bu::min(bytes, max_bytes_at_once);
-  // printf("Writing %u bytes from syscall\n", to_write);
+  printf("Writing %u bytes from syscall\n", to_write);
   print::write(bu::StringView(reinterpret_cast<const char *>(buf), to_write));
   return to_write;
 }

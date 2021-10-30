@@ -7,6 +7,7 @@
 #include <kernel/physicalmalloc.hpp>
 #include <kernel/x86/interrupts.hpp>
 #include <kernel/x86/memory.hpp>
+#include <libc/sys/types.h>
 
 class Scheduler;
 
@@ -24,6 +25,8 @@ struct Registers {
 
 using x86::Registers;
 
+enum class ProcessState { running, inSyscall, startSyscall, syscallDone };
+
 class Process {
 public:
   BU_NOCOPY(Process)
@@ -31,10 +34,12 @@ public:
   Process(Process &&) = default;
 
   friend class Scheduler;
-  Process(void (*fp)());
-  Process(bu::StringView file);
+  Process(void (*fp)(), pid_t pid);
+  Process(bu::StringView file, pid_t pid);
   Process() = delete;
   bool has_overflowed_stack() const;
+
+  pid_t pid() const;
 
   void take_page_table_page(PhysicalAddress &&addr);
   void take_memory_page(PhysicalAddress &&addr);
@@ -43,10 +48,7 @@ public:
   PhysicalAddress page_dir();
   void update_registers(x86::InterruptFrame *frame);
 
-  // syscall handlers
-  void sys_exit(int code);
-  int sys_write(int fd, const void *buf, size_t bytes);
-  // end syscall handlers
+  void start_syscall();
 
 private:
   void (*read_elf(bu::StringView path))();
@@ -60,13 +62,36 @@ private:
   bu::Vector<PhysicalAddress> m_page_table_pages;
   // Owned memory pages used for whatever
   bu::Vector<PhysicalAddress> m_general_memory_pages;
+  // Kernel stack to use when servicing syscalls
+  PhysicalAddress m_kernel_stack_page;
 
+// FIXME: maybe move this somewhere?
+#define MAX_SYSCALL_ARG_COUNT 4
+  struct SyscallInfo {
+    usize syscall;
+    usize arguments[MAX_SYSCALL_ARG_COUNT];
+    usize retval;
+    Registers previous_registers;
+    void extract_parameters();
+  };
+#undef MAX_SYSCALL_ARG_COUNT
+  SyscallInfo m_syscall_info;
+  ProcessState m_state{ProcessState::running};
+
+  // syscall handlers
+  static void syscall_entry();
+  isize do_syscall();
+  void sys_exit(int code);
+  int sys_write(int fd, const void *buf, size_t bytes);
+  // end syscall handlers
+
+  pid_t m_pid;
   u32 m_last_run;
   u32 m_kernel_stack_pages;
   void (*m_entry)();
   bool m_can_run{true};
   bool m_has_exit{false};
+  // TODO: Replace with ProcessState
   bool m_has_run{false};
-  bool m_returning_from_syscall{false};
 };
 } // namespace kernel

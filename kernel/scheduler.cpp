@@ -22,7 +22,7 @@ void Scheduler::init() {
 
 void Scheduler::spawn(void (*func)()) {
   ASSERT_NE(s_scheduler, nullptr);
-  Process proc(func);
+  Process proc(func, s_scheduler->next_pid());
   s_scheduler->m_processes.emplace_back(bu::move(proc));
 }
 
@@ -49,7 +49,7 @@ void Scheduler::run() {
   spawn(idle_thread_func);
   spawn(init_process_func);
 
-  Process test("/bin/test_app");
+  Process test("/bin/test_app", s_scheduler->next_pid());
   s_scheduler->m_processes.emplace_back(bu::move(test));
 
   // Wait to be woken up to do stuff
@@ -58,6 +58,8 @@ void Scheduler::run() {
     __asm__ volatile("sti\nhlt");
   }
 }
+
+pid_t Scheduler::next_pid() { return m_next_pid++; }
 
 void Scheduler::wake(x86::InterruptFrame *frame) {
   if (!s_enabled) {

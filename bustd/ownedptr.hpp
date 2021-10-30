@@ -1,4 +1,5 @@
 #pragma once
+#include <bustd/assert.hpp>
 #include <bustd/macros.hpp>
 #include <bustd/stddef.hpp>
 #include <bustd/type_traits.hpp>
@@ -28,8 +29,22 @@ public:
     }
   }
 
-  const T *operator->() const { return m_data; }
-  T *operator->() { return m_data; }
+  const T *operator->() const {
+    ASSERT(!is_null());
+    return m_data;
+  }
+  T *operator->() {
+    ASSERT(!is_null());
+    return m_data;
+  }
+  const T &operator*() const {
+    ASSERT(!is_null());
+    return *m_data;
+  }
+  T &operator*() {
+    ASSERT(!is_null());
+    return *m_data;
+  }
 
   bool is_null() const { return m_data == nullptr; }
   operator bool() const { return !is_null(); }

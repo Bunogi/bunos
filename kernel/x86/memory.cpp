@@ -272,6 +272,7 @@ found_entry:
   return VirtualAddress(retval);
 }
 
+// FIXME: Needs to return whether a page was actually mapped
 bool map_user_memory(Process &process, VirtualAddress at) {
   const auto pd_entry = page_dir_index_from_addr(at);
   const auto pt_entry = page_table_index_from_addr(at);

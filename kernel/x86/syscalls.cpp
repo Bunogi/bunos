@@ -8,14 +8,8 @@ namespace kernel::x86 {
 namespace {
 bool interrupt_handler(InterruptFrame *frame) {
   auto &proc = Scheduler::current_process();
-  u32 parameters[MAX_SYSCALL_ARG_COUNT];
-  const u32 code = frame->eax;
-  parameters[0] = frame->ebx;
-  parameters[1] = frame->ecx;
-  parameters[2] = frame->edx;
-  parameters[3] = frame->edi;
-  const auto result = do_syscall(proc, code, parameters);
-  proc.return_from_syscall(result);
+  proc.start_syscall();
+
   Scheduler::yield(frame);
   return true;
 }

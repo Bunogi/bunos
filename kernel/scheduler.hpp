@@ -6,6 +6,7 @@
 #include <bustd/macros.hpp>
 #include <kernel/process.hpp>
 #include <kernel/x86/interrupts.hpp>
+#include <libc/sys/types.h>
 
 namespace kernel {
 
@@ -23,6 +24,9 @@ private:
   void switch_task(usize proc_index, x86::InterruptFrame *frame,
                    bool allow_update);
   usize get_next_process();
+  pid_t next_pid();
+
+  pid_t m_next_pid{0};
   // Use a list to ensure the references returned by current_process() do not
   // shift in memory
   bu::List<Process> m_processes;
