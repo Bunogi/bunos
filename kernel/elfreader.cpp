@@ -76,9 +76,10 @@ bool validate_header(const Elf32_Ehdr *header) {
   return true;
 }
 
-bool allocate_program_headers(const u8 *const data, const usize data_len,
-                              kernel::Process &process,
-                              const Elf32_Ehdr *header) {
+bool handle_program_headers(const u8 *const data, const usize data_len,
+                            kernel::Process &process,
+                            const Elf32_Ehdr *header) {
+
   const auto header_offset = header->e_phoff;
   if (header_offset == 0) {
     DEBUG_PUTS("error: No program header found");
@@ -88,7 +89,7 @@ bool allocate_program_headers(const u8 *const data, const usize data_len,
   const auto header_size = header->e_phentsize;
 
   for (usize i = 0; i < header_count; i++) {
-    const auto *prog_header = reinterpret_cast<const Elf32_Phdr *>(
+    const auto *const prog_header = reinterpret_cast<const Elf32_Phdr *>(
         &data[header_offset + i * header_size]);
 
     switch (prog_header->p_type) {
@@ -114,44 +115,57 @@ bool allocate_program_headers(const u8 *const data, const usize data_len,
     // Only support PT_LOAD for now
     ASSERT_EQ(prog_header->p_type, PT_LOAD);
 
-    DEBUG_PRINTF("p_align: %x\n", prog_header->p_align);
+    DEBUG_PRINTF("p_align: 0x%x\n", prog_header->p_align);
     ASSERT(prog_header->p_offset + prog_header->p_memsz < data_len);
     // FIXME: Is this right?
-    ASSERT_EQ(prog_header->p_align, 4096);
+    ASSERT_EQ(prog_header->p_align, PAGE_SIZE);
 
-    auto *segment_offset = data + prog_header->p_offset;
+    auto segment_offset = kernel::VirtualAddress(
+        reinterpret_cast<uintptr_t>(data + prog_header->p_offset));
     auto vaddr = kernel::VirtualAddress(prog_header->p_vaddr);
-    auto pages_to_allocate =
-        bu::divide_ceil(prog_header->p_memsz, static_cast<Elf32_Word>(4096));
-    DEBUG_PRINTF("memsz: %x, filesz: %x, have to allocate %u pages\n",
+    auto pages_to_allocate = bu::divide_ceil(
+        prog_header->p_memsz, static_cast<Elf32_Word>(PAGE_SIZE));
+    DEBUG_PRINTF("memsz: 0x%x, filesz: 0x%x, have to allocate %u pages\n",
                  prog_header->p_memsz, prog_header->p_filesz,
                  pages_to_allocate);
     DEBUG_PRINTF("p_virtaddr: %p\n", prog_header->p_vaddr);
 
-    // Copy almost all
-    for (usize j = 0; j < pages_to_allocate - 1; j++) {
-      ASSERT_EQ(vaddr.get() & 0xFFF, 0);
-      ASSERT(kernel::x86::map_user_memory(process, vaddr));
-      if (!(prog_header->p_flags & SHF_WRITE)) {
-        kernel::x86::set_user_mem_no_write(process, vaddr);
+    for (usize j = 0; j < pages_to_allocate; j++) {
+      const auto page_aligned_address = vaddr.get() - vaddr.get() % PAGE_SIZE;
+      const auto address_offset = vaddr.get() - page_aligned_address;
+      const auto new_mapping = kernel::VirtualAddress(page_aligned_address);
+
+      DEBUG_PRINTF("Page_aligned address: %p, address_offset: %p, "
+                   "new_mapping: %p, vaddr: %p\n",
+                   page_aligned_address, address_offset, new_mapping.ptr(),
+                   vaddr.ptr());
+      ASSERT(kernel::x86::map_user_memory(process, new_mapping));
+      memset(new_mapping.ptr(), 0, address_offset);
+
+      if (segment_offset.get() + PAGE_SIZE < prog_header->p_filesz) {
+        const auto to_copy = prog_header->p_filesz - segment_offset;
+        const auto to_zero = (segment_offset.get() + PAGE_SIZE) % PAGE_SIZE;
+        memcpy(vaddr.ptr(), segment_offset.ptr(), to_copy);
+        memset(reinterpret_cast<char *>(vaddr.ptr()) + to_copy, 0, to_zero);
+      } else {
+        memcpy(vaddr.ptr(), segment_offset.ptr(), PAGE_SIZE - address_offset);
       }
-      memcpy(vaddr.ptr(), segment_offset, 4096);
-      segment_offset += 4096;
-      vaddr += 4096;
-    }
 
-    // Copy the rest
-    ASSERT(kernel::x86::map_user_memory(process, vaddr));
-    const auto remainder = prog_header->p_filesz % 4096;
-    memcpy(vaddr.ptr(), segment_offset, remainder);
-    segment_offset += remainder;
+      if (!(prog_header->p_flags & PF_W)) {
+        // FIXME: We should probably maybe protect against executing writable
+        // segments
+        kernel::x86::set_user_mem_no_write(process, new_mapping);
+      }
 
-    ASSERT(prog_header->p_memsz >= prog_header->p_filesz);
-    const auto to_zero = prog_header->p_memsz - prog_header->p_filesz;
-    ASSERT(to_zero + remainder <= 4096);
-    memset(reinterpret_cast<void *>(vaddr.get() + remainder), '0', to_zero);
-    if (!(prog_header->p_flags & SHF_WRITE)) {
-      kernel::x86::set_user_mem_no_write(process, vaddr);
+      if (address_offset != 0) {
+        const auto diff = PAGE_SIZE - address_offset;
+        segment_offset += diff;
+        vaddr += diff;
+        ASSERT_EQ(vaddr.get() % PAGE_SIZE, 0);
+      } else {
+        segment_offset += PAGE_SIZE;
+        vaddr += PAGE_SIZE;
+      }
     }
   }
   return true;
@@ -180,7 +194,7 @@ void (*parse(Process &proc, bu::StringView file))() {
   }
 
   DEBUG_PUTS("are HERE");
-  if (!allocate_program_headers(data, file_size, proc, header)) {
+  if (!handle_program_headers(data, file_size, proc, header)) {
     return nullptr;
   }
   DEBUG_PUTS("AM HERE");
