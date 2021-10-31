@@ -7,7 +7,7 @@
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pagemapguard.hpp>
 #include <libc/errno.h>
-#include <libc/fnctl.h>
+#include <libc/fcntl.h>
 #include <libc/stdio.h>
 #include <libc/string.h>
 #include <libc/sys/syscall.h>

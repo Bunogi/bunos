@@ -1,5 +1,5 @@
 #include <libc/errno.h>
-#include <libc/fnctl.h>
+#include <libc/fcntl.h>
 #include <libc/sys/syscall.h>
 #include <libc/unistd.h>
 

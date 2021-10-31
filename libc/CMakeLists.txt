@@ -10,7 +10,7 @@ set(
   NONKERNEL_LIBC_SOURCES
   # FIXME: There are probably more, maybe there should be a neater split of what's available in the kernel and not?
   errno.cpp
-  fnctl.cpp
+  fcntl.cpp
   unistd.cpp
   x86/syscall.S
 )
