@@ -8,7 +8,7 @@ _x86_syscall_no_args:
 .global _x86_syscall_one_arg
 _x86_syscall_one_arg:
     pushl %ebx // abi 
-    movl 16(%esp), %ebx
+    movl 12(%esp), %ebx
     movl 8(%esp), %eax
     int $0x80
     popl %ebx
