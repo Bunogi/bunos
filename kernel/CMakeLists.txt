@@ -79,7 +79,7 @@ add_library(kernel.object
 set(KERNEL_LINK_SCRIPT "${CMAKE_SOURCE_DIR}/kernel/x86/linker.ld")
 set_target_properties(kernel.object PROPERTIES COMPILE_FLAGS "${KERNEL_BUILD_FLAGS}")
 target_compile_definitions(kernel.object PRIVATE __IN_KERNEL__=1 __IS_X86__=1)
-target_compile_options(kernel.object PRIVATE -fstack-protector-strong)
+target_compile_options(kernel.object PRIVATE -fstack-protector-all)
 
 add_custom_command(
   OUTPUT crtbegin.o crtend.o
