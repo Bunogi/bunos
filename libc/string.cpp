@@ -25,9 +25,15 @@ char *strncpy(char *dest, const char *src, size_t n) {
 }
 
 int strcmp(const char *lhs, const char *rhs) {
-  auto s1 = strlen(lhs);
-  auto s2 = strlen(rhs);
-  return memcmp(lhs, rhs, bu::min(s1, s2));
+  const auto len1 = strlen(lhs);
+  const auto len2 = strlen(rhs);
+  if (len1 < len2) {
+    return -1;
+  }
+  if (len1 > len2) {
+    return 1;
+  }
+  return memcmp(lhs, rhs, len1);
 }
 
 int strncmp(const char *lhs, const char *rhs, size_t n) {
