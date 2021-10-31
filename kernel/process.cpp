@@ -7,6 +7,7 @@
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pagemapguard.hpp>
 #include <libc/errno.h>
+#include <libc/fnctl.h>
 #include <libc/stdio.h>
 #include <libc/string.h>
 #include <libc/sys/syscall.h>
@@ -142,16 +143,27 @@ void Process::SyscallInfo::extract_parameters() {
 }
 
 void Process::start_syscall() {
-  if (m_state == ProcessState::syscallDone) {
-    // We're done and just have to return
+  switch (m_state) {
+  case ProcessState::running:
+    m_state = ProcessState::startSyscall;
     return;
+  case ProcessState::inSyscall:
+    // Yielding from inside a syscall, no-op
+    return;
+  case ProcessState::startSyscall:
+    UNREACHABLE();
+  case ProcessState::syscallDone:
+    // Syscall done, don't have to do anything
+    return;
+  default:
+    UNREACHABLE();
   }
-  m_state = ProcessState::startSyscall;
 }
 
 // Entry point for syscalls. We must not return from this function accidentally.
 void Process::syscall_entry() {
   auto &proc = Scheduler::current_process();
+  proc.m_state = ProcessState::inSyscall;
   proc.m_syscall_info.retval = proc.do_syscall();
   proc.m_state = ProcessState::syscallDone;
   // Returning from here would be bad. So instead, trigger another syscall,
@@ -161,6 +173,10 @@ void Process::syscall_entry() {
 
 isize Process::do_syscall() {
   switch (m_syscall_info.syscall) {
+  case SYS_READ:
+    return sys_read(m_syscall_info.arguments[0],
+                    reinterpret_cast<void *>(m_syscall_info.arguments[1]),
+                    m_syscall_info.arguments[2]);
   case SYS_EXIT:
     sys_exit(m_syscall_info.arguments[0]);
     return 0;
@@ -169,6 +185,11 @@ isize Process::do_syscall() {
         m_syscall_info.arguments[0],
         reinterpret_cast<const void *>(m_syscall_info.arguments[1]),
         m_syscall_info.arguments[2]);
+  case SYS_OPEN:
+    return sys_open(reinterpret_cast<const char *>(m_syscall_info.arguments[0]),
+                    m_syscall_info.arguments[1]);
+  case SYS_CLOSE:
+    return sys_close(m_syscall_info.arguments[0]);
   default:
     printf("[syscall] Unknown syscall %u\n", m_syscall_info.syscall);
     // Invalid syscall :(
@@ -179,9 +200,46 @@ isize Process::do_syscall() {
 void Process::sys_exit(int) {
   // FIXME: Handle exit status
   m_has_exit = true;
+
+  // FIXME: destroy all FDs
+  if (m_keyboard_fd != -1) {
+    sys_close(m_keyboard_fd);
+  }
 }
 
-int Process::sys_write(int fd, const void *buf, size_t bytes) {
+isize Process::sys_close(int fd) {
+  // FIXME: better fd stuff
+  if (fd < 1) {
+    return -EBADF;
+  }
+  if (m_keyboard_fd != -1 && fd == m_keyboard_fd) {
+    auto &keyboard = process::KeyboardFile::instance();
+    ASSERT(keyboard.close(m_pid));
+    m_keyboard_fd = -1;
+    return 0;
+  }
+  return -EBADF;
+}
+
+// FIXME: Validation
+isize Process::sys_open(const char *const file_path, int flags) {
+  if (strcmp(file_path, "/dev/keyboard") != 0) {
+    return -EINVAL;
+  }
+  if (flags != O_RDONLY) {
+    return -EINVAL;
+  }
+
+  auto &keyboard = process::KeyboardFile::instance();
+  if (!keyboard.open(m_pid)) {
+    return -EACCES;
+  }
+  // FIXME: assign file descriptors
+  m_keyboard_fd = 30;
+  return m_keyboard_fd;
+}
+
+isize Process::sys_write(int fd, const void *buf, size_t bytes) {
   if (fd != 1) {
     return -EBADF;
   }
@@ -191,9 +249,42 @@ int Process::sys_write(int fd, const void *buf, size_t bytes) {
   }
   const usize max_bytes_at_once = 256;
   const auto to_write = bu::min(bytes, max_bytes_at_once);
-  printf("Writing %u bytes from syscall\n", to_write);
   print::write(bu::StringView(reinterpret_cast<const char *>(buf), to_write));
   return to_write;
+}
+
+isize Process::sys_read(const int fd, void *const buf, const size_t bytes) {
+  if (m_keyboard_fd != -1) {
+    if (m_keyboard_fd != fd) {
+      return -EBADF;
+    }
+  } else {
+    return -EBADF;
+  }
+  if (bytes == 0) {
+    return 0;
+  }
+  if (!buf) {
+    return -EINVAL;
+  }
+
+  size_t numread = 0;
+  auto &keyboard = process::KeyboardFile::instance();
+  while (numread < bytes) {
+    // TODO: When reading a file, we need to stop at EOF.
+    const auto read =
+        keyboard.read(reinterpret_cast<u8 *>(buf), bytes - numread);
+    if (read == 0) {
+      // yield for now
+      asm volatile("int $0x80");
+      continue;
+    }
+    // TODO: have to handle this too
+    ASSERT(read > 0);
+    numread += read;
+  }
+
+  return numread;
 }
 
 } // namespace kernel

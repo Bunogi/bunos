@@ -1,11 +1,11 @@
+#include <bustd/assert.hpp>
+#include <bustd/stddef.hpp>
+#include <libc/errno.h>
 #include <libc/stdio.h>
 #include <libc/string.h>
 #include <libc/sys/syscall.h>
 #include <libc/unistd.h>
 #include <stdarg.h>
-
-#include <bustd/assert.hpp>
-#include <bustd/stddef.hpp>
 
 FILE *stderr = 0;
 FILE *stdin = 0;
@@ -299,4 +299,9 @@ int puts(const char *s) {
     return 1;
   }
 #endif
+}
+
+void perror(const char *const s) {
+  const auto err_string = __bunos_libc::get_error_string(errno);
+  printf("%s: %s\n", s, err_string);
 }

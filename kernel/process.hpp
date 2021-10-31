@@ -82,10 +82,14 @@ private:
   static void syscall_entry();
   isize do_syscall();
   void sys_exit(int code);
-  int sys_write(int fd, const void *buf, size_t bytes);
+  isize sys_open(const char *path, int flags);
+  isize sys_write(int fd, const void *buf, size_t bytes);
+  isize sys_read(int fd, void *buf, size_t bytes);
+  isize sys_close(int fd);
   // end syscall handlers
 
-  pid_t m_pid;
+  const pid_t m_pid;
+  int m_keyboard_fd{-1}; // FIXME: Replace with better FD handling
   u32 m_last_run;
   u32 m_kernel_stack_pages;
   void (*m_entry)();
@@ -93,5 +97,8 @@ private:
   bool m_has_exit{false};
   // TODO: Replace with ProcessState
   bool m_has_run{false};
+
+  // TODO: replace with more generic file descriptor handling
+  bool m_has_opened_keyboard{false};
 };
 } // namespace kernel

@@ -9,8 +9,9 @@ set (
 set(
   NONKERNEL_LIBC_SOURCES
   # FIXME: There are probably more, maybe there should be a neater split of what's available in the kernel and not?
-  unistd.cpp
   errno.cpp
+  fnctl.cpp
+  unistd.cpp
   x86/syscall.S
 )
 

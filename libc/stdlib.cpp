@@ -190,7 +190,8 @@ void abort() {
 #ifdef __IN_KERNEL__
   KERNEL_PANIC("Abort() called!");
 #else
-  TODO();
+  puts("abort() called!");
+  exit(1);
 #endif
   while (1) {
   }

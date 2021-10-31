@@ -49,6 +49,7 @@ add_library(kernel.object
   panic.cpp
   physicalmalloc.cpp
   process.cpp
+  process/keyboardfile.cpp
   scheduler.cpp
   spinlock.cpp
   syscalls.cpp

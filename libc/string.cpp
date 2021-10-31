@@ -1,4 +1,6 @@
+#include <bustd/assert.hpp>
 #include <bustd/math.hpp>
+#include <errno.h>
 #include <string.h>
 
 size_t strlen(const char *str) {
@@ -81,4 +83,12 @@ int memcmp(const void *lhs, const void *rhs, size_t count) {
       return 1;
   }
   return 0;
+}
+
+char *strerror(int errnum) {
+  static char buffer[20];
+  const auto s = __bunos_libc::get_error_string(errnum);
+  ASSERT(sizeof buffer > strlen(s));
+  strncpy(buffer, s, sizeof buffer);
+  return buffer;
 }

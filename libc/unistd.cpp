@@ -16,22 +16,28 @@ i32 _x86_syscall_three_args(i32 code, i32 arg1, i32 arg2, i32 arg3);
 #endif
 
 long syscall(long code, ...) {
-  if (code > __SYSCALL_COUNT) {
-    abort();
+  if (code >= __SYSCALL_COUNT) {
+    errno = ENOSYS;
+    return 1;
   }
   kernel::Syscall call = static_cast<kernel::Syscall>(code);
   u8 argcount = 0;
 
   switch (call) {
+  case SYS_CLOSE:
   case SYS_EXIT:
     argcount = 1;
     break;
+  case SYS_OPEN:
+    argcount = 2;
+    break;
   case SYS_WRITE:
+  case SYS_READ:
     argcount = 3;
     break;
   default:
     // FIXME: set errno
-    // abort();
+    UNREACHABLE();
     return -1;
   }
 
@@ -69,5 +75,28 @@ long syscall(long code, ...) {
 }
 
 ssize_t write(int fd, const void *buf, size_t bytes) {
-  return syscall(SYS_WRITE, fd, buf, bytes);
+  const auto retval = syscall(SYS_WRITE, fd, buf, bytes);
+  if (retval < 0) {
+    errno = -retval;
+    return -1;
+  }
+  return retval;
+}
+
+int close(const int fd) {
+  const auto retval = syscall(SYS_CLOSE, fd);
+  if (retval < 0) {
+    errno = -retval;
+    return -1;
+  }
+  return 0;
+}
+
+ssize_t read(int fd, void *buf, size_t bytes) {
+  const auto retval = syscall(SYS_READ, fd, buf, bytes);
+  if (retval < 0) {
+    errno = -retval;
+    return -1;
+  }
+  return retval;
 }

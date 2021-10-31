@@ -14,6 +14,7 @@ typedef __SIZE_TYPE__ size_t;
 int sprintf(char *str, const char *format, ...);
 int printf(const char *format, ...);
 int puts(const char *s);
+void perror(const char *s);
 
 typedef void FILE;
 extern FILE *stderr, *stdout, *stdin;

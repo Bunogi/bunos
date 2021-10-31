@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <kernel/interrupts.hpp>
+#include <kernel/process/keyboardfile.hpp>
 #include <kernel/x86/interrupts.hpp>
 #include <kernel/x86/ps2.hpp>
 #include <kernel/x86/ps2_keyboard.hpp>
@@ -126,27 +127,12 @@ void PS2Keyboard::feed_scancode(u8 code) {
       if (m_shift_count > 0) {
         key_ascii = with_shift(key_ascii);
       }
-      printf("%c", key_ascii);
-      // emit_ascii(key_ascii);
+      auto &keyboard_listener = process::KeyboardFile::instance();
+      keyboard_listener.key_trigger(key_ascii);
     } else {
       m_state = State::ExpectingKeyCode;
-      if (isprint(key_ascii)) {
-        // printf("%c", key_ascii);
-      }
     }
   }
-
-  /*
-  switch (m_state) {
-      case State::ExpectingAck:
-          UNREACHABLE();
-          return;
-      case State::ExpectingKeyCode:
-        if (is_singlecode(code)) {
-
-        }
-  }
-  */
 }
 
 // clang-format off
@@ -167,8 +153,7 @@ u8 PS2Keyboard::scancode_to_ascii(u8 code) {
   case S3_C: return 'c';
   case S3_D: return 'd';
   case S3_E: return 'e';
-  case S3_F: return 'f';
-  case S3_G: return 'g';
+  case S3_F: return 'f'; case S3_G: return 'g';
   case S3_H: return 'h';
   case S3_I: return 'i';
   case S3_J: return 'j';
