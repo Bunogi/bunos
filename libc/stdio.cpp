@@ -288,16 +288,14 @@ int puts(const char *s) {
 
   return 0;
 #else
-  const auto result = syscall(SYS_WRITE, 1, s, strlen(s));
-  if (result < 0) {
+  const auto len = strlen(s);
+  if (write(1, s, len) < 0) {
     return EOF;
   }
-
-  if (syscall(SYS_WRITE, 1, "\n", 1) < 0) {
+  if (write(1, "\n", 1) < 0) {
     return EOF;
-  } else {
-    return 1;
   }
+  return 1;
 #endif
 }
 
