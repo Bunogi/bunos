@@ -118,19 +118,19 @@ PhysicalAddress Process::page_dir() { return m_page_directory; }
 void Process::update_registers(x86::InterruptFrame *const frame) {
   m_registers.update_from_frame(frame);
   switch (m_state) {
-  case ProcessState::startSyscall:
+  case ProcessState::StartSyscall:
     m_syscall_info.previous_registers.update_from_frame(frame);
     m_registers.eip = reinterpret_cast<u32>(&Process::syscall_entry);
     m_syscall_info.extract_parameters();
     break;
-  case ProcessState::syscallDone:
+  case ProcessState::SyscallDone:
     memcpy(&m_registers, &m_syscall_info.previous_registers, sizeof(Registers));
     m_registers.eax = m_syscall_info.retval;
-    m_state = ProcessState::running;
+    m_state = ProcessState::Running;
     // TODO: with a separate kernel stack, we have to update esp here
     break;
-  case ProcessState::inSyscall:
-  case ProcessState::running:
+  case ProcessState::InSyscall:
+  case ProcessState::Running:
     break;
   }
 }
@@ -144,15 +144,15 @@ void Process::SyscallInfo::extract_parameters() {
 
 void Process::start_syscall() {
   switch (m_state) {
-  case ProcessState::running:
-    m_state = ProcessState::startSyscall;
+  case ProcessState::Running:
+    m_state = ProcessState::StartSyscall;
     return;
-  case ProcessState::inSyscall:
+  case ProcessState::InSyscall:
     // Yielding from inside a syscall, no-op
     return;
-  case ProcessState::startSyscall:
+  case ProcessState::StartSyscall:
     UNREACHABLE();
-  case ProcessState::syscallDone:
+  case ProcessState::SyscallDone:
     // Syscall done, don't have to do anything
     return;
   default:
@@ -163,9 +163,9 @@ void Process::start_syscall() {
 // Entry point for syscalls. We must not return from this function accidentally.
 void Process::syscall_entry() {
   auto &proc = Scheduler::current_process();
-  proc.m_state = ProcessState::inSyscall;
+  proc.m_state = ProcessState::InSyscall;
   proc.m_syscall_info.retval = proc.do_syscall();
-  proc.m_state = ProcessState::syscallDone;
+  proc.m_state = ProcessState::SyscallDone;
   // Returning from here would be bad. So instead, trigger another syscall,
   // which reschedules us.
   asm volatile("int $0x80");

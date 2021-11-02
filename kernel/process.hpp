@@ -25,7 +25,7 @@ struct Registers {
 
 using x86::Registers;
 
-enum class ProcessState { running, inSyscall, startSyscall, syscallDone };
+enum class ProcessState { Running, InSyscall, StartSyscall, SyscallDone };
 
 class Process {
 public:
@@ -76,7 +76,7 @@ private:
   };
 #undef MAX_SYSCALL_ARG_COUNT
   SyscallInfo m_syscall_info;
-  ProcessState m_state{ProcessState::running};
+  ProcessState m_state{ProcessState::Running};
 
   // syscall handlers
   static void syscall_entry();
