@@ -75,8 +75,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Os")
-set(WARNING_FLAGS "-Wall -Wextra -Werror=return-type -pedantic -fanalyzer -Wno-analyzer-possible-null-dereference")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} -fno-omit-frame-pointer -fno-exceptions -fno-rtti")
+set(WARNING_FLAGS "-Wall -Wextra -pedantic -fanalyzer -Wno-analyzer-possible-null-dereference")
+set(WARNING_ERROR_FLAGS "-Werror=return-type -Werror=switch")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} ${WARNING_ERROR_FLAGS} -fno-omit-frame-pointer -fno-exceptions -fno-rtti")
 
 enable_testing()
 
