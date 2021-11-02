@@ -18,6 +18,8 @@ typedef int64_t i64;
 typedef int32_t isize;
 #endif
 
+typedef decltype(nullptr) nullptr_t;
+
 template <class T> struct remove_reference { typedef T type; };
 template <class T> struct remove_reference<T &> { typedef T type; };
 template <class T> struct remove_reference<T &&> { typedef T type; };

@@ -1,12 +1,13 @@
 #pragma once
 
 #include <bustd/assert.hpp>
+#include <bustd/stddef.hpp>
 #include <bustd/type_traits.hpp>
 #include <libc/string.h>
 
 namespace bu {
 template <typename T> class Optional {
-  static_assert(!is_same<T, std::nullptr_t>::value);
+  static_assert(!is_same<T, bu::nullptr_t>::value);
 
 public:
   template <typename U, class... Args>
