@@ -1,6 +1,7 @@
 set(test_sources
   bitfield.cpp
   list.cpp
+  optional.cpp
   ownedptr.cpp
   rc.cpp
   ringbuffer.cpp
