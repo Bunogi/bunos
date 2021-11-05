@@ -6,6 +6,7 @@
 #include <bustd/stringview.hpp>
 #include <kernel/filesystem/ifilesystem.hpp>
 #include <kernel/filesystem/inode.hpp>
+#include <kernel/filesystem/inodeindex.hpp>
 
 namespace kernel {
 class Vfs {
@@ -16,10 +17,11 @@ public:
   // FIXME: We have to handle file descriptors and such eventually
   bu::Optional<filesystem::Inode> get_inode_at_path(bu::StringView path);
 
-  isize data_from_inode(u64 inode_index, u64 offset, usize bytes, u8 *buffer);
+  isize data_from_inode(const filesystem::InodeIndex &index, u64 offset,
+                        usize bytes, u8 *buffer);
 
   bu::Optional<bu::Vector<filesystem::DirectoryEntry>>
-  list_directory(u64 inode_index);
+  list_directory(const filesystem::InodeIndex &index);
 
   bu::Optional<bu::Vector<u8>> quick_read_all_data(bu::StringView path);
 

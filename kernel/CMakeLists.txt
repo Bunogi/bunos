@@ -40,6 +40,7 @@ add_library(kernel.object
   debugsymbols.cpp
   elfreader.cpp
   filesystem/ext2.cpp
+  filesystem/inodeindex.cpp
   filesystem/vfs.cpp
   interruptguard.cpp
   interrupts.cpp

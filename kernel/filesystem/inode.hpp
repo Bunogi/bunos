@@ -1,13 +1,14 @@
 #pragma once
 
 #include <bustd/stddef.hpp>
+#include <kernel/filesystem/inodeindex.hpp>
 
 namespace kernel::filesystem {
 
 enum class InodeType { Directory, File };
 
 struct Inode {
-  u64 index;
+  InodeIndex index;
   u64 file_size;
   InodeType type;
 };

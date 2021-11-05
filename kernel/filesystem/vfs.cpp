@@ -26,10 +26,14 @@ Vfs::get_inode_at_path(const bu::StringView path) {
   return m_root_fs->get_inode_at_path(path);
 }
 
-isize Vfs::data_from_inode(const u64 inode_index, const u64 offset,
-                           const usize bytes, u8 *const buffer) {
+isize Vfs::data_from_inode(const filesystem::InodeIndex &index,
+                           const u64 offset, const usize bytes,
+                           u8 *const buffer) {
   ASSERT(m_root_fs);
-  return m_root_fs->data_from_inode(inode_index, offset, bytes, buffer);
+
+  // FIXME: check index for which file system it belongs to
+
+  return m_root_fs->data_from_inode(index.get(), offset, bytes, buffer);
 }
 
 bu::Optional<bu::Vector<u8>>
@@ -48,6 +52,13 @@ Vfs::quick_read_all_data(const bu::StringView path) {
   ASSERT_EQ(static_cast<u64>(read), inode->file_size);
 
   return bu::create_some<bu::Vector<u8>>(out);
+}
+
+bu::Optional<bu::Vector<filesystem::DirectoryEntry>>
+Vfs::list_directory(const filesystem::InodeIndex &index) {
+  ASSERT(m_root_fs);
+  // FIXME: have to check where it came from
+  return m_root_fs->list_directory(index.get());
 }
 
 } // namespace kernel

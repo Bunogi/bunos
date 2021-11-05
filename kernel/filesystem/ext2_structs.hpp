@@ -85,7 +85,7 @@ struct Inode {
   bool is_directory() const { return (type & EXT2_I_DIRECTORY) != 0; }
   kernel::filesystem::Inode into_system_inode(u64 index) const {
     kernel::filesystem::Inode inode{};
-    inode.index = index;
+    inode.index = InodeIndex(index);
     inode.type =
         type & EXT2_I_DIRECTORY ? InodeType::Directory : InodeType::File;
     inode.file_size = total_size();
