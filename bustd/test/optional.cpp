@@ -7,6 +7,7 @@ using bu::create_none;
 using bu::create_some;
 using bu::Optional;
 
+namespace {
 test::Result some_conversion() {
   const auto some = create_some<u8>(8);
   LIBTEST_ASSERT(static_cast<bool>(some));
@@ -45,21 +46,38 @@ struct DestructorCounter {
 };
 
 test::Result destructor_sanity() {
-  u8 destructor_calls = 0;
+  destructor_calls = 0;
   { const auto some = create_some<DestructorCounter>(); }
-  ASSERT_EQ(destructor_calls, 1);
+  LIBTEST_ASSERT_EQ(destructor_calls, 1);
 
   {
     auto some = create_some<DestructorCounter>();
     auto other(bu::move(some));
   }
-  ASSERT_EQ(destructor_calls, 2);
+  LIBTEST_ASSERT_EQ(destructor_calls, 2);
   LIBTEST_SUCCEED();
 }
+
+test::Result destructor_sanity_when_move_assigning() {
+  destructor_calls = 0;
+  {
+    auto some = create_some<DestructorCounter>();
+    auto other_some = create_some<DestructorCounter>();
+    some = bu::move(other_some);
+    LIBTEST_ASSERT_EQ(destructor_calls, 1);
+  }
+  LIBTEST_ASSERT_EQ(destructor_calls, 2);
+  LIBTEST_SUCCEED();
+}
+} // namespace
 
 int main() {
   RUN_TEST(some_conversion);
   RUN_TEST(none_conversion);
+  RUN_TEST(with_data);
+  RUN_TEST(moving_works);
+  RUN_TEST(destructor_sanity);
+  RUN_TEST(destructor_sanity_when_move_assigning);
 
   LIBTEST_CLEANUP();
 }

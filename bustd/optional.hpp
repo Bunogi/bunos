@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bustd/assert.hpp>
+#include <bustd/new.hpp>
 #include <bustd/stddef.hpp>
 #include <bustd/type_traits.hpp>
 #include <libc/string.h>
@@ -14,46 +15,44 @@ public:
   friend constexpr Optional<U> create_some(Args &&...);
   template <typename U> friend constexpr Optional<U> create_none();
 
-  constexpr Optional(Optional &&other) {
+  constexpr Optional(Optional &&other) { *this = forward(other); }
+  constexpr Optional &operator=(Optional &&other) {
+    if (m_has_data) {
+      get_data()->~T();
+    }
+
     m_has_data = other.m_has_data;
     other.m_has_data = false;
     if (m_has_data) {
       memcpy(m_data, other.m_data, sizeof(T));
     }
+    return *this;
   }
-  constexpr Optional &operator=(Optional &&other) { *this = other; }
   ~Optional() {
     if (m_has_data) {
-      reinterpret_cast<T *>(m_data)->~T();
+      get_data()->~T();
     }
   }
 
   [[nodiscard]] constexpr explicit operator bool() const { return m_has_data; }
 
-  [[nodiscard]] constexpr T &operator*() {
-    ASSERT(m_has_data);
-    return *reinterpret_cast<T *>(m_data);
-  }
-  [[nodiscard]] constexpr const T &operator*() const {
-    ASSERT(m_has_data);
-    return *reinterpret_cast<const T *>(m_data);
-  }
+  [[nodiscard]] constexpr T &operator*() { return *get_data(); }
+  [[nodiscard]] constexpr const T &operator*() const { return *get_data(); }
 
-  constexpr const T *operator->() const {
+  constexpr const T *operator->() const { return get_data(); }
+  constexpr T *operator->() { return get_data(); }
+
+private:
+  constexpr explicit Optional(nullptr_t) { m_has_data = false; }
+
+  constexpr const T *get_data() const {
     ASSERT(m_has_data);
     return reinterpret_cast<const T *>(m_data);
   }
-  constexpr T *operator->() {
+  constexpr T *get_data() {
     ASSERT(m_has_data);
     return reinterpret_cast<T *>(m_data);
   }
-
-private:
-  constexpr explicit Optional(T &&data) {
-    memcpy(m_data, reinterpret_cast<u8 *>(&data), sizeof(T));
-    m_has_data = true;
-  }
-  constexpr explicit Optional(nullptr_t) { m_has_data = false; }
 
   alignas(T) u8 m_data[sizeof(T)];
   bool m_has_data{false};
@@ -61,7 +60,10 @@ private:
 
 template <typename T, class... Args>
 [[nodiscard]] constexpr Optional<T> create_some(Args &&...args) {
-  return Optional<T>(T(forward(args)...));
+  Optional<T> out = Optional<T>(nullptr);
+  new (reinterpret_cast<T *>(&out.m_data)) T(forward(args)...);
+  out.m_has_data = true;
+  return forward(out);
 }
 
 template <typename T> [[nodiscard]] constexpr Optional<T> create_none() {
