@@ -39,6 +39,15 @@ public:
     return *reinterpret_cast<const T *>(m_data);
   }
 
+  constexpr const T *operator->() const {
+    ASSERT(m_has_data);
+    return reinterpret_cast<const T *>(m_data);
+  }
+  constexpr T *operator->() {
+    ASSERT(m_has_data);
+    return reinterpret_cast<T *>(m_data);
+  }
+
 private:
   constexpr explicit Optional(T &&data) {
     memcpy(m_data, reinterpret_cast<u8 *>(&data), sizeof(T));
