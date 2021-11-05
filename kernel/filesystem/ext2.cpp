@@ -15,10 +15,10 @@
 #endif
 
 namespace {
-u32 block_size_from_log(u32 log) { return 1024 << log; }
+constexpr u32 block_size_from_log(u32 log) { return 1024 << log; }
 } // namespace
 
-namespace kernel::fs {
+namespace kernel::filesystem {
 Ext2::Ext2() : m_superblock(bu::create_owned<ext2::SuperBlock>()) {
   static_assert(sizeof(ext2::SuperBlock) == 1024);
 
@@ -126,13 +126,6 @@ void Ext2::print_root_dir() {
   puts("");
 }
 
-bu::Vector<bu::Vector<char>> Ext2::read_dir(bu::StringView path) {
-  // FIXME: We need some way to handle an error
-  ASSERT(path[0] == '/');
-  TODO();
-  return bu::Vector<bu::Vector<char>>();
-}
-
 bu::Vector<u8> Ext2::read_block_from_disk(const u32 block_index) {
   bu::Vector<u8> out(m_block_size);
   out.fill(0, m_block_size);
@@ -169,18 +162,21 @@ bu::Vector<u8> Ext2::read_inode_block_from_disk(const ext2::Inode &inode,
   return bu::Vector<u8>();
 }
 
-isize Ext2::read_file(bu::StringView file, u8 *buffer, u64 offset, usize len) {
-  const auto inode = get_inode_for_file(file);
-  ASSERT(inode);
-  ASSERT(offset + (u64)len <=
-         ((u64)inode->size_upper << 32 | (u64)inode->size_lower));
+isize Ext2::data_from_inode(const u64 inode_index, const u64 offset,
+                            const usize bytes, u8 *const buffer) {
+  // FIXME: Should take Optional
+  const auto inode = read_inode_from_disk(inode_index);
+  // FIXME: Should return an error
+  ASSERT(!inode.is_directory());
+  const auto file_length = inode.total_size(); // FIXME: Needs to return EOF
+  ASSERT(offset + bytes <= file_length);
 
   const auto start_block = offset / m_block_size;
-  const auto end_block = bu::divide_ceil(offset + len, (u64)m_block_size) - 1;
+  const auto end_block = bu::divide_ceil(offset + bytes, (u64)m_block_size) - 1;
 
   // First block is special and might have to be offset based on the file offset
   // to start reading from.
-  auto this_block = read_inode_block_from_disk(*inode.get(), start_block);
+  auto this_block = read_inode_block_from_disk(inode, start_block);
   const auto first_block_offset = offset % m_block_size;
   memcpy(buffer, this_block.data() + first_block_offset,
          m_block_size - first_block_offset);
@@ -188,16 +184,16 @@ isize Ext2::read_file(bu::StringView file, u8 *buffer, u64 offset, usize len) {
   // Whole blocks to read
   auto *buffer_offset = buffer + m_block_size - first_block_offset;
   for (auto i = start_block + 1; i < end_block; i++) {
-    this_block = read_inode_block_from_disk(*inode.get(), i);
+    this_block = read_inode_block_from_disk(inode, i);
     memcpy(buffer_offset, this_block.data(), m_block_size);
     buffer_offset += m_block_size;
   }
 
   // Read the final block
   auto bytes_read = static_cast<uintptr_t>(buffer_offset - buffer);
-  const auto bytes_left = len - bytes_read;
+  const auto bytes_left = file_length - bytes_read;
   if (bytes_left > 0) {
-    this_block = read_inode_block_from_disk(*inode.get(), end_block);
+    this_block = read_inode_block_from_disk(inode, end_block);
     memcpy(buffer_offset, this_block.data(), bytes_left);
     bytes_read += bytes_left;
   }
@@ -207,7 +203,7 @@ isize Ext2::read_file(bu::StringView file, u8 *buffer, u64 offset, usize len) {
 
 void Ext2::for_each_entry_in_dir(
     ext2::Inode directory,
-    bu::IterationResult (*func)(const ext2::DirectoryEntry &)) {
+    bu::Function<bu::IterationResult(const ext2::DirectoryEntry &)> func) {
   ASSERT(directory.is_directory());
 
   for (usize i = 0; i < sizeof(directory.direct_block_pointers) / sizeof(u32);
@@ -263,7 +259,7 @@ u32 Ext2::find_file_in_directory(ext2::Inode directory, bu::StringView name) {
   return __find_file_in_dir_found_inode_index;
 }
 
-bu::OwnedPtr<ext2::Inode> Ext2::get_inode_for_file(bu::StringView file) {
+bu::Optional<filesystem::Inode> Ext2::get_inode_at_path(bu::StringView file) {
   // FIXME: We need some way to handle an error
   ASSERT(file[0] == '/');
   // FIXME: This should be in some path class
@@ -279,22 +275,40 @@ bu::OwnedPtr<ext2::Inode> Ext2::get_inode_for_file(bu::StringView file) {
       bu::StringView(file.data() + last_index, file.len() - last_index));
 
   ext2::Inode inode = read_inode_from_disk(EXT2_ROOT_INODE);
+  u32 found_index = 0;
   for (usize i = 1; i < segments.len(); i++) {
     const auto found = find_file_in_directory(inode, segments[i]);
     if (found == 0) {
-      return bu::OwnedPtr<ext2::Inode>(nullptr);
+      return bu::create_none<filesystem::Inode>();
     } else {
       inode = read_inode_from_disk(found);
+      found_index = found;
     }
   }
-  return bu::create_owned<ext2::Inode>(inode);
+  if (found_index != 0) {
+    return bu::create_some<filesystem::Inode>(
+        inode.into_system_inode(found_index));
+  } else {
+    return bu::create_none<filesystem::Inode>();
+  }
 }
 
-u64 Ext2::file_size(bu::StringView file) {
-  const auto inode = get_inode_for_file(file);
-  ASSERT(inode);
-  return static_cast<u64>(inode->size_upper) << 32 |
-         static_cast<u64>(inode->size_lower);
+bu::Optional<bu::Vector<filesystem::DirectoryEntry>>
+Ext2::list_directory(const u64 inode_index) {
+  const auto dir = read_inode_from_disk(inode_index);
+  ASSERT(dir.is_directory());
+  // FIXME: Validation
+  // FIXME: use string
+  bu::Vector<filesystem::DirectoryEntry> out;
+  for_each_entry_in_dir(dir, [&](const ext2::DirectoryEntry &entry) {
+    filesystem::DirectoryEntry generic_entry{};
+    generic_entry.inode =
+        read_inode_from_disk(entry.inode).into_system_inode(entry.inode);
+    strncpy(generic_entry.name, entry.name, entry.name_len);
+    out.push(generic_entry);
+    return bu::IterationResult::Continue;
+  });
+  return bu::create_some<bu::Vector<filesystem::DirectoryEntry>>(out);
 }
 
-} // namespace kernel::fs
+} // namespace kernel::filesystem

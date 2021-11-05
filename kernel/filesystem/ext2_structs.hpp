@@ -1,8 +1,9 @@
 #pragma once
 
 #include <bustd/stddef.hpp>
+#include <kernel/filesystem/inode.hpp>
 
-namespace kernel::fs::ext2 {
+namespace kernel::filesystem::ext2 {
 struct SuperBlock {
   u32 inode_count;
   u32 block_count;
@@ -82,6 +83,17 @@ struct Inode {
   u32 os_specific_value_2[3];
 
   bool is_directory() const { return (type & EXT2_I_DIRECTORY) != 0; }
+  kernel::filesystem::Inode into_system_inode(u64 index) const {
+    kernel::filesystem::Inode inode{};
+    inode.index = index;
+    inode.type =
+        type & EXT2_I_DIRECTORY ? InodeType::Directory : InodeType::File;
+    inode.file_size = total_size();
+    return inode;
+  }
+  u64 total_size() const {
+    return static_cast<u64>(size_upper) << 32 | static_cast<u64>(size_lower);
+  }
 };
 
 struct BlockGroupDescriptor {
@@ -99,7 +111,7 @@ struct DirectoryEntry {
   u16 rec_len;
   u8 name_len;
   u8 file_type;
-  u8 name[256];
+  char name[256];
 };
 
-} // namespace kernel::fs::ext2
+} // namespace kernel::filesystem::ext2

@@ -9,10 +9,10 @@ struct SymbolEntry {
   bu::Vector<char> name;
   u32 offset;
 };
+
 } // namespace
 
 namespace kernel {
-
 static bu::Vector<SymbolEntry> *s_symbols;
 static bool s_symbols_loaded;
 
@@ -24,14 +24,8 @@ void load_debug_symbols() {
   const bu::StringView file = "/boot/kernel.sym";
   printf("Loading debug symbols from %s\n", file.data());
 
-  const auto size = Vfs::instance()->file_size(file);
-  bu::Vector<u8> contents(size);
-  printf("File size: %u\n", size);
-  contents.fill('0', size);
-
-  const auto characters_read =
-      Vfs::instance()->read_file(file, contents.data(), 0, size);
-  ASSERT_EQ((usize)characters_read, size);
+  const auto file_result = Vfs::instance().quick_read_all_data(file);
+  const auto contents = *file_result;
 
   // Parse the output from nm
   enum class State { ReadingAddress, ReadingSymbol, ReadingType };
@@ -41,7 +35,7 @@ void load_debug_symbols() {
   bu::Vector<char> current_symbol;
   SymbolEntry current_entry{};
 
-  for (isize i = 0; i < characters_read; i++) {
+  for (usize i = 0; i < contents.len(); i++) {
     if (contents[i] == '\n') {
       ASSERT_EQ(state, State::ReadingSymbol);
       current_symbol.push('\0');

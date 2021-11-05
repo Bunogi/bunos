@@ -5,18 +5,23 @@
 #include <bustd/stddef.hpp>
 #include <bustd/stringview.hpp>
 #include <kernel/filesystem/ifilesystem.hpp>
+#include <kernel/filesystem/inode.hpp>
 
 namespace kernel {
 class Vfs {
   BU_NOCOPY(Vfs)
 
 public:
-  static Vfs *instance();
+  static Vfs &instance();
   // FIXME: We have to handle file descriptors and such eventually
-  isize read_file(bu::StringView file, u8 *buffer, usize offset, usize len);
-  // FIXME: This should be a string type, not a Vector<Vector>
-  bu::Vector<bu::Vector<char>> read_dir(bu::StringView path);
-  u64 file_size(bu::StringView file);
+  bu::Optional<filesystem::Inode> get_inode_at_path(bu::StringView path);
+
+  isize data_from_inode(u64 inode_index, u64 offset, usize bytes, u8 *buffer);
+
+  bu::Optional<bu::Vector<filesystem::DirectoryEntry>>
+  list_directory(u64 inode_index);
+
+  bu::Optional<bu::Vector<u8>> quick_read_all_data(bu::StringView path);
 
   void mount(bu::OwnedPtr<IFileSystem> &&fs);
 

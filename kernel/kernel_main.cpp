@@ -51,7 +51,7 @@ void kernel_main() {
 
   x86::initialize_pata();
 
-  Vfs::instance()->mount(bu::OwnedPtr<IFileSystem>(new fs::Ext2()));
+  Vfs::instance().mount(bu::OwnedPtr<IFileSystem>(new filesystem::Ext2()));
 
   printf("Main: Disk has %u sectors\n", x86::disk_sector_count());
   load_debug_symbols();

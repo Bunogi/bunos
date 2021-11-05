@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bustd/function.hpp>
 #include <bustd/iteration.hpp>
 #include <bustd/macros.hpp>
 #include <bustd/ownedptr.hpp>
@@ -9,16 +10,18 @@
 #include <kernel/filesystem/ext2_structs.hpp>
 #include <kernel/filesystem/ifilesystem.hpp>
 
-namespace kernel::fs {
+namespace kernel::filesystem {
 class Ext2 : public IFileSystem {
   BU_NOCOPY(Ext2)
 
 public:
   Ext2();
-  isize read_file(bu::StringView file, u8 *buffer, u64 offset,
-                  usize len) override;
-  bu::Vector<bu::Vector<char>> read_dir(bu::StringView path) override;
-  u64 file_size(bu::StringView file) override;
+  bu::Optional<filesystem::Inode>
+  get_inode_at_path(bu::StringView path) override;
+  isize data_from_inode(u64 inode_index, u64 offset, usize bytes,
+                        u8 *buffer) override;
+  bu::Optional<bu::Vector<filesystem::DirectoryEntry>>
+  list_directory(u64 inode_index) override;
 
 private:
   void print_root_dir();
@@ -37,7 +40,7 @@ private:
   u32 find_file_in_directory(ext2::Inode directory, bu::StringView name);
   void for_each_entry_in_dir(
       ext2::Inode directory,
-      bu::IterationResult (*func)(const ext2::DirectoryEntry &));
+      bu::Function<bu::IterationResult(const ext2::DirectoryEntry &)>);
 
   // FIXME: Optional
   bu::OwnedPtr<ext2::Inode> get_inode_for_file(bu::StringView file);
@@ -49,4 +52,4 @@ private:
   u32 m_block_size{0};
   u32 m_block_group_descriptor_table_offset;
 };
-} // namespace kernel::fs
+} // namespace kernel::filesystem

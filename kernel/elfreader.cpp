@@ -174,19 +174,14 @@ bool handle_program_headers(const u8 *const data, const usize data_len,
 
 namespace kernel::elf {
 void (*parse(Process &proc, bu::StringView file))() {
-  const auto file_size = Vfs::instance()->file_size(file);
-  bu::Vector<u8> data_buf(file_size);
-  data_buf.fill('\0', file_size);
+  const auto elf_file_data = Vfs::instance().quick_read_all_data(file);
+  const auto contents = *elf_file_data;
 
   _x86_set_page_directory(proc.page_dir().get());
 
-  // FIXME: We should not read the entire file in one swoop like this
-  const auto characters_read =
-      Vfs::instance()->read_file(file, data_buf.data(), 0, file_size);
-  ASSERT_EQ((usize)characters_read, file_size);
-  DEBUG_PRINTF("Read %u chars\n", characters_read);
+  DEBUG_PRINTF("Read %u chars\n", contents.len());
 
-  const auto *data = data_buf.data();
+  const auto *data = contents.data();
   const auto *header = reinterpret_cast<const Elf32_Ehdr *>(data);
 
   if (!validate_header(header)) {
@@ -194,7 +189,7 @@ void (*parse(Process &proc, bu::StringView file))() {
   }
 
   DEBUG_PUTS("are HERE");
-  if (!handle_program_headers(data, file_size, proc, header)) {
+  if (!handle_program_headers(data, contents.len(), proc, header)) {
     return nullptr;
   }
   DEBUG_PUTS("AM HERE");
