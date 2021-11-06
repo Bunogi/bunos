@@ -90,7 +90,11 @@ void *Allocator::allocate(size_t size) {
 void Allocator::deallocate(void *p) {
   // For fun, check that we actually allocated this, for debugging purposes.
   // This is actually undefined behaviour, so we can do whatever
-  ASSERT(previously_allocated(p));
+  if (!previously_allocated(p)) {
+    // UH OH
+    printf("[kmalloc] Attempted to deallocate unallocated pointer at %p!\n", p);
+    UNREACHABLE();
+  }
 
   // If the data is in the head, we don't have a previous node to change
   if (is_allocated_in_node(p, m_alloc_head)) {
