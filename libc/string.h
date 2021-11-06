@@ -15,6 +15,7 @@ int strncmp(const char *lhs, const char *rhs, size_t n);
 void *memcpy(void *dest, const void *src, size_t n);
 void *memset(void *ptr, int value, size_t n);
 int memcmp(const void *lhs, const void *rhs, size_t count);
+void *memmove(void *dest, const void *src, size_t count);
 
 char *strerror(int errnum);
 

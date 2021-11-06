@@ -85,6 +85,40 @@ int memcmp(const void *lhs, const void *rhs, size_t count) {
   return 0;
 }
 
+void *memmove(void *dest_in, const void *src_in, size_t count) {
+  if (count == 0) {
+    return dest_in;
+  }
+  if (dest_in == src_in) {
+    return dest_in;
+  }
+  const auto dest_val = reinterpret_cast<uintptr_t>(dest_in);
+  const auto src_val = reinterpret_cast<uintptr_t>(src_in);
+  auto *dest = reinterpret_cast<char *>(dest_in);
+  const auto *src = reinterpret_cast<const char *>(src_in);
+
+  if (dest_val < src_val && dest_val + count >= src_val) {
+    // Destination before source, so we can just copy directly
+    // Could have called memcpy here, but this way we are protected against
+    // memcpy being implemented in a faster way, like with SIMD
+    for (usize i = 0; i < count; i++) {
+      *dest++ = *src++;
+    }
+  } else if (src_val > dest_val && src_val + count >= dest_val) {
+    // Source before destination, so we can copy from the back
+    auto *reverse_dest = dest + count;
+    auto *reverse_src = src + count;
+    for (usize i = 0; i < count; i++) {
+      *reverse_dest-- = *reverse_src--;
+    }
+  } else {
+    // No overlap detected
+    memcpy(dest_in, src_in, count);
+  }
+
+  return dest_in;
+}
+
 char *strerror(int errnum) {
   static char buffer[20];
   const auto s = __bunos_libc::get_error_string(errnum);
