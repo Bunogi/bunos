@@ -5,6 +5,7 @@
 #include <bustd/math.hpp>
 #include <bustd/new.hpp>
 #include <bustd/stddef.hpp>
+#include <bustd/type_traits.hpp>
 #include <stdlib.h>
 #include <string.h>
 
@@ -134,10 +135,16 @@ public:
 
     slot(index)->~T();
 
-    for (usize i = index; i + 1 < m_size; i++) {
-      slot(i)->~T();
-      new (slot(i)) T(move(at(i + 1)));
+    if constexpr (is_trivially_coyable<T>) {
+      if (index + 1 < m_size) {
+        memmove(slot(index), slot(index + 1), (m_size - index - 1) * sizeof(T));
+      }
+    } else {
+      for (usize i = index; i < m_size; i++) {
+        *slot(i) = *slot(i + 1);
+      }
     }
+
     m_size--;
   }
 

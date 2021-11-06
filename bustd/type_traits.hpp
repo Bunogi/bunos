@@ -47,4 +47,8 @@ template <class T> constexpr bool __is_pointer = false;
 template <class T> constexpr bool __is_pointer<T *> = true;
 template <class T> constexpr bool is_pointer = __is_pointer<remove_cv<T>>;
 
+// All these can be found in https://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
+template <typename T>
+constexpr bool is_trivially_coyable = __is_trivially_copyable(T);
+
 } // namespace bu

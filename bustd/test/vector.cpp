@@ -1,6 +1,7 @@
 #include <bustd/vector.hpp>
 #include <libraries/libtest/libtest.hpp>
 
+namespace {
 test::Result basic_push_pop() {
   bu::Vector<int> foo;
 
@@ -239,6 +240,31 @@ test::Result remove() {
   LIBTEST_SUCCEED();
 }
 
+test::Result remove_destructor_sanity() {
+  static int num_destroyed = 0;
+  // When constructing the vector, the destructor is called many times.
+  static bool count_destructions = false;
+  struct DestroyCounter {
+    ~DestroyCounter() {
+      if (count_destructions) {
+        num_destroyed++;
+      }
+    }
+  };
+  {
+    bu::Vector<DestroyCounter> v;
+    for (int i = 0; i < 3; i++) {
+      v.push(DestroyCounter());
+    }
+
+    count_destructions = true;
+    v.remove(0);
+    LIBTEST_ASSERT_EQ(num_destroyed, 1);
+  }
+  LIBTEST_ASSERT_EQ(num_destroyed, 3);
+  LIBTEST_SUCCEED();
+}
+
 test::Result remove_if() {
   bu::Vector<usize> v;
   for (usize i = 0; i < 100; i++) {
@@ -285,19 +311,23 @@ test::Result range_for() {
   LIBTEST_SUCCEED();
 }
 
+} // namespace
+
 int main() {
-  RUN_TEST(basic_push_pop);
-  RUN_TEST(pop_value);
-  RUN_TEST(destructor_call_pop);
-  RUN_TEST(no_duplicate_constructor_call);
   RUN_TEST(allocation_strategy);
-  RUN_TEST(preallocate);
-  RUN_TEST(index);
-  RUN_TEST(fill);
-  RUN_TEST(resize_to_fit);
+  RUN_TEST(basic_push_pop);
   RUN_TEST(clear);
-  RUN_TEST(remove);
-  RUN_TEST(remove_if);
+  RUN_TEST(destructor_call_pop);
+  RUN_TEST(fill);
+  RUN_TEST(index);
+  RUN_TEST(move);
+  RUN_TEST(no_duplicate_constructor_call);
+  RUN_TEST(pop_value);
+  RUN_TEST(preallocate);
   RUN_TEST(range_for);
+  RUN_TEST(remove);
+  RUN_TEST(remove_destructor_sanity);
+  RUN_TEST(remove_if);
+  RUN_TEST(resize_to_fit);
   LIBTEST_CLEANUP();
 }
