@@ -12,7 +12,13 @@ void exit(int status);
 void *malloc(size_t size);
 void *calloc(size_t nmemb, size_t size);
 void free(void *ptr);
+
+#ifdef __cplusplus
+[[noreturn]] void abort(void);
+#else
 void abort(void);
+#endif
+
 int atexit(void (*function)(void));
 
 int atoi(const char *ptr);
