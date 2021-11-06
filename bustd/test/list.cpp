@@ -1,6 +1,7 @@
 #include <bustd/list.hpp>
 #include <libraries/libtest/libtest.hpp>
 
+namespace {
 test::Result basic_append() {
   bu::List<int> l;
   l.append_back(1);
@@ -104,6 +105,7 @@ test::Result range_for() {
 
   LIBTEST_SUCCEED();
 }
+} // namespace
 
 int main() {
   RUN_TEST(basic_append);

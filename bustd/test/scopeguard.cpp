@@ -1,6 +1,7 @@
 #include <bustd/scopeguard.hpp>
 #include <libtest/libtest.hpp>
 
+namespace {
 test::Result basic_locked() {
   bool did_execute = false;
   {
@@ -48,6 +49,7 @@ test::Result rearmed() {
   LIBTEST_ASSERT(did_execute);
   LIBTEST_SUCCEED();
 }
+} // namespace
 
 int main() {
   RUN_TEST(basic_locked);

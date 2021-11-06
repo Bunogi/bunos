@@ -4,6 +4,7 @@
 #include <bustd/ownedptr.hpp>
 #include <bustd/stddef.hpp>
 
+namespace {
 static u32 deleted_count, created_count;
 
 static u32 pinged;
@@ -56,6 +57,7 @@ test::Result nullable() {
 
   LIBTEST_SUCCEED();
 }
+} // namespace
 
 int main() {
   RUN_TEST(scope);

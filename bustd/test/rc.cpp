@@ -1,6 +1,7 @@
 #include <bustd/rc.hpp>
 #include <libtest/libtest.hpp>
 
+namespace {
 test::Result basic_copy() {
   bu::Rc<usize> rc = bu::create_refcounted<usize>(0xdeadbeef);
   printf("%lu\n", rc.count());
@@ -24,6 +25,7 @@ test::Result basic_copy() {
 
   LIBTEST_SUCCEED();
 }
+} // namespace
 
 int main() {
   RUN_TEST(basic_copy);

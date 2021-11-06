@@ -7,6 +7,7 @@
 
 using namespace bu::literals;
 
+namespace {
 test::Result basic_read_take() {
   bu::RingBuffer buf;
   auto v = "Why did the chicken cross the road?"sv;
@@ -115,9 +116,9 @@ test::Result push_pop() {
   }
 
   LIBTEST_ASSERT_EQ(buf.len(), 10);
-  LIBTEST_ASSERT_EQ(buf.head(), 9);
+  LIBTEST_ASSERT_EQ(buf.head(), 0);
 
-  for (int i = 10; i >= 0; i++) {
+  for (usize i = 0; i < 10; i++) {
     LIBTEST_ASSERT_EQ(buf.pop(), i);
   }
   LIBTEST_ASSERT(buf.is_empty());
@@ -155,15 +156,17 @@ test::Result read_nocopy() {
   LIBTEST_ASSERT_EQ(rhs, bu::StringView(right, half_capacity));
   LIBTEST_SUCCEED();
 }
+} // namespace
 
 int main() {
   RUN_TEST(basic_read_take);
-  RUN_TEST(read_empty);
-  RUN_TEST(with_wrapping);
-  RUN_TEST(overrun_buffer);
-  RUN_TEST(write_overrun_and_wrap);
   RUN_TEST(many_reads_and_writes);
-  RUN_TEST(write_until_full);
+  RUN_TEST(overrun_buffer);
+  RUN_TEST(push_pop);
+  RUN_TEST(read_empty);
   RUN_TEST(read_nocopy);
+  RUN_TEST(with_wrapping);
+  RUN_TEST(write_overrun_and_wrap);
+  RUN_TEST(write_until_full);
   LIBTEST_CLEANUP();
 }

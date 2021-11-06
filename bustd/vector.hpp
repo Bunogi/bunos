@@ -187,11 +187,14 @@ public:
   };
 
   Iterator begin() { return Iterator(*this, 0, false); }
-
   Iterator rbegin() { return Iterator(*this, m_size - 1, false); }
-
   Iterator end() { return Iterator(*this, m_size, false); }
   Iterator rend() { return Iterator(*this, -1, false); }
+
+  Iterator begin() const { return Iterator(*this, 0, false); }
+  Iterator rbegin() const { return Iterator(*this, m_size - 1, false); }
+  Iterator end() const { return Iterator(*this, m_size, false); }
+  Iterator rend() const { return Iterator(*this, -1, false); }
 
 private:
   void grow() {

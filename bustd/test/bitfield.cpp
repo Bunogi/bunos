@@ -2,6 +2,7 @@
 #include <bustd/bitfield.hpp>
 #include <libraries/libtest/libtest.hpp>
 
+namespace {
 template <usize N> test::Result check_first_byte(bu::Bitfield<N> field) {
   LIBTEST_ASSERT(!field.replace(1, true));
   LIBTEST_ASSERT(field.replace(1, false));
@@ -42,6 +43,7 @@ test::Result small_overrun() {
   LIBTEST_ASSERT(field.replace(9, false));
   LIBTEST_SUCCEED();
 }
+} // namespace
 
 int main() {
   RUN_TEST(basic);

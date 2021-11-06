@@ -5,6 +5,7 @@ set(test_sources
   ownedptr.cpp
   rc.cpp
   ringbuffer.cpp
+  scopeguard.cpp
   stringview.cpp
   vector.cpp
 )

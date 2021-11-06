@@ -4,6 +4,7 @@
 
 using namespace bu::literals;
 
+namespace {
 test::Result comparison_basic() {
   constexpr auto s1 = "aaaa"sv;
   constexpr auto s2 = "aaaa"sv;
@@ -54,6 +55,7 @@ test::Result substr() {
 
   LIBTEST_SUCCEED();
 }
+} // namespace
 
 int main() {
   RUN_TEST(comparison_basic);
