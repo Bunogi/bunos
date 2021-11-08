@@ -22,7 +22,7 @@
 #endif
 
 namespace {
-bool validate_ident(const u8 *data) {
+bool validate_ident(const u8 *const data) {
   if (data[EI_MAG0] != ELFMAG0 || data[EI_MAG1] != ELFMAG1 ||
       data[EI_MAG2] != ELFMAG2 || data[EI_MAG3] != ELFMAG3) {
     DEBUG_PUTS("Invalid magic number");
@@ -48,7 +48,7 @@ bool validate_ident(const u8 *data) {
   return true;
 }
 
-bool validate_header(const Elf32_Ehdr *header) {
+bool validate_header(const Elf32_Ehdr *const header) {
   if (!validate_ident(header->e_ident)) {
     return false;
   }
@@ -170,6 +170,64 @@ bool handle_program_headers(const u8 *const data, const usize data_len,
   }
   return true;
 }
+
+const char *get_section_name(const Elf32_Word name, const u8 *const data,
+                             const Elf32_Ehdr *const elf_header) {
+  if (elf_header->e_shstrndx == SHN_UNDEF) {
+    return nullptr;
+  }
+  if (name == 0) {
+    return nullptr;
+  }
+
+  ASSERT_EQ(sizeof(Elf32_Shdr), elf_header->e_shentsize);
+
+  const auto *const string_section = reinterpret_cast<const Elf32_Shdr *>(
+      data + elf_header->e_shoff +
+      elf_header->e_shstrndx * elf_header->e_shentsize);
+
+  // If the size is zero, and name isn't zero, something is invalid because the
+  // string table is empty.
+  ASSERT_NE(string_section->sh_size, 0);
+  ASSERT(name < string_section->sh_size);
+
+  return reinterpret_cast<const char *>(data + string_section->sh_offset +
+                                        name);
+}
+
+void handle_section_headers(const u8 *const data,
+                            const Elf32_Ehdr *const elf_header) {
+  // No segment header table
+  if (!elf_header->e_shoff) {
+    return;
+  }
+
+  const auto *const section_header_table =
+      reinterpret_cast<const Elf32_Shdr *>(data + elf_header->e_shoff);
+
+  ASSERT_EQ(sizeof(Elf32_Shdr), elf_header->e_shentsize);
+
+  const Elf32_Shdr *bss_section = nullptr;
+  for (usize i = 0; i < elf_header->e_shnum; ++i) {
+    const auto *const section = section_header_table + i;
+    const auto *const name =
+        get_section_name(section->sh_name, data, elf_header);
+    if (name == nullptr) {
+      continue;
+    }
+
+    if (strcmp(name, ELF_BSS) == 0) {
+      bss_section = section;
+    }
+  }
+
+  if (bss_section == nullptr) {
+    return;
+  }
+
+  memset(reinterpret_cast<void *>(bss_section->sh_addr), 0,
+         bss_section->sh_size);
+}
 } // namespace
 
 namespace kernel::elf {
@@ -193,6 +251,8 @@ void (*parse(Process &proc, bu::StringView file))() {
     return nullptr;
   }
   DEBUG_PUTS("AM HERE");
+
+  handle_section_headers(data, header);
 
   // TODO();
 
