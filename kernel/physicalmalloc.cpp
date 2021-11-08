@@ -3,8 +3,13 @@
 #include <kernel/physicalmalloc.hpp>
 #include <kernel/x86/memory.hpp>
 
-// TODO remove
+//#define DEBUG_MEMORY
+#ifdef DEBUG_MEMORY
 #include <stdio.h>
+#define DEBUG_PRINTF(s, ...) printf("[pmem]" s, __VA_ARGS__)
+#else
+#define DEBUG_PRINTF(s, ...)
+#endif
 
 extern "C" {
 extern char _kernel_heap_end;
@@ -21,14 +26,14 @@ static const u64 s_allocatable_page_start =
 void init_pmem() { ASSERT_EQ(s_allocatable_page_start & 0xFFF, 0); }
 
 PhysicalAddress allocate_physical_page() {
-  printf("[pmem] start: %p \n", s_allocatable_page_start);
+  DEBUG_PRINTF("start: %p \n", s_allocatable_page_start);
 
   // TODO: This should allow you to use a range-based for
   for (usize i = 0; i < s_allocations.size(); i++) {
     if (!s_allocations.at(i)) {
       s_allocations.set(i, true);
       const auto address = i * PAGE_SIZE + s_allocatable_page_start;
-      printf("[pmem] Allocated physical page at %p\n", address);
+      DEBUG_PRINTF("Allocated physical page at %p\n", address);
       return PhysicalAddress(address);
     }
   }
@@ -37,7 +42,7 @@ PhysicalAddress allocate_physical_page() {
 }
 
 void free_physical_page(PhysicalAddress page) {
-  printf("Supposed to delete %pP\n", page.get());
+  DEBUG_PRINTF("Supposed to delete %pP\n", page.get());
   // They have to be page aligned
   ASSERT_EQ(page.get() & (PAGE_SIZE - 1), 0);
   ASSERT(page.get() >= s_allocatable_page_start);
