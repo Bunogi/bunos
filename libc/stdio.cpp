@@ -234,6 +234,7 @@ int sprintf_impl(char *buffer, const char *format, va_list args) {
       return -1;
     }
   }
+  buffer[offset] = '\0';
 #undef CHECKED_INC
   return offset;
 }
