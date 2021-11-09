@@ -40,19 +40,19 @@ int isxdigit(int c) {
 int tolower(int c) {
   if (!isalpha(c)) {
     return c;
-  } else if (c <= 'a') {
-    return c + 0x20;
-  } else {
-    return c;
   }
+  if (c <= 'a') {
+    return c + 0x20;
+  }
+  return c;
 }
 
 int toupper(int c) {
   if (!isalpha(c)) {
     return c;
-  } else if (c >= 'a') {
-    return c - 0x20;
-  } else {
-    return c;
   }
+  if (c >= 'a') {
+    return c - 0x20;
+  }
+  return c;
 }

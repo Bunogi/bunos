@@ -8,10 +8,10 @@
 
 #ifdef __IS_X86__
 extern "C" {
-i32 _x86_syscall_no_args(i32 code);
-i32 _x86_syscall_one_arg(i32 code, i32 arg);
-i32 _x86_syscall_two_args(i32 code, i32 arg1, i32 arg2);
-i32 _x86_syscall_three_args(i32 code, i32 arg1, i32 arg2, i32 arg3);
+i32 _x86_syscall_no_args(u32 code);
+i32 _x86_syscall_one_arg(u32 code, u32 arg);
+i32 _x86_syscall_two_args(u32 code, u32 arg1, u32 arg2);
+i32 _x86_syscall_three_args(u32 code, u32 arg1, u32 arg2, u32 arg3);
 }
 #endif
 
@@ -20,7 +20,7 @@ long syscall(long code, ...) {
     errno = ENOSYS;
     return 1;
   }
-  kernel::Syscall call = static_cast<kernel::Syscall>(code);
+  const auto call = static_cast<kernel::Syscall>(code);
   u8 argcount = 0;
 
   switch (call) {

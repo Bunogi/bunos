@@ -7,9 +7,11 @@
 #include <libc/unistd.h>
 #include <stdarg.h>
 
-FILE *stderr = 0;
-FILE *stdin = 0;
-FILE *stdout = 0;
+// FIXME: These need to be opened and stuff
+FILE *stderr = NULL;
+FILE *stdin = NULL;
+FILE *stdout = NULL;
+
 int fflush(FILE *) {
   TODO();
   return 0;

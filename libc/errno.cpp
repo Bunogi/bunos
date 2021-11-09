@@ -18,7 +18,8 @@ const char *get_error_string(int errnum) {
     return "Permission denied";
   default:
     // FIXME: Should output to debug only
-    printf("[libc] %s(): unknown errno %u\n", __func__, errnum);
+    printf("[libc] %s(): unknown errno %u\n",
+           static_cast<const char *>(__func__), errnum);
     return "Unknown error";
   }
 }

@@ -5,14 +5,17 @@
 
 size_t strlen(const char *str) {
   size_t len = 0;
-  while (*(str++)) {
+  while (*(str++) != '\0') {
     len++;
   }
   return len;
 }
 
 char *strcpy(char *dest, const char *src) {
-  return static_cast<char *>(memcpy(dest, src, strlen(src)));
+  const auto len = strlen(src);
+  memcpy(dest, src, len);
+  dest[len] = '\0';
+  return dest;
 }
 
 char *strncpy(char *dest, const char *src, size_t n) {
@@ -42,15 +45,18 @@ int strncmp(const char *lhs, const char *rhs, size_t n) {
   for (size_t i = 0; i < n; i++) {
     if (*lhs == '\0' && *rhs == '\0') {
       return 0;
-    } else if (*lhs == '\0') {
+    }
+    if (*lhs == '\0') {
       return -1;
-    } else if (*rhs == '\0') {
+    }
+    if (*rhs == '\0') {
       return 1;
     }
 
     if (*lhs < *rhs) {
       return -1;
-    } else if (*lhs > *rhs) {
+    }
+    if (*lhs > *rhs) {
       return 1;
     }
   }
@@ -66,7 +72,7 @@ void *memcpy(void *dest, const void *src, size_t n) {
 }
 
 void *memset(void *ptr, int value, size_t n) {
-  unsigned char *buf = static_cast<unsigned char *>(ptr);
+  auto *buf = static_cast<unsigned char *>(ptr);
   for (size_t i = 0; i < n; i++) {
     buf[i] = static_cast<unsigned char>(value);
   }
@@ -74,8 +80,8 @@ void *memset(void *ptr, int value, size_t n) {
 }
 
 int memcmp(const void *lhs, const void *rhs, size_t count) {
-  const auto *lhs_s = reinterpret_cast<const char *>(lhs);
-  const auto *rhs_s = reinterpret_cast<const char *>(rhs);
+  const auto *lhs_s = static_cast<const char *>(lhs);
+  const auto *rhs_s = static_cast<const char *>(rhs);
   for (size_t i = 0; i < count; i++) {
     if (lhs_s[i] < rhs_s[i])
       return -1;
@@ -94,8 +100,8 @@ void *memmove(void *dest_in, const void *src_in, size_t count) {
   }
   const auto dest_val = reinterpret_cast<uintptr_t>(dest_in);
   const auto src_val = reinterpret_cast<uintptr_t>(src_in);
-  auto *dest = reinterpret_cast<char *>(dest_in);
-  const auto *src = reinterpret_cast<const char *>(src_in);
+  auto *dest = static_cast<char *>(dest_in);
+  const auto *src = static_cast<const char *>(src_in);
 
   if (dest_val < src_val && dest_val + count >= src_val) {
     // Destination before source, so we can just copy directly
@@ -107,7 +113,7 @@ void *memmove(void *dest_in, const void *src_in, size_t count) {
   } else if (src_val > dest_val && src_val + count >= dest_val) {
     // Source before destination, so we can copy from the back
     auto *reverse_dest = dest + count;
-    auto *reverse_src = src + count;
+    const auto *reverse_src = src + count;
     for (usize i = 0; i < count; i++) {
       *reverse_dest-- = *reverse_src--;
     }

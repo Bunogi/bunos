@@ -13,7 +13,7 @@
   KERNEL_PANIC(name "is not defined in kernel-space!")
 #endif
 
-int atexit(void (*function)(void)) {
+int atexit(void (*function)()) {
   (void)function;
 #ifdef __IN_KERNEL__
   NON_KERNELSPACE("atexit");
@@ -23,7 +23,7 @@ int atexit(void (*function)(void)) {
   return 0;
 }
 
-char *getenv(const char *) {
+char *getenv(const char * /*name*/) {
 #ifdef __IN_KERNEL__
   NON_KERNELSPACE("getenv");
 #else
@@ -79,13 +79,13 @@ long long atoll(const char *ptr) { return strtoll(ptr, nullptr, 10); }
 
 long long strtoll(const char *ptr, char **endptr, int base) {
   if ((base != 0 && base < 2) || base >= 36) {
-    if (endptr) {
+    if (endptr != nullptr) {
       *endptr = const_cast<char *>(ptr);
     }
     return 0;
   }
 
-  auto *current_ptr = ptr;
+  const auto *current_ptr = ptr;
   while (isspace(*current_ptr)) {
     current_ptr++;
   }
@@ -107,8 +107,8 @@ long long strtoll(const char *ptr, char **endptr, int base) {
   }
 
   // FIXME: Do we have to do this earlier?
-  auto *end = current_ptr;
-  while (*end) {
+  const auto *end = current_ptr;
+  while (*end != 0) {
     if (isalpha(*end)) {
       if (toupper(*end) - 'A' > base) {
         break;
@@ -193,6 +193,6 @@ void abort() {
   puts("abort() called!");
   exit(1);
 #endif
-  while (1) {
+  while (true) {
   }
 }
