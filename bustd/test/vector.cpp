@@ -299,12 +299,52 @@ test::Result range_for() {
     LIBTEST_ASSERT_EQ(i, 2 * current++);
   }
 
+  current = 0;
+  for (const auto i : v) {
+    LIBTEST_ASSERT_EQ(i, 2 * current++);
+  }
+
+  current = 0;
+  for (auto i : v) {
+    LIBTEST_ASSERT_EQ(i, 2 * current++);
+  }
+
   for (usize i = 0; i < v.len(); i++) {
     LIBTEST_ASSERT_EQ(v[i], i * 2);
   }
 
   bu::Vector<usize> v2;
   for (auto &i : v2) {
+    LIBTEST_ASSERT(false);
+    (void)i;
+  }
+  LIBTEST_SUCCEED();
+}
+
+test::Result const_range_for() {
+  bu::Vector<usize> v;
+  for (usize i = 0; i < 50; i++) {
+    v.push(i);
+  }
+
+  const auto v2 = v;
+
+  usize current = 0;
+  for (const auto &i : v2) {
+    LIBTEST_ASSERT_EQ(i, current++);
+  }
+
+  current = 0;
+  for (const auto i : v2) {
+    LIBTEST_ASSERT_EQ(i, current++);
+  }
+
+  bu::Vector<usize> v3;
+  for (const auto &i : v3) {
+    LIBTEST_ASSERT(false);
+    (void)i;
+  }
+  for (const auto i : v3) {
     LIBTEST_ASSERT(false);
     (void)i;
   }
@@ -325,6 +365,7 @@ int main() {
   RUN_TEST(pop_value);
   RUN_TEST(preallocate);
   RUN_TEST(range_for);
+  RUN_TEST(const_range_for);
   RUN_TEST(remove);
   RUN_TEST(remove_destructor_sanity);
   RUN_TEST(remove_if);

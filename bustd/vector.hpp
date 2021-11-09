@@ -186,15 +186,46 @@ public:
     bool m_reverse;
   };
 
+  class ConstIterator {
+  public:
+    ConstIterator operator++() const {
+      if (m_reverse) {
+        m_index--;
+      } else {
+        m_index++;
+      }
+      return *this;
+    }
+    ConstIterator operator++(int) const {
+      ConstIterator tmp(*this);
+      operator++();
+      return tmp;
+    }
+    const T &operator*() const { return m_parent[m_index]; }
+    bool operator!=(const ConstIterator &other) const {
+      return m_index != other.m_index;
+    }
+
+  private:
+    friend class Vector<T>;
+    ConstIterator(const Vector<T> &parent, usize index, bool reverse)
+        : m_parent(parent), m_index(index), m_reverse(reverse) {}
+    const Vector<T> &m_parent;
+    mutable usize m_index;
+    bool m_reverse;
+  };
+
   Iterator begin() { return Iterator(*this, 0, false); }
   Iterator rbegin() { return Iterator(*this, m_size - 1, false); }
   Iterator end() { return Iterator(*this, m_size, false); }
   Iterator rend() { return Iterator(*this, -1, false); }
 
-  Iterator begin() const { return Iterator(*this, 0, false); }
-  Iterator rbegin() const { return Iterator(*this, m_size - 1, false); }
-  Iterator end() const { return Iterator(*this, m_size, false); }
-  Iterator rend() const { return Iterator(*this, -1, false); }
+  ConstIterator begin() const { return ConstIterator(*this, 0, false); }
+  ConstIterator rbegin() const {
+    return ConstIterator(*this, m_size - 1, false);
+  }
+  ConstIterator end() const { return ConstIterator(*this, m_size, false); }
+  ConstIterator rend() const { return ConstIterator(*this, -1, false); }
 
 private:
   void grow() {
