@@ -66,7 +66,6 @@ Process::Process(void (*const entry)(), const pid_t pid)
   m_registers.ebp = 0;
   {
     m_page_directory = allocate_physical_page();
-    printf("Pagedir: %p\n", m_page_directory.get());
     const x86::PageMapGuard guard((m_page_directory));
     memcpy(guard.mapped_address(), x86::kernel_page_directory,
            1024 * sizeof(u32));

@@ -240,10 +240,6 @@ found_entry:
 
   ASSERT(page_directory_index < 1024);
   ASSERT(page_table_index + continous_page_count < 1024);
-  printf("Found room at PD[%u], PT[%u], addr: %p\n", page_directory_index,
-         page_table_index,
-         virtual_address_from_indices(page_directory_index, page_table_index)
-             .ptr());
 
   const auto entry = PageDirectoryEntry::from_u32(
       kernel::x86::kernel_page_directory[page_directory_index]);
@@ -268,7 +264,6 @@ found_entry:
   auto *const retval =
       virtual_address_from_indices(page_directory_index, page_table_index)
           .ptr();
-  printf("Successfully allocated kernel page at %p\n", retval);
   return VirtualAddress(retval);
 }
 
@@ -318,7 +313,6 @@ bool map_user_memory(Process &process, VirtualAddress at) {
 }
 
 void set_user_mem_no_write(Process &process, VirtualAddress at) {
-  printf("%p\n", at.get());
   const auto pd_entry = page_dir_index_from_addr(at);
   const auto pt_entry = page_table_index_from_addr(at);
   PhysicalAddress page_table;

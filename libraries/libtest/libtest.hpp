@@ -15,7 +15,6 @@ void handle_result(const char *name, Result res) {
     printf("\033[31m[FAIL]\033[m %s: %s\n", name, message);
     failures++;
   } else {
-    printf("\033[32m[PASS]\033[m %s\n", name);
     successes++;
   }
 }

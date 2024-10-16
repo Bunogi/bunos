@@ -32,13 +32,6 @@ void idle_thread_func() {
   }
 }
 
-void init_process_func() {
-  while (1) {
-    puts("=== HELLO FROM INIT ===");
-    timer::delay(1000 * 5);
-  }
-}
-
 static volatile bool s_enabled;
 
 Scheduler::Scheduler() {}
@@ -47,7 +40,6 @@ void Scheduler::run() {
   ASSERT_NE(s_scheduler, nullptr);
 
   spawn(idle_thread_func);
-  spawn(init_process_func);
 
   Process test("/bin/test_app", s_scheduler->next_pid());
   s_scheduler->m_processes.emplace_back(bu::move(test));
