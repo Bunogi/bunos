@@ -30,22 +30,32 @@ template <typename T, typename U> struct is_same : FalseType {};
 template <typename T> struct is_same<T, T> : TrueType {};
 
 template <bool B, class T = void> struct enable_if {};
-template <class T> struct enable_if<true, T> { using type = T; };
+template <class T> struct enable_if<true, T> {
+  using type = T;
+};
 
-template <class T> struct __remove_const { using type = T; };
-template <class T> struct __remove_const<const T> { using type = T; };
-template <typename T> using remove_const = typename __remove_const<T>::type;
+template <class T> struct _remove_const {
+  using type = T;
+};
+template <class T> struct _remove_const<const T> {
+  using type = T;
+};
+template <typename T> using remove_const = typename _remove_const<T>::type;
 
-template <class T> struct __remove_volatile { using type = T; };
-template <class T> struct __remove_volatile<volatile T> { using type = T; };
+template <class T> struct _remove_volatile {
+  using type = T;
+};
+template <class T> struct _remove_volatile<volatile T> {
+  using type = T;
+};
 template <typename T>
-using remove_volatile = typename __remove_volatile<T>::type;
+using remove_volatile = typename _remove_volatile<T>::type;
 
 template <typename T> using remove_cv = remove_const<remove_volatile<T>>;
 
-template <class T> constexpr bool __is_pointer = false;
-template <class T> constexpr bool __is_pointer<T *> = true;
-template <class T> constexpr bool is_pointer = __is_pointer<remove_cv<T>>;
+template <class T> constexpr bool _is_pointer = false;
+template <class T> constexpr bool _is_pointer<T *> = true;
+template <class T> constexpr bool is_pointer = _is_pointer<remove_cv<T>>;
 
 // All these can be found in https://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
 template <typename T>
