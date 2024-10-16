@@ -10,7 +10,7 @@
 #define ELFSIZE 32
 #include <kernel/exec_elf.h>
 
-#define DEBUG_ELF
+// #define DEBUG_ELF
 #ifdef DEBUG_ELF
 #include <stdio.h>
 #define ELFREADER_PREFIX "[ELFreader] "
