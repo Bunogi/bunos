@@ -1,4 +1,5 @@
 #include <bustd/assert.hpp>
+#include <bustd/stringview.hpp>
 #include <kernel/elfreader.hpp>
 #include <kernel/kprint.hpp>
 #include <kernel/process.hpp>
@@ -60,8 +61,12 @@ void x86::Registers::prepare_frame(InterruptFrame *frame) {
   frame->eflags = eflags;
 }
 
-Process::Process(void (*const entry)(), const pid_t pid)
+Process::Process(const bu::StringView name, void (*const entry)(),
+                 const pid_t pid)
     : m_registers(), m_pid(pid), m_kernel_stack_pages(2), m_entry(entry) {
+
+  strncpy(m_name, name.data(), name.len());
+
   m_registers.eip = reinterpret_cast<uintptr_t>(proc_entry);
   m_registers.ebp = 0;
   {
@@ -82,8 +87,9 @@ Process::Process(void (*const entry)(), const pid_t pid)
   push_entry_address();
 }
 
-Process::Process(const bu::StringView path, const pid_t pid)
-    : Process(nullptr, pid) {
+Process::Process(const bu::StringView name, const bu::StringView path,
+                 const pid_t pid)
+    : Process(name, nullptr, pid) {
   // HACK: undo the push_entry_address call
   // FIXME: Find a better way
   m_registers.esp += 4;
@@ -196,7 +202,7 @@ isize Process::do_syscall() {
   }
 }
 
-void Process::sys_exit(int) {
+void Process::sys_exit(int code) {
   // FIXME: Handle exit status
   m_has_exit = true;
 
@@ -204,6 +210,10 @@ void Process::sys_exit(int) {
   if (m_keyboard_fd != -1) {
     sys_close(m_keyboard_fd);
   }
+
+  printf("[kernel] Process %s exited with %d\n", m_name, code);
+
+  Scheduler::run_next_test_proc(m_pid);
 }
 
 isize Process::sys_close(int fd) {

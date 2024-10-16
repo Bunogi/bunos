@@ -34,12 +34,12 @@ public:
   Process(Process &&) = default;
 
   friend class Scheduler;
-  Process(void (*fp)(), pid_t pid);
-  Process(bu::StringView file, pid_t pid);
+  Process(bu::StringView name, void (*fp)(), pid_t pid);
+  Process(bu::StringView name, bu::StringView file, pid_t pid);
   Process() = delete;
   bool has_overflowed_stack() const;
 
-  pid_t pid() const;
+  pid_t pid() const { return m_pid; };
 
   void take_page_table_page(PhysicalAddress &&addr);
   void take_memory_page(PhysicalAddress &&addr);
@@ -77,6 +77,8 @@ private:
 #undef MAX_SYSCALL_ARG_COUNT
   SyscallInfo m_syscall_info;
   ProcessState m_state{ProcessState::Running};
+
+  char m_name[256];
 
   // syscall handlers
   static void syscall_entry();

@@ -17,7 +17,6 @@ template <typename T> class List {
   };
 
 public:
-  // FIXME: Needs iterator more than most
   List() = default;
 
   List(const List &other) { *this = other; }
@@ -51,6 +50,7 @@ public:
     insert_back(new_node);
   }
 
+  // FIXME: this is not really emplace...
   void emplace_back(T &&val) {
     auto *new_node = new Node(forward(val));
     ASSERT_NE(new_node, nullptr);
@@ -67,6 +67,11 @@ public:
     auto *new_node = new Node(forward(val));
     ASSERT_NE(new_node, nullptr);
     insert_front(new_node);
+  }
+
+  void take_back(List<T> &other, usize index) {
+    Node *const stolen = other.take_node(index);
+    insert_back(stolen);
   }
 
   const T &get(usize index) const { return at_index(index)->val; }
@@ -94,6 +99,8 @@ public:
 
   class Iterator {
   public:
+    using Value = T;
+
     Iterator operator++() const {
       m_this = m_reverse ? m_this->prev : m_this->next;
       return *this;
@@ -105,9 +112,10 @@ public:
     }
     T &operator*() { return m_this->val; }
     const T &operator*() const { return m_this->val; }
-    bool operator!=(const Iterator &other) const {
-      return m_this != other.m_this;
+    bool operator==(const Iterator &other) const {
+      return m_this == other.m_this;
     }
+    bool operator!=(const Iterator &other) const { return !(*this == other); }
 
   private:
     friend class List<T>;
@@ -123,9 +131,9 @@ public:
   Iterator end() { return Iterator(nullptr, false); }
   Iterator rend() { return Iterator(nullptr, false); }
 
-  void remove(usize index) {
+  Node *take_node(usize index) {
     ASSERT(index < m_size);
-    Node *to_delete = at_index(index);
+    Node *const to_delete = at_index(index);
     if (to_delete->prev) {
       to_delete->prev->next = to_delete->next;
     }
@@ -135,13 +143,16 @@ public:
 
     if (to_delete == m_head) {
       m_head = to_delete->next;
-    } else if (to_delete == m_tail) {
-      m_tail = to_delete->prev;
+    }
+    if (to_delete == m_tail) {
+      m_tail = to_delete->next;
     }
 
-    delete to_delete;
     m_size--;
+    return to_delete;
   }
+
+  void remove(usize index) { delete take_node(index); }
 
   void clear() {
     auto *node = m_head;

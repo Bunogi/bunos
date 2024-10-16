@@ -105,6 +105,84 @@ test::Result range_for() {
 
   LIBTEST_SUCCEED();
 }
+
+test::Result transfer() {
+  bu::List<usize> v;
+  bu::List<usize> v2;
+
+  v.append_back(1);
+  v.append_back(2);
+  v.append_back(3);
+  v.append_back(4);
+
+  // Middle
+  {
+    auto *const before = static_cast<void *>(&v.get(1));
+    v2.take_back(v, 1);
+    LIBTEST_ASSERT_EQ(v.len(), 3);
+
+    LIBTEST_ASSERT_EQ(v.get(0), 1);
+    LIBTEST_ASSERT_EQ(v.get(1), 3);
+    LIBTEST_ASSERT_EQ(v.get(2), 4);
+
+    LIBTEST_ASSERT_EQ(v2.len(), 1);
+    auto *const after = static_cast<void *>(&v2.back());
+    LIBTEST_ASSERT_EQ(before, after);
+    LIBTEST_ASSERT_EQ(v2.get(0), 2);
+  }
+
+  // First
+  {
+    auto *const before = static_cast<void *>(&v.get(0));
+    v2.take_back(v, 0);
+    LIBTEST_ASSERT_EQ(v.len(), 2);
+
+    LIBTEST_ASSERT_EQ(v.get(0), 3);
+    LIBTEST_ASSERT_EQ(v.get(1), 4);
+
+    LIBTEST_ASSERT_EQ(v2.len(), 2);
+    auto *const after = static_cast<void *>(&v2.back());
+
+    LIBTEST_ASSERT_EQ(before, after);
+    LIBTEST_ASSERT_EQ(v2.get(0), 2);
+    LIBTEST_ASSERT_EQ(v2.get(1), 1);
+  }
+
+  // last
+  {
+    auto *const before = static_cast<void *>(&v.get(v.len() - 1));
+    v2.take_back(v, v.len() - 1);
+    LIBTEST_ASSERT_EQ(v.len(), 1);
+
+    LIBTEST_ASSERT_EQ(v.get(0), 3);
+
+    LIBTEST_ASSERT_EQ(v2.len(), 3);
+    auto *const after = static_cast<void *>(&v2.back());
+
+    LIBTEST_ASSERT_EQ(before, after);
+    LIBTEST_ASSERT_EQ(v2.get(0), 2);
+    LIBTEST_ASSERT_EQ(v2.get(1), 1);
+    LIBTEST_ASSERT_EQ(v2.get(2), 4);
+  }
+
+  // very last element
+  {
+    auto *const before = static_cast<void *>(&v.get(v.len() - 1));
+    v2.take_back(v, 0);
+    LIBTEST_ASSERT_EQ(v.len(), 0);
+    LIBTEST_ASSERT_EQ(v2.len(), 4);
+    auto *const after = static_cast<void *>(&v2.back());
+
+    LIBTEST_ASSERT_EQ(before, after);
+    LIBTEST_ASSERT_EQ(v2.get(0), 2);
+    LIBTEST_ASSERT_EQ(v2.get(1), 1);
+    LIBTEST_ASSERT_EQ(v2.get(2), 4);
+    LIBTEST_ASSERT_EQ(v2.get(3), 3);
+  }
+
+  LIBTEST_SUCCEED();
+}
+
 } // namespace
 
 int main() {
@@ -112,5 +190,6 @@ int main() {
   RUN_TEST(cleans_up);
   RUN_TEST(remove_if);
   RUN_TEST(range_for);
+  RUN_TEST(transfer);
   LIBTEST_CLEANUP();
 }

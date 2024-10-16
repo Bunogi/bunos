@@ -8,11 +8,10 @@ namespace test {
 typedef bool Result;
 static int failures;
 static int successes;
-static const char *message = "";
+static const char *current_test_name = "";
 
-void handle_result(const char *name, Result res) {
+void handle_result(Result res) {
   if (!res) {
-    printf("\033[31m[FAIL]\033[m %s: %s\n", name, message);
     failures++;
   } else {
     successes++;
@@ -23,8 +22,9 @@ void handle_result(const char *name, Result res) {
 
 #define RUN_TEST(_test)                                                        \
   {                                                                            \
+    ::test::current_test_name = #_test;                                        \
     const auto _res = _test();                                                 \
-    ::test::handle_result(#_test, _res);                                       \
+    ::test::handle_result(_res);                                               \
   }
 
 #define STRINGIFY(x) #x
@@ -32,7 +32,9 @@ void handle_result(const char *name, Result res) {
 
 #define LIBTEST_FAIL(_msg)                                                     \
   do {                                                                         \
-    ::test::message = _msg " at " __FILE__ ":" TOSTRING(__LINE__);             \
+    const char *const message = _msg " at " __FILE__ ":" TOSTRING(__LINE__);   \
+    printf("\033[31m[FAIL]\033[m %s: %s\n", ::test::current_test_name,         \
+           message);                                                           \
     return false;                                                              \
   } while (0)
 
@@ -53,10 +55,11 @@ void handle_result(const char *name, Result res) {
   do {                                                                         \
     const auto total = ::test::failures + ::test::successes;                   \
     if (::test::failures != 0) {                                               \
-      printf("\033[31m%u/%u tests failed!\033[m\n", ::test::failures, total);  \
+      printf("%s: \033[31m%u/%u tests failed!\033[m\n", __FILE__,              \
+             ::test::failures, total);                                         \
       return 1;                                                                \
     } else {                                                                   \
-      printf("\033[32mAll %u tests succeeded!\033[m\n", total);                \
+      printf("%s: \033[32mAll %u tests succeeded!\033[m\n", __FILE__, total);  \
       return 0;                                                                \
     }                                                                          \
   } while (0)

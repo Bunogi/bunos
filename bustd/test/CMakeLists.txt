@@ -1,14 +1,28 @@
-set(test_sources
+#FIXME: Userland malloc :^)
+set(test_sources_target
   bitfield.cpp
-  list.cpp
   optional.cpp
-  ownedptr.cpp
-  rc.cpp
   ringbuffer.cpp
   scopeguard.cpp
   stringview.cpp
+)
+
+
+set(test_sources
+  algorithm.cpp
+  list.cpp
+  ownedptr.cpp
+  rc.cpp
   vector.cpp
 )
-foreach(test IN ITEMS ${test_sources})
-  bunos_test("${test}" bustd)
+
+
+foreach(test IN ITEMS ${test_sources_target})
+  bunos_test(bustd ${test} bustd)
 endforeach()
+
+if (BUNOS_BUILD_HOST)
+  foreach(test IN ITEMS ${test_sources})
+    bunos_test(bustd ${test} bustd)
+  endforeach()
+endif()
