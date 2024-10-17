@@ -1,0 +1,13 @@
+Checks: >
+    -*,
+    bugprone-*,
+    cert-*,
+    cppcoreguidelines-*,
+    misc-*,
+    modernize-*,
+    performance-*,
+    portability-*,
+    -modernize-deprecated-headers
+HeaderFilterRegex: "kernel|bustd|libraries"
+WarningsAsErrors: true
+FormatStyle: llvm
