@@ -3,7 +3,7 @@
 #include <kernel/kmalloc.hpp>
 #include <stdio.h>
 
-//#define KMALLOC_DEBUG
+// #define KMALLOC_DEBUG
 
 #ifdef KMALLOC_DEBUG
 // VA_OPT is a gnu extension but it exists in C++20 so whatever
@@ -21,6 +21,9 @@ static kernel::malloc::Allocator *s_allocator;
 
 namespace kernel::malloc {
 
+#pragma GCC diagnostic push
+// It struggles with _kernel_heap_start
+#pragma GCC diagnostic ignored "-Warray-bounds"
 Allocator::Allocator()
     : m_heap_start(reinterpret_cast<uintptr_t>(&_kernel_heap_start)),
       m_heap_end(reinterpret_cast<uintptr_t>(&_kernel_heap_end)) {
@@ -32,6 +35,7 @@ Allocator::Allocator()
   m_alloc_head->next = m_alloc_head->prev = nullptr;
   s_allocator = this;
 }
+#pragma GCC diagnostic pop
 
 Allocator *Allocator::instance() {
   ASSERT_NE(s_allocator, nullptr);

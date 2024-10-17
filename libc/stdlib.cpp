@@ -35,6 +35,8 @@ char *getenv(const char * /*name*/) {
 // It complains that we leak here, but that's the idea!
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wanalyzer-malloc-leak"
+// For some reason this is triggered on memset
+#pragma GCC diagnostic ignored "-Wnonnull"
 void *malloc(size_t size) {
   if (size == 0) {
     return nullptr;

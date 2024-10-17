@@ -54,7 +54,7 @@ private:
     return reinterpret_cast<T *>(m_data);
   }
 
-  alignas(T) u8 m_data[sizeof(T)];
+  alignas(T) u8 m_data[sizeof(T)]{};
   bool m_has_data{false};
 };
 

@@ -7,7 +7,7 @@
 #define EXT2_SIGNATURE 0xef53
 #define EXT2_ROOT_INODE 2
 
-//#define EXT2_DEBUG
+// #define EXT2_DEBUG
 #ifdef EXT2_DEBUG
 #define DEBUG_PRINTF(...) printf("[ext2] " __VA_ARGS__)
 #else
@@ -146,10 +146,10 @@ bu::Vector<u8> Ext2::read_inode_block_from_disk(const ext2::Inode &inode,
   const auto direct_block_count = sizeof(ext2::Inode::direct_block_pointers) /
                                   sizeof(ext2::Inode::direct_block_pointers[0]);
   const auto indirect_block_count = m_block_size / sizeof(u32);
-  const auto double_indirect_block_count =
-      m_block_size * m_block_size / sizeof(u32);
-  const auto triple_indirect_block_count =
-      m_block_size * m_block_size * m_block_size / sizeof(u32);
+  // const auto double_indirect_block_count =
+  //     m_block_size * m_block_size / sizeof(u32);
+  // const auto triple_indirect_block_count =
+  //     m_block_size * m_block_size * m_block_size / sizeof(u32);
 
   if (block_number < direct_block_count) {
     return read_block_from_disk(inode.direct_block_pointers[block_number]);

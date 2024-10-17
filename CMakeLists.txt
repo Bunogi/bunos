@@ -76,7 +76,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Os")
 set(WARNING_FLAGS "-Wall -Wextra -pedantic -Wno-analyzer-possible-null-dereference")
-set(WARNING_ERROR_FLAGS "-Werror=return-type -Werror=switch -Werror=class-memaccess -Werror=unused-function")
+
+set(WARNING_ERRORS "")
+list(APPEND WARNING_ERRORS "return-type")
+list(APPEND WARNING_ERRORS "switch")
+list(APPEND WARNING_ERRORS "class-memaccess")
+list(APPEND WARNING_ERRORS "unused-function")
+list(APPEND WARNING_ERRORS "uninitialized")
+list(APPEND WARNING_ERRORS "nonnull")
+list(APPEND WARNING_ERRORS "delete-non-virtual-dtor")
+
+foreach(i ${WARNING_ERRORS})
+  set(WARNING_ERROR_FLAGS "${WARNING_ERROR_FLAGS} -Werror=${i}")
+endforeach()
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} ${WARNING_ERROR_FLAGS} -fno-omit-frame-pointer -fno-exceptions -fno-rtti")
 
 if(BUNOS_BUILD_HOST)

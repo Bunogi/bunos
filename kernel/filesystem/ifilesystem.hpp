@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bustd/macros.hpp>
 #include <bustd/optional.hpp>
 #include <bustd/stddef.hpp>
 #include <bustd/stringview.hpp>
@@ -9,9 +10,14 @@
 
 namespace kernel {
 class IFileSystem {
+  BU_NOCOPY(IFileSystem)
+  BU_NOMOVE(IFileSystem)
 public:
   virtual bu::Optional<filesystem::Inode>
   get_inode_at_path(bu::StringView path) = 0;
+
+  IFileSystem() = default;
+  virtual ~IFileSystem() = default;
 
   // FIXME: Must handle errors better
   // FIXME: needs to take a file descriptor of some kind to know our offset in
