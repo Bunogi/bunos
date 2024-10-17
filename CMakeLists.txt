@@ -79,6 +79,11 @@ set(WARNING_FLAGS "-Wall -Wextra -pedantic -Wno-analyzer-possible-null-dereferen
 set(WARNING_ERROR_FLAGS "-Werror=return-type -Werror=switch -Werror=class-memaccess -Werror=unused-function")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS} ${WARNING_ERROR_FLAGS} -fno-omit-frame-pointer -fno-exceptions -fno-rtti")
 
+if(BUNOS_BUILD_HOST)
+  add_compile_options(-fsanitize=address -fsanitize=undefined)
+  add_link_options(-fsanitize=address -fsanitize=undefined)
+endif()
+
 enable_testing()
 
 set(BUNOS_INSTALL_DIR ${CMAKE_SOURCE_DIR}/root)

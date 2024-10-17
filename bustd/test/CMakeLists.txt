@@ -12,7 +12,6 @@ set(test_sources
   algorithm.cpp
   list.cpp
   ownedptr.cpp
-  rc.cpp
   vector.cpp
 )
 

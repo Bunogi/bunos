@@ -13,21 +13,20 @@ template <typename T> class OwnedPtr {
 
 public:
   OwnedPtr() = delete;
-  OwnedPtr(OwnedPtr &&other) : m_data(other.m_data) { other.m_valid = false; }
+  OwnedPtr(OwnedPtr &&other) { *this = forward(other); }
+
   OwnedPtr &operator=(OwnedPtr &&other) {
-    other.m_valid = false;
+    dealloc();
     m_data = other.m_data;
+
+    other.deactivate();
     return *this;
   }
 
   explicit OwnedPtr(T *data) : m_data(data) {}
-  explicit OwnedPtr(nullptr_t) : m_data(nullptr), m_valid(false) {}
+  explicit OwnedPtr(nullptr_t) : m_data(nullptr) {}
 
-  ~OwnedPtr() {
-    if (m_valid) {
-      delete m_data;
-    }
-  }
+  ~OwnedPtr() { delete m_data; }
 
   const T *operator->() const {
     ASSERT(!is_null());
@@ -59,8 +58,15 @@ public:
   }
 
 private:
-  T *m_data;
-  bool m_valid{true};
+  void dealloc() {
+    if (m_data) {
+      delete m_data;
+    }
+    deactivate();
+  }
+  void deactivate() { m_data = 0; }
+
+  T *m_data{nullptr};
 };
 
 template <typename T, typename... Ts>
