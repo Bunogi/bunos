@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-typeset -r BINUTILS_VERSION=2.35
+typeset -r BINUTILS_VERSION=2.43
 typeset -r BINUTILS_DOWNLOAD_URL=https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.xz
-typeset -r GCC_VERSION=11.2.0
+typeset -r GCC_VERSION=14.2.0
 typeset -r GCC_DOWNLOAD_URL=https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.xz
 
 typeset -r BINUTILS_SUCCESSFUL_FILE="$PWD/binutils.success"
@@ -90,6 +90,7 @@ function build_gcc() {
     cd $GCC_BUILD_DIR
     ../gcc-${GCC_VERSION}/configure --target=$TARGET --prefix="$PREFIX" \
         --disable-nls \
+        --disable-gcov \
         --with-gnu-as \
         --with-as="$PREFIX/bin/$TARGET-as" \
         --with-gnu-ld \
