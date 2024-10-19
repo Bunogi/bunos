@@ -15,7 +15,7 @@ public:
   PageMapGuard(PhysicalAddress address);
   ~PageMapGuard();
 
-  auto mapped_address() const -> void *;
+  [[nodiscard]] auto mapped_address() const -> void *;
 
 private:
   static SpinLock s_m_lock;

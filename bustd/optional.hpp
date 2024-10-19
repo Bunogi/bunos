@@ -47,7 +47,7 @@ public:
 private:
   constexpr explicit Optional(nullptr_t) { m_has_data = false; }
 
-  constexpr auto get_data() const -> const T * {
+  [[nodiscard]] constexpr auto get_data() const -> const T * {
     ASSERT(m_has_data);
     return reinterpret_cast<const T *>(m_data);
   }

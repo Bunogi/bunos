@@ -18,10 +18,10 @@ public:
   SizedRingBuffer(SizedRingBuffer &&other) = delete;
   auto operator=(SizedRingBuffer &&other) -> SizedRingBuffer = delete;
   // TODO: Maybe these should be a generic interface?
-  auto len() const -> usize { return m_current_size; }
-  auto max_len() const -> usize { return N; }
-  auto is_full() const -> bool { return m_current_size == N; }
-  auto is_empty() const -> bool { return m_current_size == 0; }
+  [[nodiscard]] auto len() const -> usize { return m_current_size; }
+  [[nodiscard]] auto max_len() const -> usize { return N; }
+  [[nodiscard]] auto is_full() const -> bool { return m_current_size == N; }
+  [[nodiscard]] auto is_empty() const -> bool { return m_current_size == 0; }
   auto write(const u8 *buffer, const usize length) -> usize {
     const auto to_write = bu::min(length, remaining_space());
 
@@ -75,15 +75,17 @@ public:
     return retval;
   }
 
-  auto head() const -> u8 {
+  [[nodiscard]] auto head() const -> u8 {
     u8 retval;
     ASSERT_EQ(read(&retval, 1), 1);
     return retval;
   }
 
-  auto remaining_space() const -> usize { return N - m_current_size; }
+  [[nodiscard]] auto remaining_space() const -> usize {
+    return N - m_current_size;
+  }
   // This was needed for the serial driver
-  auto vol_remaining_space() const volatile -> usize {
+  [[nodiscard]] auto vol_remaining_space() const volatile -> usize {
     return N - m_current_size;
   }
 

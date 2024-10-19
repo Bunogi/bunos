@@ -45,14 +45,14 @@ public:
     return *m_data;
   }
 
-  auto is_null() const -> bool { return m_data == nullptr; }
+  [[nodiscard]] auto is_null() const -> bool { return m_data == nullptr; }
   operator bool() const { return !is_null(); }
 
   auto get() -> T * {
     ASSERT(!is_null());
     return m_data;
   }
-  auto get() const -> const T * {
+  [[nodiscard]] auto get() const -> const T * {
     ASSERT(!is_null());
     return m_data;
   }

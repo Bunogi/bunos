@@ -74,7 +74,9 @@ public:
     insert_back(stolen);
   }
 
-  auto get(usize index) const -> const T & { return at_index(index)->val; }
+  [[nodiscard]] auto get(usize index) const -> const T & {
+    return at_index(index)->val;
+  }
   auto get(usize index) -> T & { return at_index(index)->val; }
 
   auto front() -> T & {
@@ -82,7 +84,7 @@ public:
     return m_head->val;
   }
 
-  auto front() const -> const T & {
+  [[nodiscard]] auto front() const -> const T & {
     ASSERT(m_head);
     return m_head->val;
   }
@@ -92,7 +94,7 @@ public:
     return m_tail->val;
   }
 
-  auto back() const -> const T & {
+  [[nodiscard]] auto back() const -> const T & {
     ASSERT(m_tail);
     return m_tail->val;
   }
@@ -167,7 +169,7 @@ public:
     m_size = 0;
   }
 
-  auto len() const -> usize { return m_size; }
+  [[nodiscard]] auto len() const -> usize { return m_size; }
 
   void remove_if(bu::Function<bool(const T &)> f) {
     auto *this_node = m_head;

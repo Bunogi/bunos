@@ -20,7 +20,7 @@ public:
   u8 available : 3;
   PhysicalAddress page_address;
 
-  auto as_u32() const -> u32;
+  [[nodiscard]] auto as_u32() const -> u32;
 
   static auto from_u32(u32 from) -> PageTableEntry;
 };
@@ -39,7 +39,7 @@ public:
   u8 available : 3;
   u32 page_table_address;
 
-  auto as_u32() const -> u32;
+  [[nodiscard]] auto as_u32() const -> u32;
 
   static auto from_u32(u32 from) -> PageDirectoryEntry;
 };

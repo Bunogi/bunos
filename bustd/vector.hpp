@@ -84,7 +84,7 @@ public:
 
   auto data() -> T * { return m_data; }
 
-  auto data() const -> const T * { return m_data; }
+  [[nodiscard]] auto data() const -> const T * { return m_data; }
 
   /*
     template <typename... Ts> void emplace(Ts &&... args) {
@@ -107,13 +107,15 @@ public:
     slot(m_size)->~T();
   }
 
-  auto back() const -> const T & { return *safe_slot(m_size - 1); };
+  [[nodiscard]] auto back() const -> const T & {
+    return *safe_slot(m_size - 1);
+  };
 
   auto back() -> T & { return *safe_slot(m_size - 1); };
 
-  auto len() const -> usize { return m_size; }
-  auto capacity() const -> usize { return m_capacity; }
-  auto is_empty() const -> bool { return m_size == 0; }
+  [[nodiscard]] auto len() const -> usize { return m_size; }
+  [[nodiscard]] auto capacity() const -> usize { return m_capacity; }
+  [[nodiscard]] auto is_empty() const -> bool { return m_size == 0; }
 
   void clear() {
     while (!is_empty()) {
@@ -127,7 +129,9 @@ public:
   auto operator[](usize index) const -> const T & { return *safe_slot(index); }
 
   auto at(usize index) -> T & { return *safe_slot(index); }
-  auto at(usize index) const -> const T & { return *safe_slot(index); }
+  [[nodiscard]] auto at(usize index) const -> const T & {
+    return *safe_slot(index);
+  }
 
   // FIXME: insert() is probably good to have too
   void remove(usize index) {
@@ -220,14 +224,18 @@ public:
   auto end() -> Iterator { return Iterator(*this, m_size, false); }
   auto rend() -> Iterator { return Iterator(*this, -1, false); }
 
-  auto begin() const -> ConstIterator { return ConstIterator(*this, 0, false); }
-  auto rbegin() const -> ConstIterator {
+  [[nodiscard]] auto begin() const -> ConstIterator {
+    return ConstIterator(*this, 0, false);
+  }
+  [[nodiscard]] auto rbegin() const -> ConstIterator {
     return ConstIterator(*this, m_size - 1, false);
   }
-  auto end() const -> ConstIterator {
+  [[nodiscard]] auto end() const -> ConstIterator {
     return ConstIterator(*this, m_size, false);
   }
-  auto rend() const -> ConstIterator { return ConstIterator(*this, -1, false); }
+  [[nodiscard]] auto rend() const -> ConstIterator {
+    return ConstIterator(*this, -1, false);
+  }
 
 private:
   void grow() {
@@ -236,12 +244,12 @@ private:
     ASSERT(new_size > m_size);
   }
 
-  auto slot(usize i) const -> T * {
+  [[nodiscard]] auto slot(usize i) const -> T * {
     ASSERT(i < m_capacity);
     return m_data + i;
   }
 
-  auto safe_slot(usize i) const -> T * {
+  [[nodiscard]] auto safe_slot(usize i) const -> T * {
     ASSERT(i < m_size);
     return m_data + i;
   }

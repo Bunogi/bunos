@@ -12,7 +12,7 @@ public:
   // TODO: Convert from integer type
 
   auto operator[](usize i) const -> bool { return at(i); }
-  auto at(usize i) const -> bool {
+  [[nodiscard]] auto at(usize i) const -> bool {
     ASSERT(i <= SIZE);
     const auto data_offset = i / 8;
 

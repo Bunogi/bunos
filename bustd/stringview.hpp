@@ -26,14 +26,15 @@ public:
       return m_data;
     }
   }
-  constexpr auto len() const -> usize { return m_length; };
-  constexpr auto empty() const -> bool { return m_length == 0; }
-  constexpr auto data() const -> const char * { return m_data; };
-  inline auto data_u8() const -> const u8 * {
+  [[nodiscard]] constexpr auto len() const -> usize { return m_length; };
+  [[nodiscard]] constexpr auto empty() const -> bool { return m_length == 0; }
+  [[nodiscard]] constexpr auto data() const -> const char * { return m_data; };
+  [[nodiscard]] inline auto data_u8() const -> const u8 * {
     return reinterpret_cast<const u8 *>(m_data);
   };
 
-  inline auto substr(const usize from, const usize upto) const -> StringView {
+  [[nodiscard]] inline auto substr(const usize from,
+                                   const usize upto) const -> StringView {
     ASSERT(from <= upto);
     if (from >= m_length) {
       return StringView("", 0);

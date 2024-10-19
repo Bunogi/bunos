@@ -37,9 +37,9 @@ public:
   Process(bu::StringView name, void (*fp)(), pid_t pid);
   Process(bu::StringView name, bu::StringView file, pid_t pid);
   Process() = delete;
-  auto has_overflowed_stack() const -> bool;
+  [[nodiscard]] auto has_overflowed_stack() const -> bool;
 
-  auto pid() const -> pid_t { return m_pid; };
+  [[nodiscard]] auto pid() const -> pid_t { return m_pid; };
 
   void take_page_table_page(PhysicalAddress &&addr);
   void take_memory_page(PhysicalAddress &&addr);

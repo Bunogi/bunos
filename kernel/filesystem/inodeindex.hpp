@@ -13,7 +13,7 @@ public:
   InodeIndex(InodeIndex &&) = default;
   auto operator=(const InodeIndex &) -> InodeIndex & = default;
 
-  auto get() const -> u64;
+  [[nodiscard]] auto get() const -> u64;
 
 private:
   u64 m_index{0};
