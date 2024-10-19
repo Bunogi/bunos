@@ -32,7 +32,7 @@ void out_u8_string(u16 port, const u8 *buffer, usize length) {
   _x86_out_u8_string(port, buffer, length);
 }
 
-u8 in_u8(u16 port) {
+auto in_u8(u16 port) -> u8 {
   u8 out;
   __asm__ volatile("movw %1, %%dx\n"
                    "in %%dx, %%al\n"
@@ -43,7 +43,7 @@ u8 in_u8(u16 port) {
   return out;
 }
 
-u16 in_u16(u16 port) {
+auto in_u16(u16 port) -> u16 {
   u16 out;
   __asm__ volatile("movw %1, %%dx\n"
                    "in %%dx, %%ax\n"

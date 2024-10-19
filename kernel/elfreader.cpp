@@ -22,7 +22,7 @@
 #endif
 
 namespace {
-bool validate_ident(const u8 *const data) {
+auto validate_ident(const u8 *const data) -> bool {
   if (data[EI_MAG0] != ELFMAG0 || data[EI_MAG1] != ELFMAG1 ||
       data[EI_MAG2] != ELFMAG2 || data[EI_MAG3] != ELFMAG3) {
     DEBUG_PUTS("Invalid magic number");
@@ -48,7 +48,7 @@ bool validate_ident(const u8 *const data) {
   return true;
 }
 
-bool validate_header(const Elf32_Ehdr *const header) {
+auto validate_header(const Elf32_Ehdr *const header) -> bool {
   if (!validate_ident(header->e_ident)) {
     return false;
   }
@@ -76,9 +76,9 @@ bool validate_header(const Elf32_Ehdr *const header) {
   return true;
 }
 
-bool handle_program_headers(const u8 *const data, const usize data_len,
+auto handle_program_headers(const u8 *const data, const usize data_len,
                             kernel::Process &process,
-                            const Elf32_Ehdr *header) {
+                            const Elf32_Ehdr *header) -> bool {
 
   const auto header_offset = header->e_phoff;
   if (header_offset == 0) {
@@ -171,8 +171,8 @@ bool handle_program_headers(const u8 *const data, const usize data_len,
   return true;
 }
 
-const char *get_section_name(const Elf32_Word name, const u8 *const data,
-                             const Elf32_Ehdr *const elf_header) {
+auto get_section_name(const Elf32_Word name, const u8 *const data,
+                      const Elf32_Ehdr *const elf_header) -> const char * {
   if (elf_header->e_shstrndx == SHN_UNDEF) {
     return nullptr;
   }
@@ -231,7 +231,7 @@ void handle_section_headers(const u8 *const data,
 } // namespace
 
 namespace kernel::elf {
-void (*parse(Process &proc, bu::StringView file))() {
+auto parse(Process &proc, bu::StringView file) -> Entry {
   const auto elf_file_data = Vfs::instance().quick_read_all_data(file);
   const auto contents = *elf_file_data;
 

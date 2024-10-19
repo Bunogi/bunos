@@ -17,7 +17,7 @@ public:
   static void spawn(bu::StringView, void (*func)());
   static void run();
   void wake(x86::InterruptFrame *frame);
-  static Process &current_process();
+  static auto current_process() -> Process &;
   static void yield(x86::InterruptFrame *frame);
 
   // HACK: running tests
@@ -26,11 +26,11 @@ public:
 private:
   Scheduler();
   void switch_task(pid_t pid, x86::InterruptFrame *frame, bool allow_update);
-  usize get_next_process();
-  pid_t next_pid();
+  auto get_next_process() -> usize;
+  auto next_pid() -> pid_t;
   void spawn_test_processes();
 
-  Process &find_process(pid_t);
+  auto find_process(pid_t) -> Process &;
 
   pid_t m_next_pid{0};
   // Use a list to ensure the references returned by current_process() do not

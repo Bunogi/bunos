@@ -78,7 +78,7 @@ void select_drive(Drive d) {
   in_u8(registers::status_alt);
 }
 
-bool disk_present() {
+auto disk_present() -> bool {
   out_u8(registers::sector_count, 0);
   out_u8(registers::lba_low, 0);
   out_u8(registers::lba_mid, 0);
@@ -117,7 +117,7 @@ bu::Vector<u16> identify_atapi(Drive d) {
 }
 */
 
-bu::Vector<u16> identify(Drive d) {
+auto identify(Drive d) -> bu::Vector<u16> {
   select_drive(d);
 
   const auto present = disk_present();
@@ -163,7 +163,7 @@ struct DriveData {
   u32 sector_size_in_bytes;
 };
 
-DriveData parse_info(bu::Vector<u16> &&identify_data) {
+auto parse_info(bu::Vector<u16> &&identify_data) -> DriveData {
   DriveData out{};
   out.supports_lba48 = (identify_data[83] & 0x0400) != 0;
   DEBUG_PRINTF("data[60]: 0x%.4X data[61]: 0x%.4X\n", identify_data[60],
@@ -212,7 +212,7 @@ void initialize_pata() {
   select_drive(Drive::Master);
 }
 
-usize read_sectors_polling(u8 *buffer, u64 sector, u8 sector_count) {
+auto read_sectors_polling(u8 *buffer, u64 sector, u8 sector_count) -> usize {
   ASSERT(sector_count <= s_master_drive.lba28_sector_count);
   ASSERT(sector + sector_count <= s_master_drive.lba28_sector_count);
   if (sector_count == 0) {
@@ -254,7 +254,7 @@ usize read_sectors_polling(u8 *buffer, u64 sector, u8 sector_count) {
   return 0;
 }
 
-usize read_bytes_polling(u8 *buffer, u64 offset, usize len) {
+auto read_bytes_polling(u8 *buffer, u64 offset, usize len) -> usize {
   auto sector_count =
       bu::max(len / s_master_drive.sector_size_in_bytes, usize(1));
   const auto overflow = len % s_master_drive.sector_size_in_bytes;
@@ -281,8 +281,10 @@ usize read_bytes_polling(u8 *buffer, u64 offset, usize len) {
   return len - overflow;
 }
 
-u16 disk_sector_size_in_bytes() { return s_master_drive.sector_size_in_bytes; }
+auto disk_sector_size_in_bytes() -> u16 {
+  return s_master_drive.sector_size_in_bytes;
+}
 
-u64 disk_sector_count() { return s_master_drive.lba28_sector_count; }
+auto disk_sector_count() -> u64 { return s_master_drive.lba28_sector_count; }
 
 } // namespace kernel::x86

@@ -77,7 +77,7 @@ void load_debug_symbols() {
   s_symbols_loaded = true;
 }
 
-bu::StringView function_name_from_pc(u32 pc) {
+auto function_name_from_pc(u32 pc) -> bu::StringView {
   ASSERT_NE(s_symbols, nullptr);
   ASSERT(s_symbols->len() >= 2);
 
@@ -93,6 +93,6 @@ bu::StringView function_name_from_pc(u32 pc) {
   return bu::StringView(prev_pc->name.data());
 }
 
-bool debug_symbols_loaded() { return s_symbols_loaded; }
+auto debug_symbols_loaded() -> bool { return s_symbols_loaded; }
 
 } // namespace kernel

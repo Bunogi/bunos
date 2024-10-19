@@ -37,15 +37,15 @@ public:
   Process(bu::StringView name, void (*fp)(), pid_t pid);
   Process(bu::StringView name, bu::StringView file, pid_t pid);
   Process() = delete;
-  bool has_overflowed_stack() const;
+  auto has_overflowed_stack() const -> bool;
 
-  pid_t pid() const { return m_pid; };
+  auto pid() const -> pid_t { return m_pid; };
 
   void take_page_table_page(PhysicalAddress &&addr);
   void take_memory_page(PhysicalAddress &&addr);
   void return_from_syscall(u32 return_value);
-  bool can_run();
-  PhysicalAddress page_dir();
+  auto can_run() -> bool;
+  auto page_dir() -> PhysicalAddress;
   void update_registers(x86::InterruptFrame *frame);
 
   void start_syscall();
@@ -82,12 +82,12 @@ private:
 
   // syscall handlers
   static void syscall_entry();
-  isize do_syscall();
+  auto do_syscall() -> isize;
   void sys_exit(int code);
-  isize sys_open(const char *path, int flags);
-  isize sys_write(int fd, const void *buf, size_t bytes);
-  isize sys_read(int fd, void *buf, size_t bytes);
-  isize sys_close(int fd);
+  auto sys_open(const char *path, int flags) -> isize;
+  auto sys_write(int fd, const void *buf, size_t bytes) -> isize;
+  auto sys_read(int fd, void *buf, size_t bytes) -> isize;
+  auto sys_close(int fd) -> isize;
   // end syscall handlers
 
   const pid_t m_pid;

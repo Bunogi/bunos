@@ -30,7 +30,7 @@ PageMapGuard::~PageMapGuard() {
   _x86_refresh_page_directory();
 }
 
-void *PageMapGuard::mapped_address() const {
+auto PageMapGuard::mapped_address() const -> void * {
   return kernel::vmem::reserved::Temp.ptr();
 }
 

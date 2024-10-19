@@ -35,7 +35,7 @@ void print_stack_trace(u32 current_eip, StackFrame *frame) {
   }
 }
 
-bu::StringView exception_vector_to_string(u16 vector) {
+auto exception_vector_to_string(u16 vector) -> bu::StringView {
   switch (vector) {
   case 0:
     return "divide error";
@@ -98,7 +98,7 @@ void nested_panic_check() {
 } // namespace
 
 namespace kernel {
-bool in_panic() { return s_panicking; }
+auto in_panic() -> bool { return s_panicking; }
 
 void panic_from_interrupt(x86::InterruptFrame *frame, const char *const reason,
                           bool has_errcode) {

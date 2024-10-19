@@ -4,7 +4,7 @@
 
 namespace kernel::x86 {
 
-u32 PageDirectoryEntry::as_u32() const {
+auto PageDirectoryEntry::as_u32() const -> u32 {
   ASSERT_EQ(page_table_address & 0x00000FFF, 0);
   u32 out = page_table_address & 0xFFFFF000;
   out |= static_cast<u8>(present) << 0;
@@ -20,7 +20,7 @@ u32 PageDirectoryEntry::as_u32() const {
   return out;
 }
 
-PageDirectoryEntry PageDirectoryEntry::from_u32(u32 from) {
+auto PageDirectoryEntry::from_u32(u32 from) -> PageDirectoryEntry {
   PageDirectoryEntry out{};
   for (u8 i = 0; i < 9; i++) {
     switch (from & (1 << i)) {
@@ -62,7 +62,7 @@ PageDirectoryEntry PageDirectoryEntry::from_u32(u32 from) {
   return out;
 }
 
-u32 PageTableEntry::as_u32() const {
+auto PageTableEntry::as_u32() const -> u32 {
   ASSERT_EQ(page_address.get() & 0x00000FFF, 0);
   u32 out = (page_address.get() & 0xFFFFF000);
   out |= static_cast<u8>(present) << 0;
@@ -78,7 +78,7 @@ u32 PageTableEntry::as_u32() const {
   return out;
 }
 
-PageTableEntry PageTableEntry::from_u32(u32 from) {
+auto PageTableEntry::from_u32(u32 from) -> PageTableEntry {
   PageTableEntry out{};
   for (u8 i = 0; i < 9; i++) {
     switch (from & (1 << i)) {

@@ -16,25 +16,26 @@ public:
     *this = other.m_addr;
   }
 
-  constexpr T get() const { return m_addr; }
-  constexpr AddressContainer &operator=(T addr) {
+  constexpr auto get() const -> T { return m_addr; }
+  constexpr auto operator=(T addr) -> AddressContainer & {
     m_addr = addr;
     return *this;
   }
 
-  constexpr AddressContainer &operator=(const AddressContainer &other) {
+  constexpr auto
+  operator=(const AddressContainer &other) -> AddressContainer & {
     m_addr = other.m_addr;
     return *this;
   }
 
-  constexpr bool operator==(const AddressContainer &other) const {
+  constexpr auto operator==(const AddressContainer &other) const -> bool {
     return m_addr == other.m_addr;
   }
 
-  constexpr AddressContainer operator+(T to_add) {
+  constexpr auto operator+(T to_add) -> AddressContainer {
     return AddressContainer<T>(to_add + m_addr);
   }
-  constexpr AddressContainer &operator+=(T to_add) {
+  constexpr auto operator+=(T to_add) -> AddressContainer & {
     m_addr += to_add;
     return *this;
   }
@@ -43,7 +44,7 @@ public:
 
   using Type = T;
 
-  constexpr void *ptr() const {
+  constexpr auto ptr() const -> void * {
     static_assert(
         sizeof(T) == sizeof(void *),
         "The size of the address must be equal to the size of a pointer");
@@ -65,7 +66,7 @@ public:
   explicit constexpr VirtualAddress(void *p)
       : AddressContainer(reinterpret_cast<Type>(p)) {}
 
-  constexpr PhysicalAddress to_linked_location() const {
+  constexpr auto to_linked_location() const -> PhysicalAddress {
     return PhysicalAddress(m_addr - 0xC0000000);
   }
 };

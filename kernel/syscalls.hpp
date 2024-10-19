@@ -10,6 +10,6 @@ typedef __bunos_syscall Syscall;
 #define MAX_SYSCALL_ARG_COUNT 4
 
 void init_syscalls();
-i32 do_syscall(Process &proc, u32 code, u32 *parameters);
+auto do_syscall(Process &proc, u32 code, u32 *parameters) -> i32;
 
 } // namespace kernel

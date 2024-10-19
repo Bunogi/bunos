@@ -9,7 +9,7 @@ template <class> class Function;
 template <class T, class... Args> class Function<T(Args...)> {
 private:
   struct CallableBase {
-    virtual T call(Args...) = 0;
+    virtual auto call(Args...) -> T = 0;
     virtual ~CallableBase() {}
   };
 
@@ -17,7 +17,9 @@ private:
   public:
     F m_functor;
     Callable(F functor) : m_functor(functor) {}
-    virtual T call(Args... a) override { return m_functor(bu::forward(a)...); }
+    virtual auto call(Args... a) -> T override {
+      return m_functor(bu::forward(a)...);
+    }
   };
 
   bu::OwnedPtr<CallableBase> m_func;
@@ -29,6 +31,6 @@ public:
   Function(F f) : m_func(new Callable<F>(move(f))) {}
   template <class F, class = typename enable_if<!is_pointer<F>>::type>
   Function(F &&f) : m_func(new Callable<F>(move(f))) {}
-  T operator()(Args... a) { return m_func->call(a...); }
+  auto operator()(Args... a) -> T { return m_func->call(a...); }
 };
 } // namespace bu

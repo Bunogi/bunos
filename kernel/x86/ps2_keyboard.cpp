@@ -11,7 +11,7 @@ namespace {
 static kernel::x86::PS2Keyboard *volatile s_keyboard;
 
 constexpr u8 keyboard_vector = 0x20 + 0x1;
-bool interrupt_handler(kernel::x86::InterruptFrame *) {
+auto interrupt_handler(kernel::x86::InterruptFrame *) -> bool {
   s_keyboard->handle_message(kernel::x86::ps2::read_isr_response());
   return true;
 }
@@ -27,7 +27,7 @@ constexpr u8 ack = 0xFA;
 constexpr u8 resend = 0xFE;
 } // namespace resp
 
-constexpr u8 get_data_byte_count(const u8 command) {
+constexpr auto get_data_byte_count(const u8 command) -> u8 {
   switch (command) {
   case cmd::set_scancode_set:
     return 1;
@@ -136,7 +136,7 @@ void PS2Keyboard::feed_scancode(u8 code) {
 }
 
 // clang-format off
-u8 PS2Keyboard::scancode_to_ascii(u8 code) {
+auto PS2Keyboard::scancode_to_ascii(u8 code) -> u8 {
   switch (code) {
   case S3_0: case S3_NUM0: return '0';
   case S3_1: case S3_NUM1: return '1';
@@ -202,7 +202,7 @@ u8 PS2Keyboard::scancode_to_ascii(u8 code) {
   }
 }
 
-u8 PS2Keyboard::with_shift(u8 ascii) {
+auto PS2Keyboard::with_shift(u8 ascii) -> u8 {
   if (isalpha(ascii)) {
     return toupper(ascii);
   }

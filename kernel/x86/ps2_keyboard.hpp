@@ -16,8 +16,8 @@ public:
 private:
   void send_command();
   void feed_scancode(u8 byte);
-  u8 scancode_to_ascii(u8 code);
-  u8 with_shift(u8 code);
+  auto scancode_to_ascii(u8 code) -> u8;
+  auto with_shift(u8 code) -> u8;
   enum class State { ExpectingAck, ExpectingKeyCode, Relase };
   u8 m_scancode_set;
   PS2Device m_device;

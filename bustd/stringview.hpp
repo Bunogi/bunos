@@ -15,25 +15,25 @@ public:
   StringView(const char *s) : m_data(s), m_length(strlen(s)){};
   constexpr StringView(const char *s, const usize length)
       : m_data(s), m_length(length){};
-  constexpr StringView &operator=(const StringView &) = default;
-  constexpr StringView &operator=(StringView &&) = default;
+  constexpr auto operator=(const StringView &) -> StringView & = default;
+  constexpr auto operator=(StringView &&) -> StringView & = default;
 
   // Return s if this is null or empty.
-  constexpr const char *data_or(const char *s) const {
+  constexpr auto data_or(const char *s) const -> const char * {
     if (!*this) {
       return s;
     } else {
       return m_data;
     }
   }
-  constexpr usize len() const { return m_length; };
-  constexpr bool empty() const { return m_length == 0; }
-  constexpr const char *data() const { return m_data; };
-  inline const u8 *data_u8() const {
+  constexpr auto len() const -> usize { return m_length; };
+  constexpr auto empty() const -> bool { return m_length == 0; }
+  constexpr auto data() const -> const char * { return m_data; };
+  inline auto data_u8() const -> const u8 * {
     return reinterpret_cast<const u8 *>(m_data);
   };
 
-  inline StringView substr(const usize from, const usize upto) const {
+  inline auto substr(const usize from, const usize upto) const -> StringView {
     ASSERT(from <= upto);
     if (from >= m_length) {
       return StringView("", 0);
@@ -42,18 +42,18 @@ public:
                       bu::min(upto - from, m_length - from));
   }
 
-  constexpr bool operator==(const StringView &other) const {
+  constexpr auto operator==(const StringView &other) const -> bool {
     if (m_length != other.len()) {
       return false;
     }
     return strncmp(m_data, other.data(), m_length) == 0;
   }
 
-  constexpr bool operator!=(const StringView &other) const {
+  constexpr auto operator!=(const StringView &other) const -> bool {
     return !(*this == other);
   }
 
-  inline char operator[](const usize i) const {
+  inline auto operator[](const usize i) const -> char {
     ASSERT(i <= m_length);
     return m_data[i];
   }
@@ -69,7 +69,7 @@ namespace literals {
 // We are the stdlib in this case, so we don't have to be nice
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wliteral-suffix"
-constexpr StringView operator"" sv(const char *data, usize length) {
+constexpr auto operator"" sv(const char *data, usize length) -> StringView {
   return StringView(data, length);
 }
 #pragma GCC diagnostic pop

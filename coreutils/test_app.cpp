@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int main() {
+auto main() -> int {
   size_t index = 0;
   char buf[128];
 

@@ -8,7 +8,7 @@
 using namespace bu::literals;
 
 namespace {
-test::Result basic_read_take() {
+auto basic_read_take() -> test::Result {
   bu::RingBuffer buf;
   auto v = "Why did the chicken cross the road?"sv;
   buf.write(v.data_u8(), v.len());
@@ -27,7 +27,7 @@ test::Result basic_read_take() {
   LIBTEST_SUCCEED();
 }
 
-test::Result read_empty() {
+auto read_empty() -> test::Result {
   bu::RingBuffer buf;
   bu::StringView s = "Foo";
   // TODO: Switch to vector
@@ -41,7 +41,7 @@ test::Result read_empty() {
   LIBTEST_SUCCEED();
 }
 
-test::Result with_wrapping() {
+auto with_wrapping() -> test::Result {
   bu::SizedRingBuffer<16> buf;
   bu::StringView s = "Hello, this is";
   buf.write(s.data_u8(), s.len());
@@ -56,7 +56,7 @@ test::Result with_wrapping() {
   LIBTEST_SUCCEED();
 }
 
-test::Result overrun_buffer() {
+auto overrun_buffer() -> test::Result {
   constexpr usize size = 10;
   bu::SizedRingBuffer<size> buf;
   bu::StringView s = "Hello this is longer than 10 chars";
@@ -65,7 +65,7 @@ test::Result overrun_buffer() {
   LIBTEST_SUCCEED();
 }
 
-test::Result write_overrun_and_wrap() {
+auto write_overrun_and_wrap() -> test::Result {
   constexpr usize size = 20;
   bu::SizedRingBuffer<size> buf;
   bu::StringView s = "1111111111";
@@ -79,7 +79,7 @@ test::Result write_overrun_and_wrap() {
   LIBTEST_SUCCEED();
 }
 
-test::Result many_reads_and_writes() {
+auto many_reads_and_writes() -> test::Result {
   bu::SizedRingBuffer<20> buf;
   bu::StringView s = "This should work :^)";
   for (u32 i = 0; i <= 20; i++) {
@@ -90,7 +90,7 @@ test::Result many_reads_and_writes() {
 }
 
 // This test detects stack smashing, which I have had a ton of issues with.
-test::Result write_until_full() {
+auto write_until_full() -> test::Result {
   constexpr usize len = 128;
   bu::SizedRingBuffer<len> buf;
   bu::StringView s = "This is a long line :^)";
@@ -109,7 +109,7 @@ test::Result write_until_full() {
   LIBTEST_SUCCEED();
 }
 
-test::Result push_pop() {
+auto push_pop() -> test::Result {
   bu::SizedRingBuffer<10> buf;
   for (int i = 0; i < 10; i++) {
     buf.push(i);
@@ -126,7 +126,7 @@ test::Result push_pop() {
   LIBTEST_SUCCEED();
 }
 
-test::Result read_nocopy() {
+auto read_nocopy() -> test::Result {
   bu::SizedRingBuffer<10> buf;
 
   constexpr auto half_capacity = buf.capacity() / 2;
@@ -158,7 +158,7 @@ test::Result read_nocopy() {
 }
 } // namespace
 
-int main() {
+auto main() -> int {
   RUN_TEST(basic_read_take);
   RUN_TEST(many_reads_and_writes);
   RUN_TEST(overrun_buffer);

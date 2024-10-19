@@ -16,6 +16,6 @@ enum class PS2Device { First, Second };
 
 namespace ps2 {
 void write(const PS2Device &dev, u8 byte);
-u8 read_isr_response();
+auto read_isr_response() -> u8;
 } // namespace ps2
 } // namespace kernel::x86

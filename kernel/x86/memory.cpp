@@ -23,8 +23,9 @@ extern u32 boot_page_table1[1024];
 namespace {
 using namespace kernel;
 using namespace kernel::x86;
-VirtualAddress virtual_address_from_indices(const u16 page_directory_index,
-                                            const u16 page_table_index = 0) {
+auto virtual_address_from_indices(const u16 page_directory_index,
+                                  const u16 page_table_index = 0)
+    -> VirtualAddress {
   constexpr u32 dir_entries = 1024;
   constexpr u32 bytes_per_entry = 0x1000; // 4M
   const u32 from_directory =
@@ -33,7 +34,7 @@ VirtualAddress virtual_address_from_indices(const u16 page_directory_index,
   return VirtualAddress(from_directory + from_table);
 }
 
-u16 page_dir_index_from_addr(const VirtualAddress &addr) {
+auto page_dir_index_from_addr(const VirtualAddress &addr) -> u16 {
   constexpr u32 dir_entries = 1024;
   constexpr u32 kilobytes_per_entry = 0x1000; // 4M
   const u32 to_check = addr.get() & 0xFFFFF000;
@@ -41,7 +42,7 @@ u16 page_dir_index_from_addr(const VirtualAddress &addr) {
   return to_check / (dir_entries * kilobytes_per_entry);
 }
 
-u16 page_table_index_from_addr(const VirtualAddress &addr) {
+auto page_table_index_from_addr(const VirtualAddress &addr) -> u16 {
   constexpr u32 bytes_per_entry = 0x1000; // 4K
 
   constexpr u32 page_dir_entries = 1024;
@@ -158,7 +159,7 @@ void init_memory_management() {
   printf("Re-initialized paging\n");
 }
 
-VirtualAddress map_kernel_memory(u32 continous_page_count) {
+auto map_kernel_memory(u32 continous_page_count) -> VirtualAddress {
   ASSERT(continous_page_count > 0);
   // TODO: do this for every kernel thread
   // FIXME: This way of detecting free entries won't work if we have explicitly
@@ -268,7 +269,7 @@ found_entry:
 }
 
 // FIXME: Needs to return whether a page was actually mapped
-bool map_user_memory(Process &process, VirtualAddress at) {
+auto map_user_memory(Process &process, VirtualAddress at) -> bool {
   const auto pd_entry = page_dir_index_from_addr(at);
   const auto pt_entry = page_table_index_from_addr(at);
   ASSERT(at.ptr() < &_kernel_start);

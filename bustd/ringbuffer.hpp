@@ -16,13 +16,13 @@ public:
   explicit SizedRingBuffer() = default;
   // TODO: When converted to a non-template class, implement these
   SizedRingBuffer(SizedRingBuffer &&other) = delete;
-  SizedRingBuffer operator=(SizedRingBuffer &&other) = delete;
+  auto operator=(SizedRingBuffer &&other) -> SizedRingBuffer = delete;
   // TODO: Maybe these should be a generic interface?
-  usize len() const { return m_current_size; }
-  usize max_len() const { return N; }
-  bool is_full() const { return m_current_size == N; }
-  bool is_empty() const { return m_current_size == 0; }
-  usize write(const u8 *buffer, const usize length) {
+  auto len() const -> usize { return m_current_size; }
+  auto max_len() const -> usize { return N; }
+  auto is_full() const -> bool { return m_current_size == N; }
+  auto is_empty() const -> bool { return m_current_size == 0; }
+  auto write(const u8 *buffer, const usize length) -> usize {
     const auto to_write = bu::min(length, remaining_space());
 
     const auto append_offset = m_buffer_start + m_current_size;
@@ -44,7 +44,7 @@ public:
     return to_write;
   }
 
-  usize read(u8 *buffer, const usize length) const {
+  auto read(u8 *buffer, const usize length) const -> usize {
     const auto to_read = bu::min(length, m_current_size);
     if (to_read == 0) {
       return 0;
@@ -61,7 +61,7 @@ public:
     return to_read;
   }
 
-  usize take(u8 *buffer, const usize upto) {
+  auto take(u8 *buffer, const usize upto) -> usize {
     const auto bytes_read = read(buffer, upto);
     drop(bytes_read);
     return bytes_read;
@@ -69,25 +69,27 @@ public:
 
   void push(const u8 byte) { write(&byte, 1); }
 
-  u8 pop() {
+  auto pop() -> u8 {
     u8 retval;
     ASSERT_EQ(take(&retval, 1), 1);
     return retval;
   }
 
-  u8 head() const {
+  auto head() const -> u8 {
     u8 retval;
     ASSERT_EQ(read(&retval, 1), 1);
     return retval;
   }
 
-  usize remaining_space() const { return N - m_current_size; }
+  auto remaining_space() const -> usize { return N - m_current_size; }
   // This was needed for the serial driver
-  usize vol_remaining_space() const volatile { return N - m_current_size; }
+  auto vol_remaining_space() const volatile -> usize {
+    return N - m_current_size;
+  }
 
   // Restrictions: Calling write() invalidates these pointers, and no guarantees
   // are made about the state of these afterwards.
-  bool read_nocopy(StringView &first_part, StringView &second_part) {
+  auto read_nocopy(StringView &first_part, StringView &second_part) -> bool {
     if (is_empty()) {
       return false;
     }
@@ -104,7 +106,7 @@ public:
     return true;
   }
 
-  usize drop(const usize n) {
+  auto drop(const usize n) -> usize {
     const auto to_drop = bu::min(n, m_current_size);
     m_current_size -= to_drop;
     m_buffer_start += to_drop;
@@ -114,7 +116,7 @@ public:
     return to_drop;
   }
 
-  constexpr usize capacity() { return N; }
+  constexpr auto capacity() -> usize { return N; }
 
   void clear() { drop(m_current_size); }
 

@@ -81,7 +81,7 @@ void acknowledge(u8 irq) {
   out_u8(master_pic_csr, 0x20);
 }
 
-bool check_spurious(u8 irq) {
+auto check_spurious(u8 irq) -> bool {
   ASSERT(irq == 7 || irq == 0xF);
   constexpr u8 read_interrupt_service_cmd = 0x0b;
   if (irq == 7) {

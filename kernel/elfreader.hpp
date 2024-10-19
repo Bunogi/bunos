@@ -4,5 +4,6 @@
 #include <kernel/process.hpp>
 
 namespace kernel::elf {
-void (*parse(Process &proc, bu::StringView file))();
-}
+using Entry = auto (*)() -> void;
+auto parse(Process &proc, bu::StringView file) -> Entry;
+} // namespace kernel::elf

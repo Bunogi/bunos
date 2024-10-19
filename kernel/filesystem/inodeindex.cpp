@@ -2,5 +2,5 @@
 
 namespace kernel::filesystem {
 InodeIndex::InodeIndex(const u64 index) : m_index(index) {}
-u64 InodeIndex::get() const { return m_index; }
+auto InodeIndex::get() const -> u64 { return m_index; }
 } // namespace kernel::filesystem

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int main() {
+auto main() -> int {
   while (1) {
     puts("y");
   }

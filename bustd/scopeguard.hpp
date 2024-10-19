@@ -16,17 +16,17 @@ public:
     }
   };
 
-  bool disarm() {
+  auto disarm() -> bool {
     const bool temp = m_armed;
     m_armed = false;
     return temp;
   };
-  bool rearm() {
+  auto rearm() -> bool {
     const bool temp = m_armed;
     m_armed = true;
     return temp;
   };
-  [[nodiscard]] bool armed() const { return m_armed; };
+  [[nodiscard]] auto armed() const -> bool { return m_armed; };
 
 private:
   bool m_armed{true};

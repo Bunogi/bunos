@@ -3,7 +3,7 @@
 #include <kernel/process/keyboardfile.hpp>
 
 namespace kernel::process {
-KeyboardFile &KeyboardFile::instance() {
+auto KeyboardFile::instance() -> KeyboardFile & {
   static bu::OwnedPtr<KeyboardFile> this_(nullptr);
   if (!this_) {
     this_ = bu::OwnedPtr(new KeyboardFile());
@@ -14,7 +14,7 @@ KeyboardFile &KeyboardFile::instance() {
 void KeyboardFile::key_trigger(const char c) { m_buffer.push(c); }
 
 #include <stdio.h>
-bool KeyboardFile::open(const pid_t new_pid) {
+auto KeyboardFile::open(const pid_t new_pid) -> bool {
   const auto guard = m_lock.lock();
   if (m_owning_pid != 0) {
     return false;
@@ -26,7 +26,7 @@ bool KeyboardFile::open(const pid_t new_pid) {
   return true;
 }
 
-bool KeyboardFile::close(const pid_t old_pid) {
+auto KeyboardFile::close(const pid_t old_pid) -> bool {
   const auto guard = m_lock.lock();
   if (m_owning_pid != old_pid) {
     return false;
@@ -38,7 +38,7 @@ bool KeyboardFile::close(const pid_t old_pid) {
   return true;
 }
 
-isize KeyboardFile::read(u8 *buffer, usize len) {
+auto KeyboardFile::read(u8 *buffer, usize len) -> isize {
   const auto guard = m_lock.lock();
   const InterruptGuard int_guard;
   return m_buffer.take(buffer, len);

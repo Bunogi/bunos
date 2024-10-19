@@ -14,11 +14,11 @@ Vga::Vga(Vga &&other) {
   m_current_color = other.m_current_color;
 }
 
-u8 Vga::entry_color(Color fg, Color bg) {
+auto Vga::entry_color(Color fg, Color bg) -> u8 {
   return static_cast<u8>(fg) | static_cast<u8>(bg) << 4;
 }
 
-u16 Vga::entry(char c, Color bg) {
+auto Vga::entry(char c, Color bg) -> u16 {
   return static_cast<u16>(c) | static_cast<u16>(bg) << 8;
 }
 

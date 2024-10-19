@@ -16,36 +16,38 @@ class Ext2 : public IFileSystem {
 
 public:
   Ext2();
-  bu::Optional<filesystem::Inode>
-  get_inode_at_path(bu::StringView path) override;
-  isize data_from_inode(u64 inode_index, u64 offset, usize bytes,
-                        u8 *buffer) override;
-  bu::Optional<bu::Vector<filesystem::DirectoryEntry>>
-  list_directory(u64 inode_index) override;
+  auto get_inode_at_path(bu::StringView path)
+      -> bu::Optional<filesystem::Inode> override;
+  auto data_from_inode(u64 inode_index, u64 offset, usize bytes,
+                       u8 *buffer) -> isize override;
+  auto list_directory(u64 inode_index)
+      -> bu::Optional<bu::Vector<filesystem::DirectoryEntry>> override;
 
 private:
   void print_root_dir();
-  u32 get_inode_block_group(u32 inode_index);
-  u32 find_inode();
-  u32 block_index_to_offset(u32 index);
-  ext2::Inode read_inode_from_disk(u32 inode_index);
+  auto get_inode_block_group(u32 inode_index) -> u32;
+  auto find_inode() -> u32;
+  auto block_index_to_offset(u32 index) -> u32;
+  auto read_inode_from_disk(u32 inode_index) -> ext2::Inode;
 
   // FIXME: This should be some kind of reference counted thing for caching
-  bu::Vector<u8> read_block_from_disk(u32 block_index);
-  bu::Vector<u8> read_inode_block_from_disk(const ext2::Inode &inode,
-                                            u32 block_number);
-  bu::Vector<u8> read_indirect_block_from_disk(const u32 table_block,
-                                               const u32 block_offset);
+  auto read_block_from_disk(u32 block_index) -> bu::Vector<u8>;
+  auto read_inode_block_from_disk(const ext2::Inode &inode,
+                                  u32 block_number) -> bu::Vector<u8>;
+  auto read_indirect_block_from_disk(const u32 table_block,
+                                     const u32 block_offset) -> bu::Vector<u8>;
 
-  u32 find_file_in_directory(ext2::Inode directory, bu::StringView name);
+  auto find_file_in_directory(ext2::Inode directory,
+                              bu::StringView name) -> u32;
   void for_each_entry_in_dir(
       ext2::Inode directory,
       bu::Function<bu::IterationResult(const ext2::DirectoryEntry &)>);
 
   // FIXME: Optional
-  bu::OwnedPtr<ext2::Inode> get_inode_for_file(bu::StringView file);
-  ext2::BlockGroupDescriptor read_block_group_entry_from_disk(u32 block_index);
-  ext2::DirectoryEntry read_directory_entry_from_disk(u32 block_index);
+  auto get_inode_for_file(bu::StringView file) -> bu::OwnedPtr<ext2::Inode>;
+  auto read_block_group_entry_from_disk(u32 block_index)
+      -> ext2::BlockGroupDescriptor;
+  auto read_directory_entry_from_disk(u32 block_index) -> ext2::DirectoryEntry;
 
   bu::OwnedPtr<ext2::SuperBlock> m_superblock;
   u32 m_block_group_count{0};

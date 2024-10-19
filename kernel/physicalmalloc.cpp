@@ -25,7 +25,7 @@ static const u64 s_allocatable_page_start =
 // TODO: Parse memory map and stuff
 void init_pmem() { ASSERT_EQ(s_allocatable_page_start & 0xFFF, 0); }
 
-PhysicalAddress allocate_physical_page() {
+auto allocate_physical_page() -> PhysicalAddress {
   DEBUG_PRINTF("start: %p \n", s_allocatable_page_start);
 
   // TODO: This should allow you to use a range-based for

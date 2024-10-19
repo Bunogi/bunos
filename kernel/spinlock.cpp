@@ -6,7 +6,7 @@
 namespace kernel {
 SpinLock::SpinLock() : m_valid(true), m_locked(false) {}
 
-SpinLock::Guard SpinLock::lock() {
+auto SpinLock::lock() -> SpinLock::Guard {
   while (1) {
     // Make the operation atomic
     const InterruptGuard guard;
@@ -26,7 +26,7 @@ void SpinLock::unlock() {
   m_locked = false;
 }
 
-bool SpinLock::is_locked() { return m_locked; }
+auto SpinLock::is_locked() -> bool { return m_locked; }
 
 SpinLock::Guard::Guard(SpinLock &parent) : m_parent(parent) {}
 SpinLock::Guard::~Guard() { m_parent.unlock(); }

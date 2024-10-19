@@ -7,7 +7,7 @@
 namespace kernel {
 void init_pmem();
 
-PhysicalAddress allocate_physical_page();
+auto allocate_physical_page() -> PhysicalAddress;
 void free_physical_page(PhysicalAddress addr);
 
 } // namespace kernel

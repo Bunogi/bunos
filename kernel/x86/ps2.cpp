@@ -48,24 +48,24 @@ void write_command(u8 command, u8 data) {
   out_u8(data_port, data);
 }
 
-u8 read_response() {
+auto read_response() -> u8 {
   while (in_u8(status_register & status::output_buffer_full) != 0) {
   }
   return in_u8(data_port);
 }
 
-u8 read_input_response() {
+auto read_input_response() -> u8 {
   while (in_u8(status_register & status::input_buffer_full) != 0) {
   }
   return in_u8(data_port);
 }
 
-u8 read_command(u8 command) {
+auto read_command(u8 command) -> u8 {
   out_u8(command_register, command);
   return read_response();
 }
 
-bool detect_device_type(PS2DeviceType &type, PS2Device dev) {
+auto detect_device_type(PS2DeviceType &type, PS2Device dev) -> bool {
   const char *devname = dev == PS2Device::First ? "first" : "second";
   ps2::write(dev, dev_cmd::disable_scanning);
   auto response = read_input_response();
@@ -267,6 +267,6 @@ void ps2::write(const PS2Device &dev, u8 byte) {
   out_u8(data_port, byte);
 }
 
-u8 ps2::read_isr_response() { return in_u8(data_port); }
+auto ps2::read_isr_response() -> u8 { return in_u8(data_port); }
 
 } // namespace kernel::x86

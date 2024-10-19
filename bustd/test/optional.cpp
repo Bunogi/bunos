@@ -8,20 +8,20 @@ using bu::create_some;
 using bu::Optional;
 
 namespace {
-test::Result some_conversion() {
+auto some_conversion() -> test::Result {
   const auto some = create_some<u8>(8);
   LIBTEST_ASSERT(static_cast<bool>(some));
   LIBTEST_SUCCEED();
 }
 
-test::Result none_conversion() {
+auto none_conversion() -> test::Result {
   const auto none = create_none<u8>();
   LIBTEST_ASSERT(!static_cast<bool>(none));
 
   LIBTEST_SUCCEED();
 }
 
-test::Result with_data() {
+auto with_data() -> test::Result {
   const auto some = create_some<u8>(128);
   LIBTEST_ASSERT(static_cast<bool>(some));
   LIBTEST_ASSERT_EQ(*some, 128);
@@ -29,7 +29,7 @@ test::Result with_data() {
   LIBTEST_SUCCEED();
 }
 
-test::Result moving_works() {
+auto moving_works() -> test::Result {
   Optional<u8> some = create_some<u8>(128);
 
   Optional<u8> other(bu::move(some));
@@ -45,7 +45,7 @@ struct DestructorCounter {
   ~DestructorCounter() { destructor_calls++; }
 };
 
-test::Result destructor_sanity() {
+auto destructor_sanity() -> test::Result {
   destructor_calls = 0;
   { const auto some = create_some<DestructorCounter>(); }
   LIBTEST_ASSERT_EQ(destructor_calls, 1);
@@ -58,7 +58,7 @@ test::Result destructor_sanity() {
   LIBTEST_SUCCEED();
 }
 
-test::Result destructor_sanity_when_move_assigning() {
+auto destructor_sanity_when_move_assigning() -> test::Result {
   destructor_calls = 0;
   {
     auto some = create_some<DestructorCounter>();
@@ -71,7 +71,7 @@ test::Result destructor_sanity_when_move_assigning() {
 }
 } // namespace
 
-int main() {
+auto main() -> int {
   RUN_TEST(some_conversion);
   RUN_TEST(none_conversion);
   RUN_TEST(with_data);

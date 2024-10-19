@@ -23,7 +23,7 @@ void initialize_interrupts();
 
 [[gnu::always_inline]] inline void cli() { __asm__ volatile("cli"); }
 [[gnu::always_inline]] inline void sti() { __asm__ volatile("sti"); }
-[[gnu::always_inline]] inline bool interrupts_enabled() {
+[[gnu::always_inline]] inline auto interrupts_enabled() -> bool {
   u32 eflags;
   __asm__ volatile("pushf\n"
                    "popl %0"

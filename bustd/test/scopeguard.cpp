@@ -2,7 +2,7 @@
 #include <libtest/libtest.hpp>
 
 namespace {
-test::Result basic_locked() {
+auto basic_locked() -> test::Result {
   bool did_execute = false;
   {
     bu::LockedScopeGuard guard([&]() { did_execute = true; });
@@ -13,7 +13,7 @@ test::Result basic_locked() {
   LIBTEST_SUCCEED();
 }
 
-test::Result basic() {
+auto basic() -> test::Result {
   bool did_execute = false;
   {
     bu::ScopeGuard guard([&]() { did_execute = true; });
@@ -24,7 +24,7 @@ test::Result basic() {
   LIBTEST_SUCCEED();
 }
 
-test::Result disarmed() {
+auto disarmed() -> test::Result {
   bool did_execute = false;
   {
     bu::ScopeGuard guard([&]() { did_execute = true; });
@@ -36,7 +36,7 @@ test::Result disarmed() {
   LIBTEST_SUCCEED();
 }
 
-test::Result rearmed() {
+auto rearmed() -> test::Result {
   bool did_execute = false;
   {
     bu::ScopeGuard guard([&]() { did_execute = true; });
@@ -51,7 +51,7 @@ test::Result rearmed() {
 }
 } // namespace
 
-int main() {
+auto main() -> int {
   RUN_TEST(basic_locked);
   RUN_TEST(basic);
   RUN_TEST(disarmed);

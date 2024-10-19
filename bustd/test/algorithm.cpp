@@ -4,7 +4,7 @@
 
 using namespace bu;
 
-test::Result find_if() {
+auto find_if() -> test::Result {
   List<u8> data;
   for (int i = 0; i < 64; i++) {
     data.append_back(i);
@@ -22,7 +22,7 @@ test::Result find_if() {
   LIBTEST_SUCCEED();
 }
 
-int main() {
+auto main() -> int {
   RUN_TEST(find_if);
 
   LIBTEST_CLEANUP();

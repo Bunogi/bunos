@@ -5,7 +5,7 @@
 using namespace bu::literals;
 
 namespace {
-test::Result comparison_basic() {
+auto comparison_basic() -> test::Result {
   constexpr auto s1 = "aaaa"sv;
   constexpr auto s2 = "aaaa"sv;
   LIBTEST_ASSERT_EQ(s1, s2);
@@ -19,7 +19,7 @@ test::Result comparison_basic() {
   LIBTEST_SUCCEED();
 }
 
-test::Result comparison_notnullterminated() {
+auto comparison_notnullterminated() -> test::Result {
 
   constexpr auto base = "aaaabbbb"sv;
 
@@ -36,7 +36,7 @@ test::Result comparison_notnullterminated() {
   LIBTEST_SUCCEED();
 }
 
-test::Result substr() {
+auto substr() -> test::Result {
   constexpr auto base = "Hello this is a string"sv;
   const auto s1 = base.substr(0, 5);
   LIBTEST_ASSERT_EQ(s1, "Hello"sv);
@@ -57,7 +57,7 @@ test::Result substr() {
 }
 } // namespace
 
-int main() {
+auto main() -> int {
   RUN_TEST(comparison_basic);
   RUN_TEST(comparison_notnullterminated)
   RUN_TEST(substr);

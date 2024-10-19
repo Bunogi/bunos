@@ -12,7 +12,7 @@ extern "C" void __cxa_pure_virtual() {
 // These are only called with local statics before kernel_main(), so we don't
 // have to actually use a lock mechanism.
 __extension__ typedef int __guard __attribute__((mode(__DI__)));
-extern "C" int __cxa_guard_acquire(__guard *const guard) {
+extern "C" auto __cxa_guard_acquire(__guard *const guard) -> int {
   return !*(char *)(guard);
 }
 extern "C" void __cxa_guard_release(__guard *const guard) {

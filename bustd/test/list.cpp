@@ -2,7 +2,7 @@
 #include <libraries/libtest/libtest.hpp>
 
 namespace {
-test::Result basic_append() {
+auto basic_append() -> test::Result {
   bu::List<int> l;
   l.append_back(1);
   LIBTEST_ASSERT_EQ(l.back(), 1);
@@ -17,7 +17,7 @@ test::Result basic_append() {
   LIBTEST_SUCCEED();
 }
 
-test::Result cleans_up() {
+auto cleans_up() -> test::Result {
   static int num_deleted;
   struct Deletable {
     Deletable() {}
@@ -60,7 +60,7 @@ test::Result cleans_up() {
   LIBTEST_SUCCEED();
 }
 
-test::Result remove_if() {
+auto remove_if() -> test::Result {
   bu::List<usize> v;
   for (usize i = 0; i < 100; i++) {
     v.append_front(i);
@@ -75,7 +75,7 @@ test::Result remove_if() {
   LIBTEST_SUCCEED();
 }
 
-test::Result range_for() {
+auto range_for() -> test::Result {
   bu::List<usize> v;
   for (usize i = 0; i < 50; i++) {
     v.append_back(i);
@@ -106,7 +106,7 @@ test::Result range_for() {
   LIBTEST_SUCCEED();
 }
 
-test::Result transfer() {
+auto transfer() -> test::Result {
   bu::List<usize> v;
   bu::List<usize> v2;
 
@@ -185,7 +185,7 @@ test::Result transfer() {
 
 } // namespace
 
-int main() {
+auto main() -> int {
   RUN_TEST(basic_append);
   RUN_TEST(cleans_up);
   RUN_TEST(remove_if);

@@ -55,7 +55,7 @@ void Scheduler::run() {
   }
 }
 
-pid_t Scheduler::next_pid() { return m_next_pid++; }
+auto Scheduler::next_pid() -> pid_t { return m_next_pid++; }
 
 void Scheduler::wake(x86::InterruptFrame *frame) {
   if (!s_enabled) {
@@ -83,12 +83,12 @@ void Scheduler::yield(x86::InterruptFrame *frame) {
   s_scheduler->wake(frame);
 }
 
-Process &Scheduler::current_process() {
+auto Scheduler::current_process() -> Process & {
   ASSERT_NE(s_scheduler, nullptr);
   return s_scheduler->find_process(s_scheduler->m_current_process);
 }
 
-usize Scheduler::get_next_process() {
+auto Scheduler::get_next_process() -> usize {
   usize lowest_run = 0;
   usize max_delta = 0;
   usize index = 0;
@@ -165,7 +165,7 @@ void Scheduler::spawn_test_processes() {
   m_current_test_process = m_processes.back().pid();
 }
 
-Process &Scheduler::find_process(const pid_t pid) {
+auto Scheduler::find_process(const pid_t pid) -> Process & {
   auto result =
       bu::find_if(m_processes.begin(), m_processes.end(),
                   [&](const auto &proc) { return proc.pid() == pid; });

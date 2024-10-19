@@ -17,7 +17,7 @@ extern kernel::Scheduler *s_scheduler;
 
 namespace kernel::timer {
 
-bool interrupt_handler(x86::InterruptFrame *frame) {
+auto interrupt_handler(x86::InterruptFrame *frame) -> bool {
   for (u32 i = 0; i < SLEEP_TIMER_COUNT; i++) {
     if (SLEEP_TIMERS[i] != 0) {
       SLEEP_TIMERS[i]--;
@@ -44,7 +44,7 @@ void initialize() {
   kernel::interrupts::register_handler(0x20, &interrupt_handler);
 }
 
-u32 register_timer(usize ticks) {
+auto register_timer(usize ticks) -> u32 {
   // TODO: should be a mutex or something when this is actually used
   const auto guard = s_lock.lock();
   for (u32 i = 0; i < SLEEP_TIMER_COUNT; i++) {

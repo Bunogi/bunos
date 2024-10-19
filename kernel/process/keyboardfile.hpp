@@ -9,12 +9,12 @@ namespace kernel::process {
 // than one reader
 class KeyboardFile {
 public:
-  static KeyboardFile &instance();
+  static auto instance() -> KeyboardFile &;
   // TODO: This won't be good long term but works now
   void key_trigger(char c);
-  bool open(pid_t new_pid);
-  bool close(pid_t old_pid);
-  isize read(u8 *buffer, usize len);
+  auto open(pid_t new_pid) -> bool;
+  auto close(pid_t old_pid) -> bool;
+  auto read(u8 *buffer, usize len) -> isize;
 
 private:
   volatile pid_t m_owning_pid{0};
@@ -25,7 +25,7 @@ private:
   KeyboardFile();
   KeyboardFile(const KeyboardFile &) = delete;
   KeyboardFile(const KeyboardFile &&) = delete;
-  KeyboardFile &operator=(const KeyboardFile &) = delete;
-  KeyboardFile &operator=(const KeyboardFile &&) = delete;
+  auto operator=(const KeyboardFile &) -> KeyboardFile & = delete;
+  auto operator=(const KeyboardFile &&) -> KeyboardFile & = delete;
 };
 } // namespace kernel::process

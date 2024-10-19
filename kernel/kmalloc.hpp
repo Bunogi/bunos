@@ -6,8 +6,8 @@ namespace kernel::malloc {
 class Allocator {
 public:
   explicit Allocator();
-  static Allocator *instance();
-  void *allocate(size_t size);
+  static auto instance() -> Allocator *;
+  auto allocate(size_t size) -> void *;
   void deallocate(void *p);
 
   void print_allocations();
@@ -20,8 +20,8 @@ private:
     State state;
   };
 
-  bool previously_allocated(void *p);
-  bool is_allocated_in_node(const void *p, const Node *const node);
+  auto previously_allocated(void *p) -> bool;
+  auto is_allocated_in_node(const void *p, const Node *const node) -> bool;
   void try_merge_free_nodes(Node *node);
 
   uintptr_t m_heap_start;

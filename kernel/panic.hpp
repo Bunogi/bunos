@@ -9,5 +9,5 @@ namespace kernel {
                                 const char *reason);
 [[noreturn]] void panic_from_interrupt(x86::InterruptFrame *frame,
                                        const char *reason, bool has_errcode);
-bool in_panic();
+auto in_panic() -> bool;
 } // namespace kernel

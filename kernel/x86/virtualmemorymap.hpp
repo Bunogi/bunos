@@ -16,7 +16,7 @@ constexpr VirtualAddress Vga(0xC0002000);
 } // namespace reserved
 
 // Return the region size in 4KiB pages
-constexpr usize reserved_region_size(const VirtualAddress region) {
+constexpr auto reserved_region_size(const VirtualAddress region) -> usize {
   if (region == reserved::Temp || region == reserved::Vga) {
     return 1;
   }

@@ -6,7 +6,7 @@
 
 namespace kernel::x86 {
 namespace {
-bool interrupt_handler(InterruptFrame *frame) {
+auto interrupt_handler(InterruptFrame *frame) -> bool {
   auto &proc = Scheduler::current_process();
   proc.start_syscall();
 

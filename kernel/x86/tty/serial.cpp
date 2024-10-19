@@ -73,14 +73,14 @@ void init() {
   out_u8(regs::modem_control, 0x00);
 }
 
-bool ready_to_send() {
+auto ready_to_send() -> bool {
   return (in_u8(regs::line_status) & LineStatus::TransmitterEmpty) != 0;
 }
 
 // Must only ever be one
 static tty::Serial *s_serial_instance;
 
-bool interrupt_handler(InterruptFrame *) {
+auto interrupt_handler(InterruptFrame *) -> bool {
   // We have to handle every interrupt sent to us, one at a time
   u8 detect;
   while (((detect = in_u8(regs::interrupt_detect)) & 0x01) == 0) {
@@ -122,7 +122,7 @@ Serial::Serial() {
 }
 
 // Used by the timer system to let us print stuff
-Serial *Serial::instance() { return s_serial_instance; }
+auto Serial::instance() -> Serial * { return s_serial_instance; }
 
 void Serial::write(const char *buf, const usize length) {
   // If the buffer cannot take any more, we have to wait until it can

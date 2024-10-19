@@ -2,7 +2,7 @@
 #include <libraries/libtest/libtest.hpp>
 
 namespace {
-test::Result basic_push_pop() {
+auto basic_push_pop() -> test::Result {
   bu::Vector<int> foo;
 
   for (usize i = 0; i < 5; i++) {
@@ -26,7 +26,7 @@ test::Result basic_push_pop() {
   LIBTEST_SUCCEED();
 }
 
-test::Result pop_value() {
+auto pop_value() -> test::Result {
   bu::Vector<int> foo;
 
   foo.push(1);
@@ -37,7 +37,7 @@ test::Result pop_value() {
   LIBTEST_SUCCEED();
 }
 
-test::Result destructor_call_pop() {
+auto destructor_call_pop() -> test::Result {
   static int num_destroyed = 0;
   struct Destructable {
     ~Destructable() { num_destroyed++; }
@@ -61,7 +61,7 @@ test::Result destructor_call_pop() {
   LIBTEST_SUCCEED();
 }
 
-test::Result no_duplicate_constructor_call() {
+auto no_duplicate_constructor_call() -> test::Result {
   static int num_constructed = 0;
   struct Constructable {
     Constructable() { num_constructed++; }
@@ -85,7 +85,7 @@ test::Result no_duplicate_constructor_call() {
   LIBTEST_SUCCEED();
 }
 
-test::Result allocation_strategy() {
+auto allocation_strategy() -> test::Result {
   bu::Vector<int> v(10);
   LIBTEST_ASSERT_EQ(v.len(), 0);
   LIBTEST_ASSERT_EQ(v.capacity(), 10);
@@ -118,7 +118,7 @@ test::Result allocation_strategy() {
   LIBTEST_SUCCEED();
 }
 
-test::Result preallocate() {
+auto preallocate() -> test::Result {
   const usize allocate = 10;
   bu::Vector<int> v(allocate);
   LIBTEST_ASSERT_EQ(v.len(), 0);
@@ -135,7 +135,7 @@ test::Result preallocate() {
   LIBTEST_SUCCEED();
 }
 
-test::Result move() {
+auto move() -> test::Result {
   static int num_constructed = 0;
   static int num_copied = 0;
   static int num_moved = 0;
@@ -166,7 +166,7 @@ test::Result move() {
   LIBTEST_SUCCEED();
 }
 
-test::Result index() {
+auto index() -> test::Result {
   bu::Vector<usize> v;
   v.push(0);
   v.push(1);
@@ -179,7 +179,7 @@ test::Result index() {
   LIBTEST_SUCCEED();
 }
 
-test::Result fill() {
+auto fill() -> test::Result {
   bu::Vector<char> v;
   constexpr int num = 10;
   v.fill('0', num);
@@ -197,7 +197,7 @@ test::Result fill() {
   LIBTEST_SUCCEED();
 }
 
-test::Result resize_to_fit() {
+auto resize_to_fit() -> test::Result {
   bu::Vector<int> v(300);
   LIBTEST_ASSERT_EQ(v.capacity(), 300);
   for (int i = 0; i < 150; i++) {
@@ -211,7 +211,7 @@ test::Result resize_to_fit() {
   LIBTEST_SUCCEED();
 }
 
-test::Result clear() {
+auto clear() -> test::Result {
   bu::Vector<int> v(200);
   for (int i = 0; i < 200; i++) {
     v.push(i);
@@ -224,7 +224,7 @@ test::Result clear() {
   LIBTEST_SUCCEED();
 }
 
-test::Result remove() {
+auto remove() -> test::Result {
   bu::Vector<usize> v;
   for (usize i = 0; i < 10; i++) {
     v.push(i);
@@ -240,7 +240,7 @@ test::Result remove() {
   LIBTEST_SUCCEED();
 }
 
-test::Result remove_destructor_sanity() {
+auto remove_destructor_sanity() -> test::Result {
   static int num_destroyed = 0;
   // When constructing the vector, the destructor is called many times.
   static bool count_destructions = false;
@@ -265,7 +265,7 @@ test::Result remove_destructor_sanity() {
   LIBTEST_SUCCEED();
 }
 
-test::Result remove_if() {
+auto remove_if() -> test::Result {
   bu::Vector<usize> v;
   for (usize i = 0; i < 100; i++) {
     v.push(i);
@@ -282,7 +282,7 @@ test::Result remove_if() {
   LIBTEST_SUCCEED();
 }
 
-test::Result range_for() {
+auto range_for() -> test::Result {
   bu::Vector<usize> v;
   for (usize i = 0; i < 50; i++) {
     v.push(i);
@@ -321,7 +321,7 @@ test::Result range_for() {
   LIBTEST_SUCCEED();
 }
 
-test::Result const_range_for() {
+auto const_range_for() -> test::Result {
   bu::Vector<usize> v;
   for (usize i = 0; i < 50; i++) {
     v.push(i);
@@ -353,7 +353,7 @@ test::Result const_range_for() {
 
 } // namespace
 
-int main() {
+auto main() -> int {
   RUN_TEST(allocation_strategy);
   RUN_TEST(basic_push_pop);
   RUN_TEST(clear);

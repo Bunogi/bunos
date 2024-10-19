@@ -21,7 +21,7 @@ public:
 
   List(const List &other) { *this = other; }
 
-  List &operator=(const List &other) {
+  auto operator=(const List &other) -> List & {
     clear();
 
     const auto *node = other.m_head;
@@ -34,7 +34,7 @@ public:
 
   List(List &&other) { *this = move(other); }
 
-  List &operator=(List &&other) {
+  auto operator=(List &&other) -> List & {
     m_size = other.m_size;
     m_tail = other.m_tail;
     m_head = other.m_head;
@@ -74,25 +74,25 @@ public:
     insert_back(stolen);
   }
 
-  const T &get(usize index) const { return at_index(index)->val; }
-  T &get(usize index) { return at_index(index)->val; }
+  auto get(usize index) const -> const T & { return at_index(index)->val; }
+  auto get(usize index) -> T & { return at_index(index)->val; }
 
-  T &front() {
+  auto front() -> T & {
     ASSERT(m_head);
     return m_head->val;
   }
 
-  const T &front() const {
+  auto front() const -> const T & {
     ASSERT(m_head);
     return m_head->val;
   }
 
-  T &back() {
+  auto back() -> T & {
     ASSERT(m_tail);
     return m_tail->val;
   }
 
-  const T &back() const {
+  auto back() const -> const T & {
     ASSERT(m_tail);
     return m_tail->val;
   }
@@ -101,21 +101,23 @@ public:
   public:
     using Value = T;
 
-    Iterator operator++() const {
+    auto operator++() const -> Iterator {
       m_this = m_reverse ? m_this->prev : m_this->next;
       return *this;
     }
-    Iterator operator++(int) const {
+    auto operator++(int) const -> Iterator {
       Iterator tmp(*this);
       operator++();
       return tmp;
     }
-    T &operator*() { return m_this->val; }
-    const T &operator*() const { return m_this->val; }
-    bool operator==(const Iterator &other) const {
+    auto operator*() -> T & { return m_this->val; }
+    auto operator*() const -> const T & { return m_this->val; }
+    auto operator==(const Iterator &other) const -> bool {
       return m_this == other.m_this;
     }
-    bool operator!=(const Iterator &other) const { return !(*this == other); }
+    auto operator!=(const Iterator &other) const -> bool {
+      return !(*this == other);
+    }
 
   private:
     friend class List<T>;
@@ -124,14 +126,14 @@ public:
     bool m_reverse;
   };
 
-  Iterator begin() { return Iterator(m_head, false); }
+  auto begin() -> Iterator { return Iterator(m_head, false); }
 
-  Iterator rbegin() { return Iterator(m_tail, true); }
+  auto rbegin() -> Iterator { return Iterator(m_tail, true); }
 
-  Iterator end() { return Iterator(nullptr, false); }
-  Iterator rend() { return Iterator(nullptr, false); }
+  auto end() -> Iterator { return Iterator(nullptr, false); }
+  auto rend() -> Iterator { return Iterator(nullptr, false); }
 
-  Node *take_node(usize index) {
+  auto take_node(usize index) -> Node * {
     ASSERT(index < m_size);
     Node *const to_delete = at_index(index);
     if (to_delete->prev) {
@@ -165,7 +167,7 @@ public:
     m_size = 0;
   }
 
-  usize len() const { return m_size; }
+  auto len() const -> usize { return m_size; }
 
   void remove_if(bu::Function<bool(const T &)> f) {
     auto *this_node = m_head;
@@ -188,7 +190,7 @@ public:
   }
 
 private:
-  Node *at_index(usize index) {
+  auto at_index(usize index) -> Node * {
     ASSERT(index < m_size);
     Node *node = m_head;
     // FIXME: this can be made faster by going from the back->front if index >

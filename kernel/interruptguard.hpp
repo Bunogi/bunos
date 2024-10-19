@@ -9,7 +9,7 @@ class InterruptGuard {
 public:
   explicit InterruptGuard();
   ~InterruptGuard();
-  bool disabled_interrupts() const;
+  auto disabled_interrupts() const -> bool;
 
 private:
   bool m_did_disable_interrupts{false};

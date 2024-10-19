@@ -9,11 +9,11 @@ public:
   InodeIndex() = default;
   ~InodeIndex() = default;
   InodeIndex(const InodeIndex &) = default;
-  InodeIndex &operator=(InodeIndex &&) = default;
+  auto operator=(InodeIndex &&) -> InodeIndex & = default;
   InodeIndex(InodeIndex &&) = default;
-  InodeIndex &operator=(const InodeIndex &) = default;
+  auto operator=(const InodeIndex &) -> InodeIndex & = default;
 
-  u64 get() const;
+  auto get() const -> u64;
 
 private:
   u64 m_index{0};

@@ -24,8 +24,8 @@ public:
   };
   friend class Guard;
 
-  Guard lock();
-  bool is_locked();
+  auto lock() -> Guard;
+  auto is_locked() -> bool;
 
 private:
   void unlock();

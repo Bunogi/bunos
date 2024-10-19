@@ -20,14 +20,25 @@ typedef int32_t isize;
 
 typedef decltype(nullptr) nullptr_t;
 
-template <class T> struct remove_reference { typedef T type; };
-template <class T> struct remove_reference<T &> { typedef T type; };
-template <class T> struct remove_reference<T &&> { typedef T type; };
-template <typename T> T &&move(T &v) noexcept {
+template <class T> struct remove_reference {
+  typedef T type;
+};
+template <class T> struct remove_reference<T &> {
+  typedef T type;
+};
+template <class T> struct remove_reference<T &&> {
+  typedef T type;
+};
+template <typename T> auto move(T &v) noexcept -> T && {
   return static_cast<typename remove_reference<T>::type &&>(v);
 }
-template <class T> T &&forward(T &v) noexcept { return static_cast<T &&>(v); }
-template <class T> T &&forward(T &&v) noexcept { return static_cast<T &&>(v); }
+template <class T> auto forward(T &v) noexcept -> T && {
+  return static_cast<T &&>(v);
+}
+template <class T> auto forward(T &&v) noexcept -> T && {
+  return static_cast<T &&>(v);
+}
+
 } // namespace bu
 
 using bu::u16;

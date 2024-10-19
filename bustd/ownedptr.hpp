@@ -15,7 +15,7 @@ public:
   OwnedPtr() = delete;
   OwnedPtr(OwnedPtr &&other) { *this = forward(other); }
 
-  OwnedPtr &operator=(OwnedPtr &&other) {
+  auto operator=(OwnedPtr &&other) -> OwnedPtr & {
     dealloc();
     m_data = other.m_data;
 
@@ -28,31 +28,31 @@ public:
 
   ~OwnedPtr() { delete m_data; }
 
-  const T *operator->() const {
+  auto operator->() const -> const T * {
     ASSERT(!is_null());
     return m_data;
   }
-  T *operator->() {
+  auto operator->() -> T * {
     ASSERT(!is_null());
     return m_data;
   }
-  const T &operator*() const {
+  auto operator*() const -> const T & {
     ASSERT(!is_null());
     return *m_data;
   }
-  T &operator*() {
+  auto operator*() -> T & {
     ASSERT(!is_null());
     return *m_data;
   }
 
-  bool is_null() const { return m_data == nullptr; }
+  auto is_null() const -> bool { return m_data == nullptr; }
   operator bool() const { return !is_null(); }
 
-  T *get() {
+  auto get() -> T * {
     ASSERT(!is_null());
     return m_data;
   }
-  const T *get() const {
+  auto get() const -> const T * {
     ASSERT(!is_null());
     return m_data;
   }
@@ -70,7 +70,7 @@ private:
 };
 
 template <typename T, typename... Ts>
-inline OwnedPtr<T> create_owned(Ts &&...args) {
+inline auto create_owned(Ts &&...args) -> OwnedPtr<T> {
   auto s = OwnedPtr(new T(forward(args)...));
   ASSERT(s);
   return move(s);

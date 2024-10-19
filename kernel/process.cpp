@@ -106,7 +106,7 @@ void Process::push_entry_address() {
   m_registers.esp -= 4;
 }
 
-bool Process::has_overflowed_stack() const {
+auto Process::has_overflowed_stack() const -> bool {
   return m_registers.esp < m_kernel_stack_start.get();
 }
 
@@ -118,7 +118,7 @@ void Process::take_memory_page(PhysicalAddress &&addr) {
   m_general_memory_pages.push(addr);
 }
 
-PhysicalAddress Process::page_dir() { return m_page_directory; }
+auto Process::page_dir() -> PhysicalAddress { return m_page_directory; }
 
 void Process::update_registers(x86::InterruptFrame *const frame) {
   m_registers.update_from_frame(frame);
@@ -176,7 +176,7 @@ void Process::syscall_entry() {
   asm volatile("int $0x80");
 }
 
-isize Process::do_syscall() {
+auto Process::do_syscall() -> isize {
   switch (m_syscall_info.syscall) {
   case SYS_READ:
     return sys_read(m_syscall_info.arguments[0],
@@ -216,7 +216,7 @@ void Process::sys_exit(int code) {
   Scheduler::run_next_test_proc(m_pid);
 }
 
-isize Process::sys_close(int fd) {
+auto Process::sys_close(int fd) -> isize {
   // FIXME: better fd stuff
   if (fd < 1) {
     return -EBADF;
@@ -231,7 +231,7 @@ isize Process::sys_close(int fd) {
 }
 
 // FIXME: Validation
-isize Process::sys_open(const char *const file_path, int flags) {
+auto Process::sys_open(const char *const file_path, int flags) -> isize {
   if (strcmp(file_path, "/dev/keyboard") != 0) {
     return -EINVAL;
   }
@@ -248,7 +248,7 @@ isize Process::sys_open(const char *const file_path, int flags) {
   return m_keyboard_fd;
 }
 
-isize Process::sys_write(int fd, const void *buf, size_t bytes) {
+auto Process::sys_write(int fd, const void *buf, size_t bytes) -> isize {
   if (fd != 1) {
     return -EBADF;
   }
@@ -262,7 +262,8 @@ isize Process::sys_write(int fd, const void *buf, size_t bytes) {
   return to_write;
 }
 
-isize Process::sys_read(const int fd, void *const buf, const size_t bytes) {
+auto Process::sys_read(const int fd, void *const buf,
+                       const size_t bytes) -> isize {
   if (m_keyboard_fd != -1) {
     if (m_keyboard_fd != fd) {
       return -EBADF;

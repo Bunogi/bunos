@@ -5,7 +5,7 @@
 namespace kernel {
 static Vfs *this_instance;
 
-Vfs &Vfs::instance() {
+auto Vfs::instance() -> Vfs & {
 
   if (this_instance == nullptr) {
     this_instance = new Vfs();
@@ -20,15 +20,14 @@ void Vfs::mount(bu::OwnedPtr<IFileSystem> &&fs) {
   m_root_fs = bu::move(fs);
 }
 
-bu::Optional<filesystem::Inode>
-Vfs::get_inode_at_path(const bu::StringView path) {
+auto Vfs::get_inode_at_path(const bu::StringView path)
+    -> bu::Optional<filesystem::Inode> {
   ASSERT(m_root_fs);
   return m_root_fs->get_inode_at_path(path);
 }
 
-isize Vfs::data_from_inode(const filesystem::InodeIndex &index,
-                           const u64 offset, const usize bytes,
-                           u8 *const buffer) {
+auto Vfs::data_from_inode(const filesystem::InodeIndex &index, const u64 offset,
+                          const usize bytes, u8 *const buffer) -> isize {
   ASSERT(m_root_fs);
 
   // FIXME: check index for which file system it belongs to
@@ -36,8 +35,8 @@ isize Vfs::data_from_inode(const filesystem::InodeIndex &index,
   return m_root_fs->data_from_inode(index.get(), offset, bytes, buffer);
 }
 
-bu::Optional<bu::Vector<u8>>
-Vfs::quick_read_all_data(const bu::StringView path) {
+auto Vfs::quick_read_all_data(const bu::StringView path)
+    -> bu::Optional<bu::Vector<u8>> {
   const auto inode = get_inode_at_path(path);
   if (!inode) {
     return bu::create_none<bu::Vector<u8>>();
@@ -54,8 +53,8 @@ Vfs::quick_read_all_data(const bu::StringView path) {
   return bu::create_some<bu::Vector<u8>>(out);
 }
 
-bu::Optional<bu::Vector<filesystem::DirectoryEntry>>
-Vfs::list_directory(const filesystem::InodeIndex &index) {
+auto Vfs::list_directory(const filesystem::InodeIndex &index)
+    -> bu::Optional<bu::Vector<filesystem::DirectoryEntry>> {
   ASSERT(m_root_fs);
   // FIXME: have to check where it came from
   return m_root_fs->list_directory(index.get());

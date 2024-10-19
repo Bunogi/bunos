@@ -13,8 +13,8 @@ void out_u8(u16 port, u8 out);
 // Wrapper around asm routine
 void out_u8_string(u16 port, const u8 *buffer, usize length);
 
-u8 in_u8(u16 port);
-u16 in_u16(u16 port);
+auto in_u8(u16 port) -> u8;
+auto in_u16(u16 port) -> u16;
 // u32 in_u32(u16 port);
 // void in_string(/*something*/)
 void in_u16_string(u16 port, u16 *buffer, usize length);

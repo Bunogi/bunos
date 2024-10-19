@@ -37,12 +37,12 @@ Allocator::Allocator()
 }
 #pragma GCC diagnostic pop
 
-Allocator *Allocator::instance() {
+auto Allocator::instance() -> Allocator * {
   ASSERT_NE(s_allocator, nullptr);
   return s_allocator;
 }
 
-void *Allocator::allocate(size_t size) {
+auto Allocator::allocate(size_t size) -> void * {
   ASSERT_NE(size, 0);
   // Find the first region with enough space
   Node *current_node = m_alloc_head;
@@ -123,7 +123,8 @@ void Allocator::deallocate(void *p) {
   UNREACHABLE();
 }
 
-bool Allocator::is_allocated_in_node(const void *p, const Node *const node) {
+auto Allocator::is_allocated_in_node(const void *p,
+                                     const Node *const node) -> bool {
   const auto ptr = reinterpret_cast<uintptr_t>(p);
   if (reinterpret_cast<uintptr_t>(node) == ptr - m_data_offset) {
     DEBUG_PRINTF("%p was allocated at %p\n", p, node);
@@ -150,7 +151,7 @@ void Allocator::try_merge_free_nodes(Node *node) {
   }
 }
 
-bool Allocator::previously_allocated(void *p) {
+auto Allocator::previously_allocated(void *p) -> bool {
   DEBUG_PRINTF("Checking %p\n", p);
   auto *node = m_alloc_head;
   while (node != nullptr) {
@@ -178,12 +179,12 @@ void Allocator::print_allocations() {
 
 } // namespace kernel::malloc
 
-void *operator new(size_t size) {
+auto operator new(size_t size) -> void * {
   ASSERT_NE(s_allocator, nullptr);
   return s_allocator->allocate(size);
 }
 
-void *operator new[](size_t size) {
+auto operator new[](size_t size) -> void * {
   ASSERT_NE(s_allocator, nullptr);
   return s_allocator->allocate(size);
 }

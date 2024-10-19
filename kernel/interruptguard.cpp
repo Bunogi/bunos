@@ -15,7 +15,7 @@ InterruptGuard::~InterruptGuard() {
   }
 }
 
-bool InterruptGuard::disabled_interrupts() const {
+auto InterruptGuard::disabled_interrupts() const -> bool {
   return m_did_disable_interrupts;
 }
 

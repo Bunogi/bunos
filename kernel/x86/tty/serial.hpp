@@ -13,7 +13,7 @@ public:
   virtual void flush() override;
 
   void transmit();
-  static Serial *instance();
+  static auto instance() -> Serial *;
 
 private:
   bu::SizedRingBuffer<64 * 16> m_buffer;

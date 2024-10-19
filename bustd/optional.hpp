@@ -12,11 +12,11 @@ template <typename T> class Optional {
 
 public:
   template <typename U, class... Args>
-  friend constexpr Optional<U> create_some(Args &&...);
-  template <typename U> friend constexpr Optional<U> create_none();
+  friend constexpr auto create_some(Args &&...) -> Optional<U>;
+  template <typename U> friend constexpr auto create_none() -> Optional<U>;
 
   constexpr Optional(Optional &&other) { *this = forward(other); }
-  constexpr Optional &operator=(Optional &&other) {
+  constexpr auto operator=(Optional &&other) -> Optional & {
     if (m_has_data) {
       get_data()->~T();
     }
@@ -36,20 +36,22 @@ public:
 
   [[nodiscard]] constexpr explicit operator bool() const { return m_has_data; }
 
-  [[nodiscard]] constexpr T &operator*() { return *get_data(); }
-  [[nodiscard]] constexpr const T &operator*() const { return *get_data(); }
+  [[nodiscard]] constexpr auto operator*() -> T & { return *get_data(); }
+  [[nodiscard]] constexpr auto operator*() const -> const T & {
+    return *get_data();
+  }
 
-  constexpr const T *operator->() const { return get_data(); }
-  constexpr T *operator->() { return get_data(); }
+  constexpr auto operator->() const -> const T * { return get_data(); }
+  constexpr auto operator->() -> T * { return get_data(); }
 
 private:
   constexpr explicit Optional(nullptr_t) { m_has_data = false; }
 
-  constexpr const T *get_data() const {
+  constexpr auto get_data() const -> const T * {
     ASSERT(m_has_data);
     return reinterpret_cast<const T *>(m_data);
   }
-  constexpr T *get_data() {
+  constexpr auto get_data() -> T * {
     ASSERT(m_has_data);
     return reinterpret_cast<T *>(m_data);
   }
@@ -59,14 +61,15 @@ private:
 };
 
 template <typename T, class... Args>
-[[nodiscard]] constexpr Optional<T> create_some(Args &&...args) {
+[[nodiscard]] constexpr auto create_some(Args &&...args) -> Optional<T> {
   Optional<T> out = Optional<T>(nullptr);
   new (reinterpret_cast<T *>(&out.m_data)) T(forward(args)...);
   out.m_has_data = true;
   return forward(out);
 }
 
-template <typename T> [[nodiscard]] constexpr Optional<T> create_none() {
+template <typename T>
+[[nodiscard]] constexpr auto create_none() -> Optional<T> {
   return Optional<T>(nullptr);
 }
 } // namespace bu

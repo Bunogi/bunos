@@ -41,11 +41,11 @@ public:
 private:
   void scroll();
   void clear();
-  u16 ascii_to_vga(char c);
+  auto ascii_to_vga(char c) -> u16;
   void update_cursor();
 
-  u8 entry_color(Color fg, Color bg);
-  u16 entry(char c, Color bg);
+  auto entry_color(Color fg, Color bg) -> u8;
+  auto entry(char c, Color bg) -> u16;
   u8 m_row{0};
   u8 m_column{0};
   Color m_current_color{Color::White};

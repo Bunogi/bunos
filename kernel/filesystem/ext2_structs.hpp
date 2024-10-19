@@ -82,8 +82,8 @@ struct Inode {
   u32 fragment_block_addr;
   u32 os_specific_value_2[3];
 
-  bool is_directory() const { return (type & EXT2_I_DIRECTORY) != 0; }
-  kernel::filesystem::Inode into_system_inode(u64 index) const {
+  auto is_directory() const -> bool { return (type & EXT2_I_DIRECTORY) != 0; }
+  auto into_system_inode(u64 index) const -> kernel::filesystem::Inode {
     kernel::filesystem::Inode inode{};
     inode.index = InodeIndex(index);
     inode.type =
@@ -91,7 +91,7 @@ struct Inode {
     inode.file_size = total_size();
     return inode;
   }
-  u64 total_size() const {
+  auto total_size() const -> u64 {
     return static_cast<u64>(size_upper) << 32 | static_cast<u64>(size_lower);
   }
 };

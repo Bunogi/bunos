@@ -16,7 +16,7 @@ void init() {
   x86::pic::initialize();
 }
 
-u16 register_handler(u16 vector, x86::InterruptHandler handler) {
+auto register_handler(u16 vector, x86::InterruptHandler handler) -> u16 {
   constexpr u8 usable_vector_offset = 32;
   // Reserved for exceptions
   ASSERT(vector >= usable_vector_offset);
@@ -34,7 +34,7 @@ u16 register_handler(u16 vector, x86::InterruptHandler handler) {
   return vector;
 }
 
-bool handle_interrupt(x86::InterruptFrame *frame) {
+auto handle_interrupt(x86::InterruptFrame *frame) -> bool {
   if (frame->int_vector == 0x27 || frame->int_vector == 0x2f) {
     return true;
   }
@@ -54,5 +54,5 @@ bool handle_interrupt(x86::InterruptFrame *frame) {
 
 void disable_non_printing_interrupts() { x86::pic::mask_non_printing_irqs(); }
 
-bool is_in_isr() { return ::is_in_isr; }
+auto is_in_isr() -> bool { return ::is_in_isr; }
 } // namespace kernel::interrupts

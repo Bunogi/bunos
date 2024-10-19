@@ -22,7 +22,7 @@ public:
 
   Vector(const Vector &other) : Vector(other.len()) { *this = other; }
 
-  Vector &operator=(const Vector &other) {
+  auto operator=(const Vector &other) -> Vector & {
     clear();
 
     for (usize i = 0; i < other.len(); i++) {
@@ -33,7 +33,7 @@ public:
 
   Vector(Vector &&other) { *this = forward(other); }
 
-  Vector &operator=(Vector &&other) {
+  auto operator=(Vector &&other) -> Vector & {
     if (m_data != nullptr) {
       free(m_data);
     }
@@ -82,9 +82,9 @@ public:
     }
   }
 
-  T *data() { return m_data; }
+  auto data() -> T * { return m_data; }
 
-  const T *data() const { return m_data; }
+  auto data() const -> const T * { return m_data; }
 
   /*
     template <typename... Ts> void emplace(Ts &&... args) {
@@ -107,13 +107,13 @@ public:
     slot(m_size)->~T();
   }
 
-  const T &back() const { return *safe_slot(m_size - 1); };
+  auto back() const -> const T & { return *safe_slot(m_size - 1); };
 
-  T &back() { return *safe_slot(m_size - 1); };
+  auto back() -> T & { return *safe_slot(m_size - 1); };
 
-  usize len() const { return m_size; }
-  usize capacity() const { return m_capacity; }
-  bool is_empty() const { return m_size == 0; }
+  auto len() const -> usize { return m_size; }
+  auto capacity() const -> usize { return m_capacity; }
+  auto is_empty() const -> bool { return m_size == 0; }
 
   void clear() {
     while (!is_empty()) {
@@ -123,11 +123,11 @@ public:
 
   void resize_to_fit() { set_size(m_size); }
 
-  T &operator[](usize index) { return *safe_slot(index); }
-  const T &operator[](usize index) const { return *safe_slot(index); }
+  auto operator[](usize index) -> T & { return *safe_slot(index); }
+  auto operator[](usize index) const -> const T & { return *safe_slot(index); }
 
-  T &at(usize index) { return *safe_slot(index); }
-  const T &at(usize index) const { return *safe_slot(index); }
+  auto at(usize index) -> T & { return *safe_slot(index); }
+  auto at(usize index) const -> const T & { return *safe_slot(index); }
 
   // FIXME: insert() is probably good to have too
   void remove(usize index) {
@@ -158,7 +158,7 @@ public:
 
   class Iterator {
   public:
-    Iterator operator++() const {
+    auto operator++() const -> Iterator {
       if (m_reverse) {
         m_index--;
       } else {
@@ -166,14 +166,14 @@ public:
       }
       return *this;
     }
-    Iterator operator++(int) const {
+    auto operator++(int) const -> Iterator {
       Iterator tmp(*this);
       operator++();
       return tmp;
     }
-    T &operator*() { return m_parent[m_index]; }
-    const T &operator*() const { return m_parent[m_index]; }
-    bool operator!=(const Iterator &other) const {
+    auto operator*() -> T & { return m_parent[m_index]; }
+    auto operator*() const -> const T & { return m_parent[m_index]; }
+    auto operator!=(const Iterator &other) const -> bool {
       return m_index != other.m_index;
     }
 
@@ -188,7 +188,7 @@ public:
 
   class ConstIterator {
   public:
-    ConstIterator operator++() const {
+    auto operator++() const -> ConstIterator {
       if (m_reverse) {
         m_index--;
       } else {
@@ -196,13 +196,13 @@ public:
       }
       return *this;
     }
-    ConstIterator operator++(int) const {
+    auto operator++(int) const -> ConstIterator {
       ConstIterator tmp(*this);
       operator++();
       return tmp;
     }
-    const T &operator*() const { return m_parent[m_index]; }
-    bool operator!=(const ConstIterator &other) const {
+    auto operator*() const -> const T & { return m_parent[m_index]; }
+    auto operator!=(const ConstIterator &other) const -> bool {
       return m_index != other.m_index;
     }
 
@@ -215,31 +215,33 @@ public:
     bool m_reverse;
   };
 
-  Iterator begin() { return Iterator(*this, 0, false); }
-  Iterator rbegin() { return Iterator(*this, m_size - 1, false); }
-  Iterator end() { return Iterator(*this, m_size, false); }
-  Iterator rend() { return Iterator(*this, -1, false); }
+  auto begin() -> Iterator { return Iterator(*this, 0, false); }
+  auto rbegin() -> Iterator { return Iterator(*this, m_size - 1, false); }
+  auto end() -> Iterator { return Iterator(*this, m_size, false); }
+  auto rend() -> Iterator { return Iterator(*this, -1, false); }
 
-  ConstIterator begin() const { return ConstIterator(*this, 0, false); }
-  ConstIterator rbegin() const {
+  auto begin() const -> ConstIterator { return ConstIterator(*this, 0, false); }
+  auto rbegin() const -> ConstIterator {
     return ConstIterator(*this, m_size - 1, false);
   }
-  ConstIterator end() const { return ConstIterator(*this, m_size, false); }
-  ConstIterator rend() const { return ConstIterator(*this, -1, false); }
+  auto end() const -> ConstIterator {
+    return ConstIterator(*this, m_size, false);
+  }
+  auto rend() const -> ConstIterator { return ConstIterator(*this, -1, false); }
 
 private:
   void grow() {
-    const auto new_size = bu::max(m_size * 2, 1lu);
+    const auto new_size = bu::max(m_size * 2, static_cast<usize>(1));
     set_size(new_size);
     ASSERT(new_size > m_size);
   }
 
-  T *slot(usize i) const {
+  auto slot(usize i) const -> T * {
     ASSERT(i < m_capacity);
     return m_data + i;
   }
 
-  T *safe_slot(usize i) const {
+  auto safe_slot(usize i) const -> T * {
     ASSERT(i < m_size);
     return m_data + i;
   }

@@ -11,8 +11,8 @@ public:
   Bitfield() {}
   // TODO: Convert from integer type
 
-  bool operator[](usize i) const { return at(i); }
-  bool at(usize i) const {
+  auto operator[](usize i) const -> bool { return at(i); }
+  auto at(usize i) const -> bool {
     ASSERT(i <= SIZE);
     const auto data_offset = i / 8;
 
@@ -21,7 +21,7 @@ public:
     const auto shifted = 1 << byte_offset;
     return (data & shifted) != 0;
   }
-  bool replace(usize i, bool v) {
+  auto replace(usize i, bool v) -> bool {
     ASSERT(i <= SIZE);
     const auto data_offset = i / 8;
 
@@ -36,7 +36,7 @@ public:
     return old_value;
   }
   void set(usize i, bool v) { replace(i, v); }
-  constexpr usize size() { return SIZE; }
+  constexpr auto size() -> usize { return SIZE; }
 
 private:
   u8 m_data[SIZE / 8 + (SIZE % 8 != 0 ? 1 : 0)]{};

@@ -13,12 +13,12 @@ class Foo {
 public:
   Foo() : bar(0) { created_count++; }
   Foo(int a) : bar(a) { created_count++; }
-  u32 ping() { return ++pinged; }
+  auto ping() -> u32 { return ++pinged; }
   ~Foo() { deleted_count++; }
   u32 bar;
 };
 
-test::Result scope() {
+auto scope() -> test::Result {
   const auto created_before = created_count;
   const auto deleted_before = deleted_count;
   {
@@ -31,7 +31,7 @@ test::Result scope() {
   LIBTEST_SUCCEED();
 }
 
-test::Result moved() {
+auto moved() -> test::Result {
   const auto deleted_before = deleted_count;
   {
     bu::OwnedPtr<Foo> foo1 = bu::create_owned<Foo>();
@@ -46,7 +46,7 @@ test::Result moved() {
   LIBTEST_SUCCEED();
 }
 
-test::Result nullable() {
+auto nullable() -> test::Result {
   bu::OwnedPtr<int> ptr(nullptr);
   LIBTEST_ASSERT_EQ(ptr.is_null(), true);
   LIBTEST_ASSERT_EQ(static_cast<bool>(ptr), false);
@@ -59,7 +59,7 @@ test::Result nullable() {
 }
 } // namespace
 
-int main() {
+auto main() -> int {
   RUN_TEST(scope);
   RUN_TEST(moved);
   RUN_TEST(nullable);
