@@ -1,0 +1,5 @@
+bunos_lib(
+  NAME ubsan KERNEL_SPECIFIC_BUILD_REQUIRED HOST_DISABLE
+  SOURCES
+    "ubsan.cpp"
+)

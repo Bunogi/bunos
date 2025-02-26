@@ -4,35 +4,18 @@
 #include <kernel/panic.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/x86/interrupts.hpp>
+#include <libstacktrace/stacktrace.hpp>
 #include <stdio.h>
 
 namespace {
-struct StackFrame {
-  StackFrame *ebp;
-  uint32_t eip;
-};
 
-void print_stack_trace(u32 current_eip, StackFrame *frame) {
+void print_stack_trace(u32 current_eip, u32 current_ebp) {
+  printf("Panic at: %p %s", current_eip,
+         kernel::function_name_from_pc(current_eip));
+
   printf("Stack trace:\n");
-  if (current_eip != 0) {
-    printf("%p     ", current_eip);
-
-    if (kernel::debug_symbols_loaded()) {
-      printf("%s\n", kernel::function_name_from_pc(current_eip).data());
-    } else {
-      puts("<missing debug symbols>");
-    }
-  }
-  // assumption: bottom-most stack frame has a base pointer of 0
-  while (frame) {
-    printf("%p     ", frame->eip);
-    if (kernel::debug_symbols_loaded()) {
-      printf("%s\n", kernel::function_name_from_pc(frame->eip).data());
-    } else {
-      puts("<missing debug symbols>");
-    }
-    frame = frame->ebp;
-  }
+  stacktrace::StackWalker walker(current_ebp);
+  walker.dump(nullptr);
 }
 
 auto exception_vector_to_string(u16 vector) -> bu::StringView {
@@ -136,7 +119,7 @@ void panic_from_interrupt(x86::InterruptFrame *frame, const char *const reason,
   nested_panic_check();
   s_panicking = true;
 
-  print_stack_trace(frame->eip, reinterpret_cast<StackFrame *>(frame->ebp));
+  print_stack_trace(frame->eip, frame->ebp);
 
   kernel::print::flush();
   __asm__ volatile("cli\nhlt");
@@ -155,7 +138,7 @@ void panic_in_code(const char *file, const u32 line, const char *const reason) {
   nested_panic_check();
   s_panicking = true;
 
-  StackFrame *frame;
+  u32 frame;
   __asm__ volatile("movl %%ebp, %0\n" : "=r"(frame));
   print_stack_trace(0, frame);
   kernel::print::flush();

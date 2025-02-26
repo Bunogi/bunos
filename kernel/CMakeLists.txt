@@ -81,7 +81,7 @@ add_library(kernel.object
 set(KERNEL_LINK_SCRIPT "${CMAKE_SOURCE_DIR}/kernel/x86/linker.ld")
 set_target_properties(kernel.object PROPERTIES COMPILE_FLAGS "${KERNEL_BUILD_FLAGS}")
 target_compile_definitions(kernel.object PRIVATE __IN_KERNEL__=1 __IS_X86__=1)
-target_compile_options(kernel.object PRIVATE -fstack-protector-all)
+target_compile_options(kernel.object PRIVATE -fstack-protector-all -fsanitize=undefined)
 
 add_custom_command(
   OUTPUT crtbegin.o crtend.o
@@ -108,6 +108,8 @@ set(KERNEL_LINK_LIBS
   -L. -lkernel.object
   -L../libc -lc-kernel
   -L../bustd -lbustd-kernel
+  -L../libraries/libubsan -lubsan-kernel
+  -L../libraries/libstacktrace -lstacktrace-kernel
   -lgcc
   crtend.o
   crtn.o)
@@ -118,6 +120,16 @@ separate_arguments(KERNEL_CXX_FLAGS)
 add_custom_target(
   kernel.bin
   COMMAND ${CMAKE_CXX_COMPILER} ${KERNEL_CXX_FLAGS} ${KERNEL_LINK_LIBS} -T ${KERNEL_LINK_SCRIPT} -nostdlib -o kernel.bin
-  DEPENDS kernel.object ${KERNEL_LINK_SCRIPT} crti.o crtn.o crtbegin.o crtend.o bustd-kernel c-kernel
+  DEPENDS
+    kernel.object
+    ${KERNEL_LINK_SCRIPT}
+    crti.o
+    crtn.o
+    crtbegin.o
+    crtend.o
+    bustd-kernel
+    c-kernel
+    ubsan-kernel
+    stacktrace-kernel
   VERBATIM
 )

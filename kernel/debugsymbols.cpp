@@ -77,7 +77,7 @@ void load_debug_symbols() {
   s_symbols_loaded = true;
 }
 
-auto function_name_from_pc(u32 pc) -> bu::StringView {
+auto function_name_from_pc(u32 pc) -> const char * {
   ASSERT_NE(s_symbols, nullptr);
   ASSERT(s_symbols->len() >= 2);
 
@@ -85,12 +85,12 @@ auto function_name_from_pc(u32 pc) -> bu::StringView {
   auto *prev_pc = &symbols[0];
   for (usize i = 0; i < s_symbols->len(); i++) {
     if (pc < symbols[i].offset) {
-      return bu::StringView(prev_pc->name.data());
+      return prev_pc->name.data();
     }
     prev_pc = &symbols[i];
   }
 
-  return bu::StringView(prev_pc->name.data());
+  return prev_pc->name.data();
 }
 
 auto debug_symbols_loaded() -> bool { return s_symbols_loaded; }

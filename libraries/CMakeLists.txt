@@ -1,3 +1,5 @@
-add_subdirectory(libtest)
 add_subdirectory(libm)
+add_subdirectory(libstacktrace)
 add_subdirectory(libstdc++)
+add_subdirectory(libtest)
+add_subdirectory(libubsan)
