@@ -47,7 +47,9 @@ struct DestructorCounter {
 
 auto destructor_sanity() -> test::Result {
   destructor_calls = 0;
-  { const auto some = create_some<DestructorCounter>(); }
+  {
+    const auto some = create_some<DestructorCounter>();
+  }
   LIBTEST_ASSERT_EQ(destructor_calls, 1);
 
   {

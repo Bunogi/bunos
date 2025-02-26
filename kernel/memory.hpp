@@ -10,7 +10,7 @@ template <typename T> class AddressContainer {
                 "T must be able to contain a void*");
 
 public:
-  AddressContainer() : m_addr(0){};
+  AddressContainer() : m_addr(0) {};
   explicit constexpr AddressContainer(T addr) : m_addr(addr) {}
   explicit constexpr AddressContainer(const AddressContainer &other) {
     *this = other.m_addr;
@@ -63,8 +63,7 @@ class VirtualAddress : public AddressContainer<uintptr_t> {
   using AddressContainer<uintptr_t>::AddressContainer;
 
 public:
-  explicit constexpr VirtualAddress(void *p)
-      : AddressContainer(reinterpret_cast<Type>(p)) {}
+  explicit constexpr VirtualAddress(void *p) : AddressContainer((Type)p) {}
 
   [[nodiscard]] constexpr auto to_linked_location() const -> PhysicalAddress {
     return PhysicalAddress(m_addr - 0xC0000000);

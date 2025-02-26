@@ -9,12 +9,12 @@
 namespace bu {
 class StringView {
 public:
-  constexpr StringView() : StringView(nullptr){};
-  constexpr StringView(nullptr_t) : m_data(nullptr), m_length(0){};
+  constexpr StringView() : StringView(nullptr) {};
+  constexpr StringView(nullptr_t) : m_data(nullptr), m_length(0) {};
   constexpr StringView(const StringView &) = default;
-  StringView(const char *s) : m_data(s), m_length(strlen(s)){};
+  StringView(const char *s) : m_data(s), m_length(strlen(s)) {};
   constexpr StringView(const char *s, const usize length)
-      : m_data(s), m_length(length){};
+      : m_data(s), m_length(length) {};
   constexpr auto operator=(const StringView &) -> StringView & = default;
   constexpr auto operator=(StringView &&) -> StringView & = default;
 
@@ -33,8 +33,8 @@ public:
     return reinterpret_cast<const u8 *>(m_data);
   };
 
-  [[nodiscard]] inline auto substr(const usize from,
-                                   const usize upto) const -> StringView {
+  [[nodiscard]] inline auto substr(const usize from, const usize upto) const
+      -> StringView {
     ASSERT(from <= upto);
     if (from >= m_length) {
       return StringView("", 0);

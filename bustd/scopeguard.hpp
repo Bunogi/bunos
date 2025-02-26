@@ -9,7 +9,7 @@ template <class T> class ScopeGuard {
   BU_NOMOVE(ScopeGuard)
 
 public:
-  ScopeGuard(T f) : m_func(move(f)){};
+  ScopeGuard(T f) : m_func(move(f)) {};
   ~ScopeGuard() {
     if (m_armed) {
       m_func();
@@ -38,7 +38,7 @@ template <class T> class LockedScopeGuard {
   BU_NOMOVE(LockedScopeGuard);
 
 public:
-  LockedScopeGuard(T f) : m_func(move(f)){};
+  LockedScopeGuard(T f) : m_func(move(f)) {};
   ~LockedScopeGuard() { m_func(); };
 
 private:
