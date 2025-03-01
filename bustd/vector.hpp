@@ -115,10 +115,10 @@ public:
 
   [[nodiscard]] auto len() const -> usize { return m_size; }
   [[nodiscard]] auto capacity() const -> usize { return m_capacity; }
-  [[nodiscard]] auto is_empty() const -> bool { return m_size == 0; }
+  [[nodiscard]] auto empty() const -> bool { return m_size == 0; }
 
   void clear() {
-    while (!is_empty()) {
+    while (!empty()) {
       pop();
     }
   }

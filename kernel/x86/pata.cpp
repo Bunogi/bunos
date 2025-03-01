@@ -5,7 +5,7 @@
 #include <kernel/x86/io.hpp>
 #include <kernel/x86/pata.hpp>
 
-//#define PATA_DEBUG
+// #define PATA_DEBUG
 #ifdef PATA_DEBUG
 #include <stdio.h>
 #define DEBUG_PRINTF(...) printf("[pata] " __VA_ARGS__)
@@ -199,12 +199,12 @@ void initialize_pata() {
   reset_bus();
 
   auto master_data = identify(Drive::Master);
-  if (!master_data.is_empty()) {
+  if (!master_data.empty()) {
     s_master_drive = parse_info(bu::move(master_data));
   }
 
   auto slave_data = identify(Drive::Slave);
-  if (!slave_data.is_empty()) {
+  if (!slave_data.empty()) {
     parse_info(bu::move(slave_data));
   }
 
