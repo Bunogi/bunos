@@ -125,7 +125,10 @@ Serial::Serial() {
 auto Serial::instance() -> Serial * { return s_serial_instance; }
 
 void Serial::write(const char *buf, const usize length) {
-  // If the buffer cannot take any more, we have to wait until it can
+  // FIXME: This function will never send data if the buffer is full. THat's why
+  // it freezes sometimes.
+  //  To get around this, the whole thing needs its own thread that unblocks
+  //  when whenever a write request is received
   const InterruptGuard guard;
   const auto written =
       m_buffer.write(reinterpret_cast<const u8 *>(buf), length);
