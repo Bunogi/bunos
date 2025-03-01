@@ -13,13 +13,11 @@ struct SymbolEntry {
 } // namespace
 
 namespace kernel {
-static bu::Vector<SymbolEntry> *s_symbols;
-static bool s_symbols_loaded;
+static bu::Vector<SymbolEntry> s_symbols;
 
 void load_debug_symbols() {
-  ASSERT_EQ(s_symbols, nullptr);
-
-  s_symbols = new bu::Vector<SymbolEntry>();
+  return;
+  ASSERT(s_symbols.empty());
 
   const bu::StringView file = "/boot/kernel.sym";
   printf("Loading debug symbols from %s\n", file.data());
@@ -40,7 +38,7 @@ void load_debug_symbols() {
       ASSERT_EQ(state, State::ReadingSymbol);
       current_symbol.push('\0');
       current_entry.name = current_symbol;
-      s_symbols->push(current_entry);
+      s_symbols.push(current_entry);
       state = State::ReadingAddress;
       current_symbol.clear();
     } else if (contents[i] != ' ') {
@@ -72,27 +70,22 @@ void load_debug_symbols() {
     }
   }
 
-  printf("Loaded %u debug symbols\n", s_symbols->len());
-
-  s_symbols_loaded = true;
+  printf("Loaded %u debug symbols\n", s_symbols.len());
 }
 
-auto function_name_from_pc(u32 pc) -> const char * {
-  ASSERT_NE(s_symbols, nullptr);
-  ASSERT(s_symbols->len() >= 2);
-
-  auto &symbols = *s_symbols;
-  auto *prev_pc = &symbols[0];
-  for (usize i = 0; i < s_symbols->len(); i++) {
-    if (pc < symbols[i].offset) {
-      return prev_pc->name.data();
+auto function_name_from_pc(usize pc) -> const char * {
+  if (s_symbols.empty()) {
+    return "<missing debug symbols>";
+  }
+  const char *name = "<unknown>";
+  for (usize i = 0; i < s_symbols.len(); i++) {
+    if (pc < s_symbols[i].offset) {
+      break;
     }
-    prev_pc = &symbols[i];
+    name = s_symbols[i].name.data();
   }
 
-  return prev_pc->name.data();
+  return name;
 }
-
-auto debug_symbols_loaded() -> bool { return s_symbols_loaded; }
 
 } // namespace kernel

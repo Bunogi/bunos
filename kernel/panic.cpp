@@ -4,19 +4,10 @@
 #include <kernel/panic.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/x86/interrupts.hpp>
-#include <libstacktrace/stacktrace.hpp>
+#include <libstacktrace/stackwalker.hpp>
 #include <stdio.h>
 
 namespace {
-
-void print_stack_trace(u32 current_eip, u32 current_ebp) {
-  printf("Panic at: %p %s", current_eip,
-         kernel::function_name_from_pc(current_eip));
-
-  printf("Stack trace:\n");
-  stacktrace::StackWalker walker(current_ebp);
-  walker.dump(nullptr);
-}
 
 auto exception_vector_to_string(u16 vector) -> bu::StringView {
   switch (vector) {
@@ -71,11 +62,15 @@ auto exception_vector_to_string(u16 vector) -> bu::StringView {
 
 static bool s_panicking;
 
+// easier to debug
+void nested_panic_check_fail() {
+  kernel::print::flush();
+  __asm__ volatile("cli\nhlt");
+}
+
 void nested_panic_check() {
   if (s_panicking) {
-    puts("Kernel panic while panicking!");
-    kernel::print::flush();
-    __asm__ volatile("cli\nhlt");
+    nested_panic_check_fail();
   }
 }
 } // namespace
@@ -119,7 +114,12 @@ void panic_from_interrupt(x86::InterruptFrame *frame, const char *const reason,
   nested_panic_check();
   s_panicking = true;
 
-  print_stack_trace(frame->eip, frame->ebp);
+  printf("Panic at: %p %s\n", frame->eip,
+         kernel::function_name_from_pc(frame->eip));
+
+  printf("Stack trace:\n");
+  stacktrace::StackWalker walker(frame->ebp);
+  walker.dump("panic");
 
   panic_notrace();
 }
@@ -135,9 +135,12 @@ void panic_in_code(const char *file, const u32 line, const char *const reason) {
   nested_panic_check();
   s_panicking = true;
 
-  u32 frame;
-  __asm__ volatile("movl %%ebp, %0\n" : "=r"(frame));
-  print_stack_trace(0, frame);
+  u32 frame = 0;
+  asm("movl %%ebp, %0" : "=r"(frame));
+
+  printf("Stack trace:\n");
+  stacktrace::StackWalker walker(frame);
+  walker.dump("panic");
   panic_notrace();
 }
 

@@ -1,5 +1,4 @@
 #include <libc/stdio.h>
-#include <libstacktrace/stacktrace.hpp>
 #include <libubsan/abi.hpp>
 #include <libubsan/abort.hpp>
 

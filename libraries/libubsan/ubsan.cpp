@@ -6,7 +6,6 @@
 #include <bustd/stddef.hpp>
 #include <kernel/panic.hpp>
 #include <libc/stdio.h>
-#include <libstacktrace/stacktrace.hpp>
 
 #define MAKE_DEF(foo)                                                          \
   void __ubsan_handle_##foo() { KERNEL_PANIC(#foo); }

@@ -10,6 +10,7 @@
 #include <kernel/physicalmalloc.hpp>
 #include <kernel/scheduler.hpp>
 #include <kernel/syscalls.hpp>
+#include <kernel/test_kmalloc.hpp>
 #include <kernel/timer.hpp>
 #include <kernel/tty/kerneloutputdevice.hpp>
 #include <kernel/x86/gdt.hpp>
@@ -35,14 +36,19 @@ void kernel_main() {
   x86::set_io_permissions();
   x86::setup_gdt();
   x86::init_memory_management();
-  malloc::Allocator allocator;
-  init_pmem();
 
   interrupts::init();
 
   printf("=== Switching to late print device ===\n");
   tty::KernelOutputDevice print_device(bu::move(early_printer));
   print::init(&print_device);
+
+  malloc::Allocator allocator;
+  {
+    malloc::AllocTester tester(allocator);
+    tester.run();
+  }
+  init_pmem();
 
   kernel::Scheduler::init();
 

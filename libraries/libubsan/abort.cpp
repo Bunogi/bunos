@@ -1,6 +1,6 @@
 #include <kernel/panic.hpp>
 #include <libc/stdio.h>
-#include <libstacktrace/stacktrace.hpp>
+#include <libstacktrace/stackwalker.hpp>
 #include <libubsan/abort.hpp>
 
 namespace ubsan {
