@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
 files=""
 
 typeset -r USAGE="Usage: $0 [host|target] [file...] -- [clang-tidy options]"
