@@ -28,7 +28,7 @@ private:
 [[gnu::always_inline]]
 inline auto current_stackframe() -> usize {
   usize frame = 0;
-  asm("movl %0, ebp" : "=r"(frame));
+  asm("movl %%ebp, %0" : "=r"(frame));
   return frame;
 }
 

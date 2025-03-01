@@ -121,10 +121,7 @@ void panic_from_interrupt(x86::InterruptFrame *frame, const char *const reason,
 
   print_stack_trace(frame->eip, frame->ebp);
 
-  kernel::print::flush();
-  __asm__ volatile("cli\nhlt");
-  while (1) {
-  }
+  panic_notrace();
 }
 
 void panic_in_code(const char *file, const u32 line, const char *const reason) {
@@ -141,6 +138,10 @@ void panic_in_code(const char *file, const u32 line, const char *const reason) {
   u32 frame;
   __asm__ volatile("movl %%ebp, %0\n" : "=r"(frame));
   print_stack_trace(0, frame);
+  panic_notrace();
+}
+
+void panic_notrace() {
   kernel::print::flush();
   __asm__ volatile("cli\nhlt");
   while (1) {

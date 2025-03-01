@@ -259,7 +259,7 @@ int sprintf(char *str, const char *format, ...) {
 }
 
 int printf(const char *format, ...) {
-  char buffer[256]; // TODO do something smarter
+  char buffer[1024]; // TODO do something smarter
 
   va_list args;
   va_start(args, format);

@@ -49,9 +49,11 @@ auto StackWalker::dump(const char *prefix) -> void {
     if (prefix) {
       printf("%s: ", prefix);
     }
+
     printf("%p    %s\n", m_current_frame->instruction_pointer, *f);
 
     up();
+    f = current_function();
   }
 }
 
