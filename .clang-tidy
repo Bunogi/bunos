@@ -9,7 +9,8 @@ Checks: >
     portability-*,
     -modernize-deprecated-headers,
     -misc-include-cleaner,
-    -cppcoreguidelines-pro-type-vararg
+    -cppcoreguidelines-pro-type-vararg,
+    -cppcoreguidelines-avoid-do-while
 HeaderFilterRegex: "kernel|bustd|libraries"
 WarningsAsErrors: true
 FormatStyle: llvm

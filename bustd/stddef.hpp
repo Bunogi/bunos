@@ -4,30 +4,30 @@
 #include <stdint.h>
 
 namespace bu {
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef size_t usize;
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+using usize = size_t;
 
-typedef int8_t i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
+using i8 = int8_t;
+using i16 = int16_t;
+using i32 = int32_t;
+using i64 = int64_t;
 #ifdef __IS_X86__
-typedef int32_t isize;
+using isize = int32_t;
 #endif
 
-typedef decltype(nullptr) nullptr_t;
+using nullptr_t = decltype(nullptr);
 
 template <class T> struct remove_reference {
-  typedef T type;
+  using type = T;
 };
 template <class T> struct remove_reference<T &> {
-  typedef T type;
+  using type = T;
 };
 template <class T> struct remove_reference<T &&> {
-  typedef T type;
+  using type = T;
 };
 template <typename T> auto move(T &v) noexcept -> T && {
   return static_cast<typename remove_reference<T>::type &&>(v);

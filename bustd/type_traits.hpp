@@ -9,8 +9,8 @@ template <class T, T v> struct IntegralConstant {
   constexpr operator value_type() const noexcept { return value; }
 };
 
-typedef IntegralConstant<bool, false> FalseType;
-typedef IntegralConstant<bool, true> TrueType;
+using FalseType = IntegralConstant<bool, false>;
+using TrueType = IntegralConstant<bool, true>;
 
 // FIXME: Find a good naming scheme for these
 template <typename T> struct is_integral_type : FalseType {};

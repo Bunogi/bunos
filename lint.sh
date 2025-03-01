@@ -2,6 +2,8 @@
 
 files=""
 
+cd $(dirname $0)
+
 typeset -r USAGE="Usage: $0 [host|target] [file...] -- [clang-tidy options]"
 
 if [ "$#" -lt 1 ]; then
