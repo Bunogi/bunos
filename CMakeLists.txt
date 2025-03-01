@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.18.2)
 
 if(NOT BUNOS_BUILD_HOST)
-  set(CMAKE_C_COMPILER_WORKS 1)
-  set(CMAKE_CXX_COMPILER_WORKS 1)
   set(CMAKE_TOOLCHAIN_FILE cross.cmake)
 endif()
 
