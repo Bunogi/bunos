@@ -54,13 +54,14 @@ add_library(kernel.object
   scheduler.cpp
   spinlock.cpp
   syscalls.cpp
+  test_kmalloc.cpp
   timer.cpp
   tty/kerneloutputdevice.cpp
   x86/boot.S
   x86/gdt.cpp
   x86/gdt.s
-  x86/interrupts.S
   x86/interrupts.cpp
+  x86/interrupts.S
   x86/io.cpp
   x86/io.s
   x86/memory.cpp
