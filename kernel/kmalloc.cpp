@@ -1,21 +1,17 @@
 #include <bustd/assert.hpp>
+#include <bustd/stddef.hpp>
 #include <bustd/stringview.hpp>
 #include <kernel/kmalloc.hpp>
 #include <kernel/panic.hpp>
 #include <stdio.h>
 
-#define KMALLOC_DEBUG
-
-#ifdef KMALLOC_DEBUG
 // VA_OPT is a gnu extension but it exists in C++20 so whatever
 #define DEBUG_PRINTF(format, ...)                                              \
+  if (m_debug)                                                                 \
   printf("[kmalloc] " format __VA_OPT__(, ) __VA_ARGS__)
-#else
-#define DEBUG_PRINTF(...)
-#endif
 
 extern "C" {
-extern void *_kernel_heap_start, *_kernel_heap_end;
+extern char _kernel_heap_start, _kernel_heap_end;
 }
 
 static kernel::malloc::Allocator *s_allocator;
@@ -27,19 +23,30 @@ namespace kernel::malloc {
 static constexpr usize NODE_SPLIT_THRESHOLD = 8;
 
 #pragma GCC diagnostic push
-// It struggles with _kernel_heap_start
+// It struggles with _kernel_heap_start*/
 #pragma GCC diagnostic ignored "-Warray-bounds"
-Allocator::Allocator()
-    : m_heap_start(reinterpret_cast<uintptr_t>(&_kernel_heap_start)),
-      m_heap_end(reinterpret_cast<uintptr_t>(&_kernel_heap_end)) {
+Allocator::Allocator() {
   ASSERT_EQ(s_allocator, nullptr);
-
-  m_alloc_head = reinterpret_cast<Node *>(m_heap_start);
-  ASSERT(reinterpret_cast<usize>(m_alloc_head) % alignof(Node) == 0);
-  m_alloc_head->capacity = m_heap_end - m_heap_start - offsetof(Node, dummy);
-  m_alloc_head->state = State::Free;
-  m_alloc_head->next = nullptr;
   s_allocator = this;
+
+  const auto heap_start = reinterpret_cast<usize>(&_kernel_heap_start);
+  ASSERT_EQ(heap_start % BLOCK_SIZE, 0);
+  ASSERT_EQ(heap_start % alignof(Block), 0);
+  m_first_block = reinterpret_cast<Block *>(&_kernel_heap_start);
+
+  const auto heap_size =
+      reinterpret_cast<usize>(&_kernel_heap_end) - heap_start;
+  const auto block_count = heap_size / BLOCK_SIZE;
+  const auto wasted_space = heap_size % BLOCK_SIZE;
+  m_last_block = m_first_block + block_count;
+
+  printf("[kmalloc] Blocksize: %u, first block capacity %u, heap memory region "
+         "size: %u. Total blocks: %u (%u KiB). Waste: %u bytes\n",
+         BLOCK_SIZE, FIRST_BLOCK_CAPACITY, heap_size, block_count,
+         block_count * BLOCK_SIZE / bu::KiB, wasted_space);
+
+  m_first_block->subblocks = block_count - 1;
+  m_first_block->free = true;
 }
 #pragma GCC diagnostic pop
 
@@ -48,157 +55,131 @@ auto Allocator::instance() -> Allocator * {
   return s_allocator;
 }
 
-auto Allocator::allocate(size_t size) -> void * {
-  ASSERT_NE(size, 0);
-  Node *node = m_alloc_head;
+auto Allocator::allocate(const size_t size) -> void * {
+  const auto fits_in_one_block = size < FIRST_BLOCK_CAPACITY;
 
-  // Find the first region with enough space
-  while (node) {
-    if (node->state == State::Free && node->capacity >= size) {
+  const auto size_without_first_block = size - FIRST_BLOCK_CAPACITY;
+  const auto one_off = size_without_first_block % BLOCK_SIZE != 0 ? 1 : 0;
+  const auto subblocks = size_without_first_block / BLOCK_SIZE + one_off;
+
+  const auto extra_subblocks = fits_in_one_block ? 0 : subblocks;
+
+  auto *block = m_first_block;
+  for (; block; block = next_block(block)) {
+    if (block->free && block->subblocks >= extra_subblocks) {
       break;
     }
-
-    node = node->next;
-  }
-  if (!node) {
-    KERNEL_PANIC("Ran out of heap space!");
   }
 
-  split(node, size);
+  if (!block) {
+    char buffer[256];
+    sprintf(buffer, "Not enough heap space for another %u bytes!", size);
+    print_allocations();
+    KERNEL_PANIC(buffer);
+  }
 
-  node->state = State::Used;
+  DEBUG_PRINTF("Allocating %u bytes at %p\n", size, block->data());
 
-  void *retval = &node->dummy;
-  DEBUG_PRINTF("Allocated %d bytes at %p\n", size, retval);
-
-  /*
-  const auto data_addr =
-      reinterpret_cast<usize>(node) + NODE_DATA_PADDING_BYTES;
-  return reinterpret_cast<void *>(data_addr);
-  */
-  return retval;
+  split(block, extra_subblocks);
+  block->free = false;
+  if (m_debug) {
+    print_allocations();
+  }
+  return block->data();
 }
 
-auto Allocator::split(Node *node, usize new_size) -> void {
-  /*
-  const auto node_usize = reinterpret_cast<usize>(node);
-
-  const auto next_address = node_usize + sizeof(Node) + new_size;
-  const auto extra_align = next_address % alignof(Node);
-  const auto missing_align = alignof(max_align_t) - extra_align;
-  const auto next_aligned_address = next_address + missing_align;
-  const auto next_data_address = next_aligned_address + NODE_DATA_PADDING_BYTES;
-  ASSERT_EQ(next_aligned_address % alignof(Node), 0);
-  ASSERT_EQ(next_data_address % alignof(max_align_t), 0);
-  static_assert(alignof(max_align_t) == 8);
-
-  const auto data_bytes_in_next_node = next_data_address - next_address;
-  // You could probably performance tune this a lot...
-  if (data_bytes_in_next_node < NODE_SPLIT_THRESHOLD) {
+auto Allocator::split(Block *const block, usize extra_subblocks) -> void {
+  if (block->subblocks == extra_subblocks) {
     return;
   }
-  */
+  ASSERT(block->subblocks > extra_subblocks);
 
-  // FIXME: Maybe a safety margin with canary would be good?
-  //
-  const auto data_offset = reinterpret_cast<usize>(&node->dummy);
-  const auto next_address = data_offset + new_size;
-  const auto missing_align = alignof(Node) - (next_address % alignof(Node));
-  const auto next_aligned_address = next_address + missing_align;
+  const auto prev_blocks = block->subblocks;
+  // next uses this
+  block->subblocks = extra_subblocks;
 
-  ASSERT_EQ(next_aligned_address % alignof(Node), 0);
-  Node *next = reinterpret_cast<Node *>(next_aligned_address);
-  const auto next_data_address = reinterpret_cast<usize>(&next->dummy);
-  ASSERT_EQ(next_data_address % alignof(max_align_t), 0);
-
-  const auto bytes_to_next_data = next_data_address - data_offset;
-  const auto bytes_in_next_node = node->capacity - bytes_to_next_data;
-
-  // You could probably performance tune this a lot...
-  if (bytes_in_next_node < NODE_SPLIT_THRESHOLD) {
+  auto *next = next_block(block);
+  if (!next) {
+    block->subblocks = prev_blocks;
     return;
   }
 
-  // NOTE: This will be null when this is the last node
-  Node *old_next = node->next;
-  next->capacity = bytes_in_next_node;
-  next->next = old_next;
-  next->state = State::Free;
-  node->next = next;
-  node->capacity = new_size;
+  next->subblocks = prev_blocks;
+  next->subblocks -= 1;
+  next->subblocks -= extra_subblocks;
+  next->free = true;
 }
 
 auto Allocator::deallocate(void *p) -> void {
-  auto *node = m_alloc_head;
-  Node *prev = nullptr;
-  while (node) {
-    if (p != &node->dummy) {
-      prev = node;
-      node = node->next;
-      continue;
+  auto *block = m_first_block;
+  Block *prev = nullptr;
+  for (; block; prev = block, block = next_block(block)) {
+    if (block->data() == p) {
+      break;
     }
-
-    node->state = State::Free;
-
-    DEBUG_PRINTF("Deallocated %u bytes at %p\n", node->capacity, &node->dummy);
-
-    if (!prev) {
-      merge_nodes_forward(node);
-    } else if (prev && prev->state == State::Free) {
-      merge_nodes_forward(prev);
-    }
-
-    return;
+  }
+  if (!block) {
+    char buf[256];
+    sprintf((char *)buf, "Attempt to deallocate unallocated address %p", p);
+    print_allocations();
+    KERNEL_PANIC(buf);
   }
 
-  char error[256];
-  // FIXME: snprintf
-  sprintf(error, "KMalloc: De-alloc of unallocated pointer %p", p);
-  KERNEL_PANIC(error);
-}
+  DEBUG_PRINTF("Freeing %u blocks at %p\n", block->subblocks + 1,
+               block->data());
 
-auto Allocator::is_allocated_in_node(const void *p, const Node *const node)
-    -> bool {
-  return p == &node->dummy;
-}
-
-void Allocator::merge_nodes_forward(Node *node) {
-  if (node->state != State::Free) {
-    return;
+  block->free = true;
+  if (prev && prev->free) {
+    // The block we just freed is ahead of another free block.
+    // Prevent two free blocks in a row by merging the prev block.
+    merge_blocks(prev);
+  } else {
+    merge_blocks(block);
   }
+  if (m_debug) {
+    print_allocations();
+  }
+}
 
-  // If the freed node is between othre free nodes, they can all be merged, so
+void Allocator::merge_blocks(Block *const block) {
+
+  // If the freed block is between other free blocks, they can all be merged, so
   // keep going as long as possible
-  while (node->next && node->next->state == State::Free) {
-    const auto this_data = reinterpret_cast<usize>(&node->dummy);
-    const auto next_data = reinterpret_cast<usize>(&node->next->dummy);
-    const auto reclaimable_space = next_data - this_data + node->next->capacity;
-    const auto new_capacity = node->capacity + reclaimable_space;
-    DEBUG_PRINTF("Merging %p and %p into one of capacity %u\n", node,
-                 node->next, new_capacity);
-    node->capacity = new_capacity;
-    node->next = node->next->next;
+
+  auto *next = next_block(block);
+  while (next && next->free) {
+    const auto new_blocks = block->subblocks + next->subblocks + 1;
+    DEBUG_PRINTF("Merging %p and %p into one with %u subblocks\n", block, next,
+                 new_blocks);
+    block->subblocks += next->subblocks + 1;
+    next = next_block(block);
   }
 }
 
-auto Allocator::previously_allocated(void *p) -> bool {
-  auto *node = m_alloc_head;
-  while (node != nullptr) {
-    if (is_allocated_in_node(p, node)) {
-      return true;
-    }
-    node = node->next;
+auto Allocator::next_block(Block *const block) -> Block * {
+  const auto as_usize = reinterpret_cast<usize>(block);
+  const auto block_offset = BLOCK_SIZE * (block->subblocks + 1);
+
+  const auto retval = reinterpret_cast<Block *>(as_usize + block_offset);
+  if (retval > m_last_block) {
+    return nullptr;
   }
-  return false;
+  return retval;
 }
 
 auto Allocator::print_allocations() -> void {
-  printf("[kmalloc]: allocations:\n");
-  auto *node = m_alloc_head;
-  while (node) {
-    const char *state = node->state == State::Free ? "free" : "used";
-    printf("  %p: %u bytes %s\n", &node->dummy, node->capacity, state);
-    node = node->next;
+  printf("[kmalloc] allocations:\n");
+  auto *block = m_first_block;
+  u32 i = 0;
+  while (block) {
+    const char *state = block->free ? "free" : "used";
+    const auto bytes = FIRST_BLOCK_CAPACITY + BLOCK_SIZE * block->subblocks;
+    printf(
+        " %u: block addr: %p, data: %p. subblocks: %u, %u bytes (%uKiB) %s\n",
+        i, block, block->data(), block->subblocks, bytes, bytes / bu::KiB,
+        state);
+    block = next_block(block);
+    i++;
   }
 }
 } // namespace kernel::malloc

@@ -9,12 +9,28 @@
 
 namespace kernel::malloc {
 auto AllocTester::run() -> void {
+  const auto free_subblocks_before = m_alloc.m_first_block->subblocks;
   sanity_check();
-  m_alloc.print_allocations();
   printf("[kmalloc] sanity_check() success\n");
+  ASSERT_EQ(free_subblocks_before, m_alloc.m_first_block->subblocks);
+
+  block_size_alloc_check();
+  ASSERT_EQ(free_subblocks_before, m_alloc.m_first_block->subblocks);
+  printf("[kmalloc] block_size_alloc_check() success\n");
+
   reuse_check();
-  m_alloc.print_allocations();
+  ASSERT_EQ(free_subblocks_before, m_alloc.m_first_block->subblocks);
   printf("[kmalloc] reuse_check() success\n");
+
+  big_alloc_check();
+  ASSERT_EQ(free_subblocks_before, m_alloc.m_first_block->subblocks);
+  printf("[kmalloc] big_alloc_check() success\n");
+}
+
+auto AllocTester::block_size_alloc_check() -> void {
+  auto *const p1 = m_alloc.allocate(m_alloc.BLOCK_SIZE);
+  ALIGNMENT_CHECK(p1);
+  m_alloc.deallocate(p1);
 }
 
 auto AllocTester::sanity_check() -> void {
@@ -30,26 +46,17 @@ auto AllocTester::sanity_check() -> void {
 
 auto AllocTester::reuse_check() -> void {
   auto *p1 = m_alloc.allocate(1);
-  m_alloc.print_allocations();
   m_alloc.deallocate(p1);
-  m_alloc.print_allocations();
   auto *p2 = m_alloc.allocate(1);
-  m_alloc.print_allocations();
   ASSERT_EQ(p1, p2);
   m_alloc.deallocate(p2);
-  m_alloc.print_allocations();
 
   p1 = m_alloc.allocate(64);
-  m_alloc.print_allocations();
   p2 = m_alloc.allocate(128);
-  m_alloc.print_allocations();
   auto *const p3 = m_alloc.allocate(32);
-  m_alloc.print_allocations();
 
   m_alloc.deallocate(p2);
-  m_alloc.print_allocations();
   auto *const p4 = m_alloc.allocate(32);
-  m_alloc.print_allocations();
   ALIGNMENT_CHECK(p4);
   ASSERT_EQ(p4, p2);
 
@@ -60,5 +67,27 @@ auto AllocTester::reuse_check() -> void {
   auto *const p5 = m_alloc.allocate(1);
   ASSERT_EQ(p5, p1);
   m_alloc.deallocate(p1);
+}
+
+auto AllocTester::big_alloc_check() -> void {
+  auto *const p1 = m_alloc.allocate(512);
+  auto *const p2 = m_alloc.allocate(1024);
+  m_alloc.deallocate(p1);
+  auto *p3 = m_alloc.allocate(128);
+  ASSERT_EQ(p1, p3);
+  m_alloc.deallocate(p1);
+  m_alloc.deallocate(p2);
+}
+
+auto AllocTester::many_allocations_check() -> void {
+  constexpr auto pointer_count = 512;
+  void *pointers[pointer_count];
+  for (auto &pointer : pointers) {
+    pointer = m_alloc.allocate(16);
+  }
+
+  for (auto &pointer : pointers) {
+    m_alloc.deallocate(pointer);
+  }
 }
 } // namespace kernel::malloc

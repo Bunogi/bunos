@@ -39,6 +39,9 @@ template <class T> auto forward(T &&v) noexcept -> T && {
   return static_cast<T &&>(v);
 }
 
+constexpr usize KiB = 1024;
+constexpr usize MiB = KiB * 1024;
+
 } // namespace bu
 
 using bu::u16;

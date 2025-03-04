@@ -16,7 +16,6 @@ namespace kernel {
 static bu::Vector<SymbolEntry> s_symbols;
 
 void load_debug_symbols() {
-  return;
   ASSERT(s_symbols.empty());
 
   const bu::StringView file = "/boot/kernel.sym";

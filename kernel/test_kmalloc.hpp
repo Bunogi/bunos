@@ -12,6 +12,8 @@ public:
 private:
   auto sanity_check() -> void;
   auto reuse_check() -> void;
+  auto big_alloc_check() -> void;
+  auto block_size_alloc_check() -> void;
   Allocator &m_alloc; // NOLINT
 };
 } // namespace kernel::malloc

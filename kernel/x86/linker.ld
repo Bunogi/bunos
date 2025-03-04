@@ -54,6 +54,6 @@ SECTIONS
    /* Reserve some(static) heap space */
    . = ALIGN(4K);
    _kernel_heap_start = .;
-   . += 0x00100000;
+   . += 0x00200000;
    _kernel_heap_end = .;
 }
