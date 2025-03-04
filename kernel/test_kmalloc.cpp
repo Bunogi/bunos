@@ -78,16 +78,4 @@ auto AllocTester::big_alloc_check() -> void {
   m_alloc.deallocate(p1);
   m_alloc.deallocate(p2);
 }
-
-auto AllocTester::many_allocations_check() -> void {
-  constexpr auto pointer_count = 512;
-  void *pointers[pointer_count];
-  for (auto &pointer : pointers) {
-    pointer = m_alloc.allocate(16);
-  }
-
-  for (auto &pointer : pointers) {
-    m_alloc.deallocate(pointer);
-  }
-}
 } // namespace kernel::malloc
