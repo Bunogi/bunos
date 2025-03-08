@@ -183,6 +183,98 @@ auto transfer() -> test::Result {
   LIBTEST_SUCCEED();
 }
 
+auto looping_iterator_basic() -> test::Result {
+  bu::List<int> l;
+  {
+    auto it = l.looping_iter();
+    LIBTEST_ASSERT(!it);
+  }
+  constexpr auto items = 256;
+
+  for (int i = 0; i < items; i++) {
+    l.append_back(i);
+  }
+
+  auto it = l.looping_iter();
+
+  for (int i = 0; i < items; i++) {
+    LIBTEST_ASSERT(it);
+    LIBTEST_ASSERT_EQ(*it, i);
+    it++;
+  }
+
+  LIBTEST_ASSERT(it);
+  LIBTEST_ASSERT_EQ(*it, 0);
+  it.skip(items - 1);
+  LIBTEST_ASSERT(it);
+  LIBTEST_ASSERT_EQ(*it, items - 1);
+  it.skip(items);
+  LIBTEST_ASSERT(it);
+  LIBTEST_ASSERT_EQ(*it, items - 1);
+  it.skip(items * 2);
+  LIBTEST_ASSERT(it);
+  LIBTEST_ASSERT_EQ(*it, items - 1);
+
+  it.skip(1);
+  LIBTEST_ASSERT(it);
+  LIBTEST_ASSERT_EQ(*it, 0);
+  it.skip(2);
+  LIBTEST_ASSERT(it);
+  LIBTEST_ASSERT_EQ(*it, 2);
+
+  LIBTEST_SUCCEED();
+}
+
+auto looping_iterator_remove() -> test::Result {
+  auto get_list = [=]() {
+    bu::List<int> l;
+
+    for (int i = 0; i < 3; i++) {
+      l.append_back(i);
+    }
+    return l;
+  };
+
+  {
+    auto l = get_list();
+    auto it = l.looping_iter();
+    it = l.remove_loop(it);
+    LIBTEST_ASSERT_EQ(l.len(), 2);
+    LIBTEST_ASSERT(it);
+    LIBTEST_ASSERT_EQ(*it, 1);
+  }
+
+  {
+    auto l = get_list();
+    auto it = l.looping_iter();
+    it.skip(1);
+    it = l.remove_loop(it);
+    LIBTEST_ASSERT_EQ(l.len(), 2);
+    LIBTEST_ASSERT(it);
+    LIBTEST_ASSERT_EQ(*it, 2);
+  }
+  {
+    auto l = get_list();
+    auto it = l.looping_iter();
+    it.skip(2);
+    it = l.remove_loop(it);
+    LIBTEST_ASSERT_EQ(l.len(), 2);
+    LIBTEST_ASSERT(it);
+    LIBTEST_ASSERT_EQ(*it, 0);
+  }
+  {
+    auto l = get_list();
+    auto it = l.looping_iter();
+    it = l.remove_loop(it);
+    it = l.remove_loop(it);
+    it = l.remove_loop(it);
+    LIBTEST_ASSERT(!it);
+    LIBTEST_ASSERT(l.empty());
+  }
+
+  LIBTEST_SUCCEED();
+}
+
 } // namespace
 
 auto main() -> int {
@@ -191,5 +283,7 @@ auto main() -> int {
   RUN_TEST(remove_if);
   RUN_TEST(range_for);
   RUN_TEST(transfer);
+  RUN_TEST(looping_iterator_basic);
+  RUN_TEST(looping_iterator_remove);
   LIBTEST_CLEANUP();
 }

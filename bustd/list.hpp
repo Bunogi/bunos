@@ -41,6 +41,7 @@ public:
 
     other.m_tail = other.m_head = nullptr;
     other.m_size = 0;
+    return *this;
   }
   ~List() { clear(); }
 
@@ -128,12 +129,75 @@ public:
     bool m_reverse;
   };
 
+  class LoopingIterator {
+  public:
+    using Value = T;
+
+    LoopingIterator(Node *start) : m_this(start), m_start(start) {}
+
+    auto operator++() -> LoopingIterator {
+      if (!m_this->next) {
+        m_this = m_start;
+        return *this;
+      }
+      m_this = m_this->next;
+      return *this;
+    }
+    auto operator++(int) -> LoopingIterator {
+      LoopingIterator tmp(*this);
+      operator++();
+      return tmp;
+    }
+
+    auto skip(const usize count) {
+      for (usize i = 0; i < count; i++) {
+        if (m_this->next) {
+          m_this = m_this->next;
+        } else {
+          m_this = m_start;
+        }
+      }
+    }
+
+    operator bool() const { return m_this != nullptr; }
+    auto operator*() -> T {
+      ASSERT(*this);
+      return m_this->val;
+    }
+
+  private:
+    friend class List<T>;
+    Node *m_this;
+    Node *m_start;
+  };
+
   auto begin() -> Iterator { return Iterator(m_head, false); }
 
   auto rbegin() -> Iterator { return Iterator(m_tail, true); }
 
   auto end() -> Iterator { return Iterator(nullptr, false); }
   auto rend() -> Iterator { return Iterator(nullptr, false); }
+
+  auto looping_iter() -> LoopingIterator { return LoopingIterator(m_head); }
+  auto remove_loop(const LoopingIterator &it) -> LoopingIterator {
+    ASSERT(it);
+
+    auto *node = m_head;
+    usize index = 0;
+    while (node) {
+      if (node == it.m_this) {
+        break;
+      }
+      index++;
+      node = node->next;
+    }
+
+    ASSERT(node);
+    remove(index);
+    auto next = LoopingIterator(m_head);
+    next.skip(index);
+    return next;
+  }
 
   auto take_node(usize index) -> Node * {
     ASSERT(index < m_size);
@@ -170,6 +234,7 @@ public:
   }
 
   [[nodiscard]] auto len() const -> usize { return m_size; }
+  [[nodiscard]] auto empty() const -> bool { return m_size == 0; }
 
   void remove_if(bu::Function<bool(const T &)> f) {
     auto *this_node = m_head;
