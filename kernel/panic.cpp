@@ -2,7 +2,6 @@
 #include <kernel/debugsymbols.hpp>
 #include <kernel/kprint.hpp>
 #include <kernel/panic.hpp>
-#include <kernel/scheduler.hpp>
 #include <kernel/x86/interrupts.hpp>
 #include <libstacktrace/stackwalker.hpp>
 #include <stdio.h>
@@ -78,8 +77,8 @@ void nested_panic_check() {
 namespace kernel {
 auto in_panic() -> bool { return s_panicking; }
 
-void panic_from_interrupt(x86::InterruptFrame *frame, const char *const reason,
-                          bool has_errcode) {
+void panic_from_interrupt(const x86::InterruptFrame *frame,
+                          const char *const reason, bool has_errcode) {
 
   printf("====KERNEL_PANIC====\n%s\n", reason ? reason : "No message given");
 

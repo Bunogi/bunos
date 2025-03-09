@@ -1,6 +1,4 @@
 #include <bustd/assert.hpp>
-#include <kernel/scheduler.hpp>
-#include <kernel/timer.hpp>
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pagemapguard.hpp>
 #include <kernel/x86/paging.hpp>

@@ -1,5 +1,5 @@
 #include <bustd/assert.hpp>
-#include <kernel/syscalls.hpp>
+#include <bustd/stddef.hpp>
 #include <libc/errno.h>
 #include <libc/stdlib.h>
 #include <libc/sys/syscall.h>
@@ -20,10 +20,9 @@ long syscall(long code, ...) {
     errno = ENOSYS;
     return 1;
   }
-  const auto call = static_cast<kernel::Syscall>(code);
   u8 argcount = 0;
 
-  switch (call) {
+  switch (code) {
   case SYS_CLOSE:
   case SYS_EXIT:
     argcount = 1;
@@ -41,7 +40,7 @@ long syscall(long code, ...) {
     return -1;
   }
 
-  u32 args[MAX_SYSCALL_ARG_COUNT];
+  u32 args[4];
 
   va_list arg_list;
   va_start(arg_list, code);

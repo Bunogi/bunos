@@ -1,8 +1,6 @@
 #pragma once
 
 #include <bustd/stddef.hpp>
-#pragma once
-#pragma once
 #include <kernel/memory.hpp>
 
 namespace kernel::x86 {

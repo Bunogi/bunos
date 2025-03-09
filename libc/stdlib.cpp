@@ -2,9 +2,9 @@
 #include <bustd/math.hpp>
 #include <bustd/stddef.hpp>
 #include <ctype.h>
-#include <kernel/syscalls.hpp>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 #ifdef __IN_KERNEL__

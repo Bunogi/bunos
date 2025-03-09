@@ -7,7 +7,7 @@
 namespace kernel {
 [[noreturn]] void panic_in_code(const char *const file, const u32 line,
                                 const char *reason);
-[[noreturn]] void panic_from_interrupt(x86::InterruptFrame *frame,
+[[noreturn]] void panic_from_interrupt(const x86::InterruptFrame *frame,
                                        const char *reason, bool has_errcode);
 
 [[noreturn]] void panic_notrace();

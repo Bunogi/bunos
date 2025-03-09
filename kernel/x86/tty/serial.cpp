@@ -4,8 +4,6 @@
 #include <kernel/interruptguard.hpp>
 #include <kernel/interrupts.hpp>
 #include <kernel/process.hpp>
-#include <kernel/scheduler.hpp>
-#include <kernel/timer.hpp>
 #include <kernel/x86/io.hpp>
 #include <kernel/x86/tty/serial.hpp>
 
@@ -121,11 +119,8 @@ Serial::Serial() {
   s_serial_instance = this;
 }
 
-// Used by the timer system to let us print stuff
-auto Serial::instance() -> Serial * { return s_serial_instance; }
-
 void Serial::write(const char *buf, const usize length) {
-  // FIXME: This function will never send data if the buffer is full. THat's why
+  // FIXME: This function will never send data if the buffer is full. That's why
   // it freezes sometimes.
   //  To get around this, the whole thing needs its own thread that unblocks
   //  when whenever a write request is received
@@ -145,7 +140,6 @@ void Serial::write(const char *buf, const usize length) {
       x86::sti();
       volatile auto &buffer = m_buffer;
       while (buffer.vol_remaining_space() < remaining) {
-        timer::delay(10);
       }
       x86::cli();
     }
@@ -173,7 +167,6 @@ void Serial::flush() {
   if (!m_buffer.is_empty()) {
     if (interrupts::enabled()) {
       while (m_buffer.len() > 0) {
-        timer::delay(10);
       }
     } else {
       while (!m_buffer.is_empty()) {

@@ -2,8 +2,6 @@
 #include <kernel/memory.hpp>
 #include <kernel/physicalmalloc.hpp>
 #include <kernel/process.hpp>
-#include <kernel/scheduler.hpp>
-#include <kernel/timer.hpp>
 #include <kernel/x86/memory.hpp>
 #include <kernel/x86/pagemapguard.hpp>
 #include <kernel/x86/paging.hpp>
@@ -164,6 +162,7 @@ auto map_kernel_memory(u32 continous_page_count) -> VirtualAddress {
   // TODO: do this for every kernel thread
   // FIXME: This way of detecting free entries won't work if we have explicitly
   // mapped some memory as not present
+  // FIXME: Guard pages?
 
   // If we are out of space in this page directory entry,
   // create another one, and map that in at the kernel address plus whatever.
@@ -274,11 +273,11 @@ auto map_user_memory(Process &process, VirtualAddress at) -> bool {
   const auto pt_entry = page_table_index_from_addr(at);
   ASSERT(at.ptr() < &_kernel_start);
 
-  auto page_dir = process.page_dir();
+  auto page_dir = process.mmu_base_addr();
   PhysicalAddress page_table;
   {
     // Page dir of the process is always initialized
-    const PageMapGuard guard((page_dir));
+    const PageMapGuard guard(page_dir);
     u32 *const dir = static_cast<u32 *>(guard.mapped_address());
     auto entry = PageDirectoryEntry::from_u32(dir[pd_entry]);
     if (!entry.present) {
@@ -286,7 +285,7 @@ auto map_user_memory(Process &process, VirtualAddress at) -> bool {
 
       auto allocated = allocate_physical_page();
       entry.page_table_address = allocated.get();
-      process.take_page_table_page(bu::move(allocated));
+      process.take_memory_page(allocated);
 
       entry.user = true;
       entry.read_write = true;
@@ -310,6 +309,7 @@ auto map_user_memory(Process &process, VirtualAddress at) -> bool {
 
     table[pt_entry] = new_entry.as_u32();
   }
+
   return true;
 }
 
@@ -318,7 +318,7 @@ void set_user_mem_no_write(Process &process, VirtualAddress at) {
   const auto pt_entry = page_table_index_from_addr(at);
   PhysicalAddress page_table;
   {
-    const auto page_dir = process.page_dir();
+    const auto page_dir = process.mmu_base_addr();
     const PageMapGuard guard((page_dir));
     auto *const dir = static_cast<u32 *>(guard.mapped_address());
     const auto entry = PageDirectoryEntry::from_u32(dir[pd_entry]);

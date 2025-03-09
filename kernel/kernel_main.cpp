@@ -8,10 +8,8 @@
 #include <kernel/kprint.hpp>
 #include <kernel/panic.hpp>
 #include <kernel/physicalmalloc.hpp>
-#include <kernel/scheduler.hpp>
-#include <kernel/syscalls.hpp>
+#include <kernel/sched.hpp>
 #include <kernel/test_kmalloc.hpp>
-#include <kernel/timer.hpp>
 #include <kernel/tty/kerneloutputdevice.hpp>
 #include <kernel/x86/gdt.hpp>
 #include <kernel/x86/io.hpp>
@@ -50,9 +48,6 @@ void kernel_main() {
   }
   init_pmem();
 
-  kernel::Scheduler::init();
-
-  timer::initialize();
   printf("Welcome to Bunos 0.0-dev!\n");
 
   x86::initialize_pata();
@@ -63,10 +58,9 @@ void kernel_main() {
   load_debug_symbols();
 
   x86::init_ps2_controller();
-  init_syscalls();
   printf("Running scheduler...\n");
 
-  kernel::Scheduler::run();
+  kernel::sched::run();
 
   KERNEL_PANIC("Reached end of kernel_main");
 }

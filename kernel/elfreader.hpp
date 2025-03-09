@@ -5,5 +5,5 @@
 
 namespace kernel::elf {
 using Entry = auto (*)() -> void;
-auto parse(Process &proc, bu::StringView file) -> Entry;
+auto load(Process &proc, bu::StringView file) -> Entry;
 } // namespace kernel::elf

@@ -83,6 +83,7 @@ list(APPEND WARNING_ERRORS "unused-function")
 list(APPEND WARNING_ERRORS "uninitialized")
 list(APPEND WARNING_ERRORS "nonnull")
 list(APPEND WARNING_ERRORS "delete-non-virtual-dtor")
+list(APPEND WARNING_ERRORS "address")
 
 foreach(i ${WARNING_ERRORS})
   set(WARNING_ERROR_FLAGS "${WARNING_ERROR_FLAGS} -Werror=${i}")

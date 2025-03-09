@@ -53,7 +53,7 @@ public:
 
   // FIXME: this is not really emplace...
   void emplace_back(T &&val) {
-    auto *new_node = new Node(forward(val));
+    auto *new_node = new Node(val);
     ASSERT_NE(new_node, nullptr);
     insert_back(new_node);
   }
@@ -147,6 +147,15 @@ public:
       LoopingIterator tmp(*this);
       operator++();
       return tmp;
+    }
+
+    auto operator->() const -> const T * {
+      ASSERT(m_this);
+      return &m_this->val;
+    }
+    auto operator->() -> T * {
+      ASSERT(m_this);
+      return &m_this->val;
     }
 
     auto skip(const usize count) {

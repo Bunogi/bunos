@@ -51,11 +51,12 @@ add_library(kernel.object
   physicalmalloc.cpp
   process.cpp
   process/keyboardfile.cpp
-  scheduler.cpp
+  sched.cpp
   spinlock.cpp
-  syscalls.cpp
+  syscall.cpp
+  task/x86.cpp
+  task/x86.s
   test_kmalloc.cpp
-  timer.cpp
   tty/kerneloutputdevice.cpp
   x86/boot.S
   x86/gdt.cpp
@@ -73,8 +74,6 @@ add_library(kernel.object
   x86/pit.cpp
   x86/ps2.cpp
   x86/ps2_keyboard.cpp
-  x86/scheduler.s
-  x86/syscalls.cpp
   x86/tty/serial.cpp
   x86/tty/vga.cpp
 )

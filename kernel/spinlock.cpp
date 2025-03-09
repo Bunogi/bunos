@@ -1,7 +1,6 @@
 #include <bustd/assert.hpp>
 #include <kernel/interruptguard.hpp>
 #include <kernel/spinlock.hpp>
-#include <kernel/timer.hpp>
 
 namespace kernel {
 SpinLock::SpinLock() : m_valid(true), m_locked(false) {}

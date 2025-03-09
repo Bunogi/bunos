@@ -77,8 +77,8 @@ auto validate_header(const Elf32_Ehdr *const header) -> bool {
 }
 
 auto handle_program_headers(const u8 *const data, const usize data_len,
-                            kernel::Process &process,
-                            const Elf32_Ehdr *header) -> bool {
+                            kernel::Process &process, const Elf32_Ehdr *header)
+    -> bool {
 
   const auto header_offset = header->e_phoff;
   if (header_offset == 0) {
@@ -231,11 +231,11 @@ void handle_section_headers(const u8 *const data,
 } // namespace
 
 namespace kernel::elf {
-auto parse(Process &proc, bu::StringView file) -> Entry {
+auto load(Process &proc, bu::StringView file) -> Entry {
   const auto elf_file_data = Vfs::instance().quick_read_all_data(file);
   const auto contents = *elf_file_data;
 
-  _x86_set_page_directory(proc.page_dir().get());
+  proc.set_memory_mapping();
 
   DEBUG_PRINTF("Read %u chars\n", contents.len());
 
